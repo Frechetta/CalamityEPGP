@@ -1,0 +1,22 @@
+## Title: Calamity EPGP
+## Notes: EPGP addon for WOTLK
+## Author: Kardiir
+## Version: 0.1.0
+## Interface: 30402
+## SavedVariables: CalamityEPGPDB
+
+# interface is retrieved by running this in-game: `/run print((select(4, GetBuildInfo())));`
+
+embeds.xml
+
+# config.lua
+# timer.lua
+# Main-old.lua
+main.lua
+main.xml
+
+# Main.lua
+# Main.xml
+
+# CalamityEPGP.lua
+# CalamityEPGP.xml
