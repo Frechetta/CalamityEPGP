@@ -90,6 +90,8 @@ function addon:createWindow()
     mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
+    self.mainFrame = mainFrame
+
 	mainFrame.title = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
 	mainFrame.title:SetPoint("LEFT", mainFrame.TitleBg, "LEFT", 5, 0);
 	mainFrame.title:SetText("CalamityEPGP");
@@ -106,50 +108,9 @@ function addon:createWindow()
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
     mainFrame.tableFrame:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 6)
 
-    local data = self:getData()
-
-    self:createTable(mainFrame.tableFrame, data)
-
-	-- -- Reset Button:
-	-- mainFrame.resetBtn = createButton("TOP", mainFrame.saveBtn, "BOTTOM", -10, "Reset");
-
-	-- -- Load Button:
-	-- mainFrame.loadBtn = createButton("TOP", mainFrame.resetBtn, "BOTTOM", -10, "Load");
-
-	-- ----------------------------------
-	-- -- Sliders
-	-- ----------------------------------
-	-- -- Slider 1:
-	-- mainFrame.slider1 = CreateFrame("SLIDER", nil, mainFrame, "OptionsSliderTemplate");
-	-- mainFrame.slider1:SetPoint("TOP", mainFrame.loadBtn, "BOTTOM", 0, -20);
-	-- mainFrame.slider1:SetMinMaxValues(1, 100);
-	-- mainFrame.slider1:SetValue(50);
-	-- mainFrame.slider1:SetValueStep(30);
-	-- mainFrame.slider1:SetObeyStepOnDrag(true);
-
-	-- -- Slider 2:
-	-- mainFrame.slider2 = CreateFrame("SLIDER", nil, mainFrame, "OptionsSliderTemplate");
-	-- mainFrame.slider2:SetPoint("TOP", mainFrame.slider1, "BOTTOM", 0, -20);
-	-- mainFrame.slider2:SetMinMaxValues(1, 100);
-	-- mainFrame.slider2:SetValue(40);
-	-- mainFrame.slider2:SetValueStep(30);
-	-- mainFrame.slider2:SetObeyStepOnDrag(true);
-
-	-- ----------------------------------
-	-- -- Check Buttons
-	-- ----------------------------------
-	-- -- Check Button 1:
-	-- mainFrame.checkBtn1 = CreateFrame("CheckButton", nil, mainFrame, "UICheckButtonTemplate");
-	-- mainFrame.checkBtn1:SetPoint("TOPLEFT", mainFrame.slider1, "BOTTOMLEFT", -10, -40);
-	-- mainFrame.checkBtn1.text:SetText("My Check Button!");
-
-	-- -- Check Button 2:
-	-- mainFrame.checkBtn2 = CreateFrame("CheckButton", nil, mainFrame, "UICheckButtonTemplate");
-	-- mainFrame.checkBtn2:SetPoint("TOPLEFT", mainFrame.checkBtn1, "BOTTOMLEFT", 0, -10);
-	-- mainFrame.checkBtn2.text:SetText("Another Check Button!");
-	-- mainFrame.checkBtn2:SetChecked(true);
-
-	-- mainFrame:Hide();
+    self:getData()
+    self:createTable()
+    self:setData()
 
 	return mainFrame;
 end
@@ -164,12 +125,15 @@ function addon:createButton(parent, point, relativeFrame, relativePoint, yOffset
 	return btn;
 end
 
-function addon:createTable(parent, data)
+function addon:createTable()
+    local parent = self.mainFrame.tableFrame
+    local data = self.data
+
     -- Initialize header
     -- we will finalize the size once the scroll frame is set up
     parent.header = CreateFrame('Frame', nil, parent)
     parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
-    parent.header:SetHeight(30)
+    parent.header:SetHeight(10)
 
     -- Initialize scroll frame
     parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
@@ -208,17 +172,26 @@ function addon:createTable(parent, data)
         local headerText = header[1]
         local justify = header[2]
 
-        local column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+        local column = CreateFrame('Frame', nil, parent.header)
+        column:SetHeight(parent.header:GetHeight())
 
-        -- local xOffset = columnWidth * (i - 1)
+        local fontString = column:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+        fontString:SetText(headerText)
+        fontString:SetJustifyH(justify)
+        fontString:SetTextColor(1, 1, 0)
 
-        -- column:SetPoint('LEFT', parent.header, 'LEFT', xOffset, 0)
-        -- column:SetWidth(columnWidth)
+        column.fontString = fontString
+        column.textWidth = fontString:GetWrappedWidth()
+        column.maxWidth = column.textWidth
 
-        column:SetText(headerText)
-        column:SetJustifyH(justify)
+        column:SetScript('OnEnter', function() fontString:SetTextColor(1, 1, 1) end)
+        column:SetScript('OnLeave', function() fontString:SetTextColor(1, 1, 0) end)
 
-        column.maxWidth = column:GetWrappedWidth()
+        column:SetScript("OnMouseUp", function(self, button)
+            if button == 'LeftButton' then
+                addon:handleHeaderClick(i)
+            end
+        end)
 
         table.insert(parent.header.columns, column)
     end
@@ -227,44 +200,79 @@ function addon:createTable(parent, data)
     parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
     parent.contents:SetAllPoints(parent.scrollChild)
 
-    local rowHeight = 20
-
     parent.rows = {}
 
+    for i = 1, #data.rows do
+        self:addRow(i)
+    end
+end
+
+function addon:addRow(index)
+    local parent = self.mainFrame.tableFrame
+    local data = self.data
+
+    local rowHeight = 20
+
+    local row = CreateFrame('Frame', nil, parent.contents)
+
+    local yOffset = rowHeight * (index - 1)
+
+    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
+    row:SetWidth(parent.header:GetWidth())
+    row:SetHeight(rowHeight)
+
+    row.columns = {}
+
+    for i = 1, #data.header do
+        -- We will set the size later, once we've computed the column width based on the data
+        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+
+        column:SetPoint('TOP', row, 'TOP', 0, 0)
+
+        table.insert(row.columns, column)
+    end
+
+    table.insert(parent.rows, row)
+end
+
+function addon:setData()
+    local parent = self.mainFrame.tableFrame
+    local data = self.data
+
     for i, rowData in ipairs(data.rows) do
-        local row = CreateFrame('Frame', nil, parent.contents)
+        if i > #parent.rows then
+            self:Print('adding row!')
+            self:addRow(i)
+        end
 
-        local yOffset = rowHeight * (i - 1)
+        local row = parent.rows[i]
 
-        row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-        row:SetWidth(parent.header:GetWidth())
-        row:SetHeight(rowHeight)
-
-        row.columns = {}
+        local class = string.upper(rowData[2]):gsub(' ', '')
+        local classColorData = RAID_CLASS_COLORS[class]
 
         for j, columnText in ipairs(rowData) do
             local headerColumn = parent.header.columns[j]
-
-            local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-
-            column:SetPoint('TOP', row, 'TOP', 0, 0)
-            -- column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
-            -- column:SetWidth(columnWidth)
+            local column = row.columns[j]
 
             column:SetText(columnText)
-            column:SetJustifyH(headerColumn:GetJustifyH())
+            column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
 
             local text_width = column:GetWrappedWidth()
             if (text_width > headerColumn.maxWidth) then
                 headerColumn.maxWidth = text_width
             end
-
-            table.insert(row.columns, column)
         end
-
-        table.insert(parent.rows, row)
     end
 
+    if #parent.rows > #data.rows then
+        for i = #data.rows + 1, #parent.rows do
+            self:Print('removing row!')
+            local row = parent.rows[i]
+            row:Hide()
+        end
+    end
+
+    -- Calculate column padding
     local columnWidthTotal = 0
     for _, column in ipairs(parent.header.columns) do
         columnWidthTotal = columnWidthTotal + column.maxWidth
@@ -273,33 +281,67 @@ function addon:createTable(parent, data)
     local leftover = parent.header:GetWidth() - columnWidthTotal
     local columnPadding = leftover / #parent.header.columns
 
+    -- Finally set column width
     for i, column in ipairs(parent.header.columns) do
         local relativeElement = parent.header
         local relativePoint = 'LEFT'
+        local padding = 0
         if (i > 1) then
             relativeElement = parent.header.columns[i - 1]
             relativePoint = 'RIGHT'
+            padding = relativeElement.padding
         end
 
-        column:SetPoint('LEFT', relativeElement, relativePoint, 0, 0)
-        column:SetWidth(column.maxWidth + columnPadding)
+        column.padding = column.maxWidth + columnPadding - column.textWidth
+
+        local xOffset = padding
+        if column.fontString:GetJustifyH() == 'RIGHT' then
+            xOffset = xOffset + column.padding - column.textWidth
+        end
+
+        column:SetPoint('LEFT', relativeElement, relativePoint, xOffset, 0)
+        column:SetWidth(column.textWidth)
+
+        column.fontString:SetAllPoints()
     end
 
     for _, row in ipairs(parent.rows) do
         for i, column in ipairs(row.columns) do
             local headerColumn = parent.header.columns[i]
 
-            column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
-            column:SetWidth(headerColumn.maxWidth + columnPadding)
+            local anchorPoint = headerColumn.fontString:GetJustifyH()
+            column:SetPoint(anchorPoint, headerColumn, anchorPoint, 0, 0)
         end
     end
+end
+
+function addon:handleHeaderClick(headerIndex)
+    local order = 'ascending'
+    if self.data.sorted.columnIndex == headerIndex and self.data.sorted.order == order then
+        order = 'descending'
+    end
+
+    self:sortData(headerIndex, order)
+    self:setData()
+end
+
+function addon:sortData(columnIndex, order)
+    table.sort(self.data.rows, function(left, right)
+        if order == 'ascending' then
+            return left[columnIndex] < right[columnIndex]
+        else
+            return left[columnIndex] > right[columnIndex]
+        end
+    end)
+
+    self.data.sorted.columnIndex = columnIndex
+    self.data.sorted.order = order
 end
 
 function addon:getData()
     local data = {
         ['header'] = {
             {'Name', 'LEFT'},
-            {'Level', 'LEFT'},
             {'Class', 'LEFT'},
             {'Guildie', 'LEFT'},
             {'Rank', 'LEFT'},
@@ -307,7 +349,8 @@ function addon:getData()
             {'GP', 'RIGHT'},
             {'PR', 'RIGHT'}
         },
-        ['rows'] = {}
+        ['rows'] = {},
+        ['sorted'] = {}
     }
 
     for character, charData in pairs(self.db.profile.standings) do
@@ -316,7 +359,6 @@ function addon:getData()
 
         local row = {
             name,
-            charData.level,
             charData.class,
             charData.inGuild and 'Yes' or 'No',
             charData.rank,
@@ -328,5 +370,7 @@ function addon:getData()
         table.insert(data.rows, row)
     end
 
-    return data
+    self.data = data
+
+    self:sortData(7, 'descending')
 end
