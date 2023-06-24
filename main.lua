@@ -17,14 +17,16 @@ local addonName, ns = ...  -- Namespace
 local addon = LibStub('AceAddon-3.0'):NewAddon(addonName, 'AceConsole-3.0')
 ns.addon = addon
 
+local dbDefaults = {
+    profile = {
+        standings = {}
+    }
+}
+
 
 function addon:OnInitialize()
-    self.db = LibStub('AceDB-3.0'):New(addonName)
+    self.db = LibStub('AceDB-3.0'):New(addonName, dbDefaults)
     guildName, _, _ = GetGuildInfo(UnitName('player'))
-
-    if (self.db.profile.standings == nil) then
-        self.db.profile.standings = {}
-    end
 
     for i = 1, GetNumGuildMembers() do
         local name, rank, _, level, class, _, _, _, _, _, _ = GetGuildRosterInfo(i)
@@ -72,138 +74,88 @@ end
 
 addon:RegisterChatCommand('ce', 'SlashCommandHandler')
 
-local MainFrame;
-
 function addon:ShowWindowHandler()
-    local window = MainFrame or self:createWindow()
+    local window = self:createWindow()
     window:SetShown(true)
-
-    -- CalamityEPGP_MainFrame:Show()
-    -- local textStore
-
-    -- local frame = AceGUI:Create('Frame')
-    -- frame:SetTitle('Example Frame')
-    -- frame:SetStatusText('AceGUI-3.0 Example Container Frame')
-    -- frame:SetCallback('OnClose', function(widget) AceGUI:Release(widget) end)
-    -- frame:SetLayout('Flow')
-
-    -- local editbox = AceGUI:Create('EditBox')
-    -- editbox:SetLabel('Insert text:')
-    -- editbox:SetWidth(200)
-    -- editbox:SetCallback('OnEnterPressed', function(widget, event, text) textStore = text end)
-    -- frame:AddChild(editbox)
-
-    -- local button = AceGUI:Create('Button')
-    -- button:SetText('Click Me!')
-    -- button:SetWidth(200)
-    -- button:SetCallback('OnClick', function() print(textStore) end)
-    -- frame:AddChild(button)
-
-    -- local standingsContainer = AceGUI:Create('SimpleGroup')
-    -- standingsContainer:SetFullWidth(true)
-    -- standingsContainer:SetFullHeight(true)
-    -- standingsContainer:SetLayout('Fill')
-    -- frame:AddChild(standingsContainer)
-
-    -- local standingsTable = AceGUI:Create('ScrollFrame')
-    -- standingsTable:SetLayout('Flow')
-    -- standingsContainer:AddChild(standingsTable)
-
-    -- for character in pairs(self.db.profile.standings) do
-    --     local group = AceGUI:Create('SimpleGroup')
-    --     group:SetFullWidth(true)
-    --     group:SetLayout('Flow')
-    --     standingsTable:AddChild(group)
-
-    --     local level = self.db.profile.standings[character].level
-
-    --     local labelChar = AceGUI:Create('Label')
-    --     labelChar:SetText(character)
-    --     group:AddChild(labelChar)
-
-    --     local labelLevel = AceGUI:Create('Label')
-    --     labelLevel:SetText(level)
-    --     group:AddChild(labelLevel)
-    -- end
 end
 
 function addon:createWindow()
-    MainFrame = CreateFrame("Frame", addonName .. "_MainFrame", UIParent, "BasicFrameTemplateWithInset");
-	MainFrame:SetSize(500, 400);
-	MainFrame:SetPoint("CENTER"); -- Doesn't need to be ("CENTER", UIParent, "CENTER")
+    local mainFrame = CreateFrame("Frame", addonName .. "_MainFrame", UIParent, "BasicFrameTemplateWithInset");
+	mainFrame:SetSize(500, 400);
+	mainFrame:SetPoint("CENTER"); -- Doesn't need to be ("CENTER", UIParent, "CENTER")
 
-    MainFrame:SetMovable(true)
-    MainFrame:EnableMouse(true)
-    MainFrame:RegisterForDrag('LeftButton')
-    MainFrame:SetScript('OnDragStart', MainFrame.StartMoving)
-    MainFrame:SetScript('OnDragStop', MainFrame.StopMovingOrSizing)
+    mainFrame:SetMovable(true)
+    mainFrame:EnableMouse(true)
+    mainFrame:RegisterForDrag('LeftButton')
+    mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
+    mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
-	MainFrame.title = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
-	MainFrame.title:SetPoint("LEFT", MainFrame.TitleBg, "LEFT", 5, 0);
-	MainFrame.title:SetText("CalamityEPGP");
+	mainFrame.title = mainFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+	mainFrame.title:SetPoint("LEFT", mainFrame.TitleBg, "LEFT", 5, 0);
+	mainFrame.title:SetText("CalamityEPGP");
 
 	----------------------------------
 	-- Buttons
 	----------------------------------
 	-- Save Button:
-	MainFrame.saveBtn = self:createButton("CENTER", MainFrame, "TOP", -70, "Save");
+	mainFrame.saveBtn = self:createButton(mainFrame, "CENTER", mainFrame, "TOP", -70, "Save");
 
-    MainFrame.tableFrame = CreateFrame('Frame', MainFrame:GetName() .. 'TableFrame', MainFrame)
-    MainFrame.tableFrame:SetPoint('TOP', MainFrame.saveBtn, 'BOTTOM', 0, -10)
-    MainFrame.tableFrame:SetPoint('LEFT', MainFrame, 'LEFT', 10, 0)
-    MainFrame.tableFrame:SetPoint('RIGHT', MainFrame, 'RIGHT', -8, 0)
-    MainFrame.tableFrame:SetPoint('BOTTOM', MainFrame, 'BOTTOM', 0, 6)
+    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame:SetPoint('TOP', mainFrame.saveBtn, 'BOTTOM', 0, -10)
+    mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
+    mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
+    mainFrame.tableFrame:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 6)
 
     local data = self:getData()
 
-    self:createTable(MainFrame.tableFrame, data)
+    self:createTable(mainFrame.tableFrame, data)
 
 	-- -- Reset Button:
-	-- MainFrame.resetBtn = createButton("TOP", MainFrame.saveBtn, "BOTTOM", -10, "Reset");
+	-- mainFrame.resetBtn = createButton("TOP", mainFrame.saveBtn, "BOTTOM", -10, "Reset");
 
 	-- -- Load Button:
-	-- MainFrame.loadBtn = createButton("TOP", MainFrame.resetBtn, "BOTTOM", -10, "Load");
+	-- mainFrame.loadBtn = createButton("TOP", mainFrame.resetBtn, "BOTTOM", -10, "Load");
 
 	-- ----------------------------------
 	-- -- Sliders
 	-- ----------------------------------
 	-- -- Slider 1:
-	-- MainFrame.slider1 = CreateFrame("SLIDER", nil, MainFrame, "OptionsSliderTemplate");
-	-- MainFrame.slider1:SetPoint("TOP", MainFrame.loadBtn, "BOTTOM", 0, -20);
-	-- MainFrame.slider1:SetMinMaxValues(1, 100);
-	-- MainFrame.slider1:SetValue(50);
-	-- MainFrame.slider1:SetValueStep(30);
-	-- MainFrame.slider1:SetObeyStepOnDrag(true);
+	-- mainFrame.slider1 = CreateFrame("SLIDER", nil, mainFrame, "OptionsSliderTemplate");
+	-- mainFrame.slider1:SetPoint("TOP", mainFrame.loadBtn, "BOTTOM", 0, -20);
+	-- mainFrame.slider1:SetMinMaxValues(1, 100);
+	-- mainFrame.slider1:SetValue(50);
+	-- mainFrame.slider1:SetValueStep(30);
+	-- mainFrame.slider1:SetObeyStepOnDrag(true);
 
 	-- -- Slider 2:
-	-- MainFrame.slider2 = CreateFrame("SLIDER", nil, MainFrame, "OptionsSliderTemplate");
-	-- MainFrame.slider2:SetPoint("TOP", MainFrame.slider1, "BOTTOM", 0, -20);
-	-- MainFrame.slider2:SetMinMaxValues(1, 100);
-	-- MainFrame.slider2:SetValue(40);
-	-- MainFrame.slider2:SetValueStep(30);
-	-- MainFrame.slider2:SetObeyStepOnDrag(true);
+	-- mainFrame.slider2 = CreateFrame("SLIDER", nil, mainFrame, "OptionsSliderTemplate");
+	-- mainFrame.slider2:SetPoint("TOP", mainFrame.slider1, "BOTTOM", 0, -20);
+	-- mainFrame.slider2:SetMinMaxValues(1, 100);
+	-- mainFrame.slider2:SetValue(40);
+	-- mainFrame.slider2:SetValueStep(30);
+	-- mainFrame.slider2:SetObeyStepOnDrag(true);
 
 	-- ----------------------------------
 	-- -- Check Buttons
 	-- ----------------------------------
 	-- -- Check Button 1:
-	-- MainFrame.checkBtn1 = CreateFrame("CheckButton", nil, MainFrame, "UICheckButtonTemplate");
-	-- MainFrame.checkBtn1:SetPoint("TOPLEFT", MainFrame.slider1, "BOTTOMLEFT", -10, -40);
-	-- MainFrame.checkBtn1.text:SetText("My Check Button!");
+	-- mainFrame.checkBtn1 = CreateFrame("CheckButton", nil, mainFrame, "UICheckButtonTemplate");
+	-- mainFrame.checkBtn1:SetPoint("TOPLEFT", mainFrame.slider1, "BOTTOMLEFT", -10, -40);
+	-- mainFrame.checkBtn1.text:SetText("My Check Button!");
 
 	-- -- Check Button 2:
-	-- MainFrame.checkBtn2 = CreateFrame("CheckButton", nil, MainFrame, "UICheckButtonTemplate");
-	-- MainFrame.checkBtn2:SetPoint("TOPLEFT", MainFrame.checkBtn1, "BOTTOMLEFT", 0, -10);
-	-- MainFrame.checkBtn2.text:SetText("Another Check Button!");
-	-- MainFrame.checkBtn2:SetChecked(true);
+	-- mainFrame.checkBtn2 = CreateFrame("CheckButton", nil, mainFrame, "UICheckButtonTemplate");
+	-- mainFrame.checkBtn2:SetPoint("TOPLEFT", mainFrame.checkBtn1, "BOTTOMLEFT", 0, -10);
+	-- mainFrame.checkBtn2.text:SetText("Another Check Button!");
+	-- mainFrame.checkBtn2:SetChecked(true);
 
-	-- MainFrame:Hide();
+	-- mainFrame:Hide();
 
-	return MainFrame;
+	return mainFrame;
 end
 
-function addon:createButton(point, relativeFrame, relativePoint, yOffset, text)
-	local btn = CreateFrame("Button", nil, MainFrame, "GameMenuButtonTemplate");
+function addon:createButton(parent, point, relativeFrame, relativePoint, yOffset, text)
+	local btn = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate");
 	btn:SetPoint(point, relativeFrame, relativePoint, 0, yOffset);
 	btn:SetSize(140, 40);
 	btn:SetText(text);
@@ -213,8 +165,17 @@ function addon:createButton(point, relativeFrame, relativePoint, yOffset, text)
 end
 
 function addon:createTable(parent, data)
+    -- Initialize header
+    -- we will finalize the size once the scroll frame is set up
+    parent.header = CreateFrame('Frame', nil, parent)
+    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
+    parent.header:SetHeight(30)
+
+    -- Initialize scroll frame
     parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
-    parent.scrollFrame:SetAllPoints(parent)
+    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
+    parent.scrollFrame:SetWidth(parent:GetWidth())
+    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
 
     parent.scrollChild = CreateFrame('Frame')
 
@@ -238,79 +199,133 @@ function addon:createTable(parent, data)
 
     parent.scrollChild:SetSize(parent.scrollFrame:GetWidth(), parent.scrollFrame:GetHeight() * 2)
 
+    -- Back to the header
+    parent.header:SetPoint('RIGHT', parent.scrollBar, 'LEFT', -5, 0)
+
+    parent.header.columns = {}
+
+    for i, header in ipairs(data.header) do
+        local headerText = header[1]
+        local justify = header[2]
+
+        local column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+
+        -- local xOffset = columnWidth * (i - 1)
+
+        -- column:SetPoint('LEFT', parent.header, 'LEFT', xOffset, 0)
+        -- column:SetWidth(columnWidth)
+
+        column:SetText(headerText)
+        column:SetJustifyH(justify)
+
+        column.maxWidth = column:GetWrappedWidth()
+
+        table.insert(parent.header.columns, column)
+    end
+
+    -- Initialize the content
     parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
     parent.contents:SetAllPoints(parent.scrollChild)
 
-    parent.contents.row1 = CreateFrame('Frame', nil, parent.contents)
-    parent.contents.row1:SetPoint('TOP', parent.contents, 'TOP', 0, 0)
-    parent.contents.row1:SetWidth(parent.contents:GetWidth())
-    parent.contents.row1:SetHeight(20)
+    local rowHeight = 20
 
-    parent.contents.row1.col1 = parent.contents.row1:CreateFontString(nil, "OVERLAY", "GameTooltipText")
-    parent.contents.row1.col1:SetText('Col1')
-    parent.contents.row1.col1:SetPoint('LEFT', parent.contents.row1, 'LEFT', 0, 0)
+    parent.rows = {}
 
-    parent.contents.row2 = CreateFrame('Frame', nil, parent.contents)
-    parent.contents.row2:SetPoint('TOP', parent.contents.row1, 'BOTTOM', 0, 0)
-    parent.contents.row2:SetWidth(parent.contents:GetWidth())
-    parent.contents.row2:SetHeight(20)
+    for i, rowData in ipairs(data.rows) do
+        local row = CreateFrame('Frame', nil, parent.contents)
 
-    parent.contents.row2.col1 = parent.contents.row2:CreateFontString(nil, "OVERLAY", "GameTooltipText")
-    parent.contents.row2.col1:SetText('Col1')
-    parent.contents.row2.col1:SetPoint('LEFT', parent.contents.row2, 'LEFT', 0, 0)
+        local yOffset = rowHeight * (i - 1)
+
+        row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
+        row:SetWidth(parent.header:GetWidth())
+        row:SetHeight(rowHeight)
+
+        row.columns = {}
+
+        for j, columnText in ipairs(rowData) do
+            local headerColumn = parent.header.columns[j]
+
+            local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+
+            column:SetPoint('TOP', row, 'TOP', 0, 0)
+            -- column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
+            -- column:SetWidth(columnWidth)
+
+            column:SetText(columnText)
+            column:SetJustifyH(headerColumn:GetJustifyH())
+
+            local text_width = column:GetWrappedWidth()
+            if (text_width > headerColumn.maxWidth) then
+                headerColumn.maxWidth = text_width
+            end
+
+            table.insert(row.columns, column)
+        end
+
+        table.insert(parent.rows, row)
+    end
+
+    local columnWidthTotal = 0
+    for _, column in ipairs(parent.header.columns) do
+        columnWidthTotal = columnWidthTotal + column.maxWidth
+    end
+
+    local leftover = parent.header:GetWidth() - columnWidthTotal
+    local columnPadding = leftover / #parent.header.columns
+
+    for i, column in ipairs(parent.header.columns) do
+        local relativeElement = parent.header
+        local relativePoint = 'LEFT'
+        if (i > 1) then
+            relativeElement = parent.header.columns[i - 1]
+            relativePoint = 'RIGHT'
+        end
+
+        column:SetPoint('LEFT', relativeElement, relativePoint, 0, 0)
+        column:SetWidth(column.maxWidth + columnPadding)
+    end
+
+    for _, row in ipairs(parent.rows) do
+        for i, column in ipairs(row.columns) do
+            local headerColumn = parent.header.columns[i]
+
+            column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
+            column:SetWidth(headerColumn.maxWidth + columnPadding)
+        end
+    end
 end
 
 function addon:getData()
-    local data = {}
+    local data = {
+        ['header'] = {
+            {'Name', 'LEFT'},
+            {'Level', 'LEFT'},
+            {'Class', 'LEFT'},
+            {'Guildie', 'LEFT'},
+            {'Rank', 'LEFT'},
+            {'EP', 'RIGHT'},
+            {'GP', 'RIGHT'},
+            {'PR', 'RIGHT'}
+        },
+        ['rows'] = {}
+    }
 
     for character, charData in pairs(self.db.profile.standings) do
-        local row = AceGUI:Create('SimpleGroup')
-        row:SetFullWidth(true)
-        row:SetLayout('Flow')
-        standingsTable:AddChild(row)
-
         local nameDash = string.find(character, '-')
         local name = string.sub(character, 0, nameDash - 1)
 
-        local labelChar = AceGUI:Create('Label')
-        labelChar:SetText(name)
-        labelChar:SetWidth(columnWidth)
-        row:AddChild(labelChar)
+        local row = {
+            name,
+            charData.level,
+            charData.class,
+            charData.inGuild and 'Yes' or 'No',
+            charData.rank,
+            charData.ep,
+            charData.gp,
+            charData.ep / charData.gp
+        }
 
-        local labelLevel = AceGUI:Create('Label')
-        labelLevel:SetText(charData.level)
-        labelLevel:SetWidth(columnWidth)
-        row:AddChild(labelLevel)
-
-        local labelClass = AceGUI:Create('Label')
-        labelClass:SetText(charData.class)
-        labelClass:SetWidth(columnWidth)
-        row:AddChild(labelClass)
-
-        local labelInGuild = AceGUI:Create('Label')
-        labelInGuild:SetText(tostring(charData.inGuild))
-        labelInGuild:SetWidth(columnWidth)
-        row:AddChild(labelInGuild)
-
-        local labelGuildRank = AceGUI:Create('Label')
-        labelGuildRank:SetText(charData.rank)
-        labelGuildRank:SetWidth(columnWidth)
-        row:AddChild(labelGuildRank)
-
-        local labelEp = AceGUI:Create('Label')
-        labelEp:SetText(charData.ep)
-        labelEp:SetWidth(columnWidth)
-        row:AddChild(labelEp)
-
-        local labelGp = AceGUI:Create('Label')
-        labelGp:SetText(charData.gp)
-        labelGp:SetWidth(columnWidth)
-        row:AddChild(labelGp)
-
-        local labelPr = AceGUI:Create('Label')
-        labelPr:SetText(charData.ep / charData.gp)
-        labelPr:SetWidth(columnWidth)
-        row:AddChild(labelPr)
+        table.insert(data.rows, row)
     end
 
     return data
