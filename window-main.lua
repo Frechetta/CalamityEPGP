@@ -1,12 +1,10 @@
 local addonName, ns = ...  -- Namespace
 
 local MainWindow = {
-    ['data'] = {}
+    data = {}
 }
 
 ns.MainWindow = MainWindow
-
-local decay = 0.1  -- 10%
 
 
 function MainWindow:createWindow()
@@ -26,11 +24,18 @@ function MainWindow:createWindow()
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0);
 	mainFrame.title:SetText('CalamityEPGP');
 
-	----------------------------------
-	-- Buttons
-	----------------------------------
-	-- Save Button:
-	mainFrame.saveBtn = self:createButton(mainFrame, 'CENTER', mainFrame, 'TOP', -70, 'Save');
+    mainFrame.raidOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.raidOnlyLabel:SetText('Raid Only')
+    mainFrame.raidOnlyLabel:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -20)
+
+    mainFrame.raidOnlyButton = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.raidOnlyButton:SetPoint('LEFT', mainFrame.raidOnlyLabel, 'RIGHT', 5, 0)
+
+    mainFrame.optionsButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.optionsButton:SetText('Options')
+    mainFrame.optionsButton:SetPoint('TOP', mainFrame.TitleBg, 'BOTTOM', 0, -15)
+    mainFrame.optionsButton:SetPoint('RIGHT', mainFrame, 'RIGHT', -20, 0)
+    mainFrame.optionsButton:SetWidth(97)
 
     mainFrame.addEpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.addEpButton:SetText('Add EP')
@@ -43,13 +48,13 @@ function MainWindow:createWindow()
     mainFrame.decayEpgpButton:SetWidth(100)
 
     mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
-    mainFrame.tableFrame:SetPoint('TOP', mainFrame.saveBtn, 'BOTTOM', 0, -10)
+    mainFrame.tableFrame:SetPoint('TOP', mainFrame.raidOnlyLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
     mainFrame.tableFrame:SetPoint('BOTTOMLEFT', mainFrame.addEpButton, 'TOPLEFT', 0, 2)
 
+    mainFrame.optionsButton:SetScript('OnClick', ns.addon.openOptions)
     mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
-
     mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
 
     self:refresh(true)
@@ -58,6 +63,10 @@ function MainWindow:createWindow()
 end
 
 function MainWindow:refresh(initial)
+    if self.mainFrame == nil then
+        return
+    end
+
     local initial = initial or false
 
     self:getData()
@@ -67,16 +76,6 @@ function MainWindow:refresh(initial)
     end
 
     self:setData()
-end
-
-function MainWindow:createButton(parent, point, relativeFrame, relativePoint, yOffset, text)
-	local btn = CreateFrame('Button', nil, parent, 'GameMenuButtonTemplate');
-	btn:SetPoint(point, relativeFrame, relativePoint, 0, yOffset);
-	btn:SetSize(140, 40);
-	btn:SetText(text);
-	btn:SetNormalFontObject('GameFontNormalLarge');
-	btn:SetHighlightFontObject('GameFontHighlightLarge');
-	return btn;
 end
 
 function MainWindow:createTable()
@@ -223,7 +222,7 @@ function MainWindow:setData()
 
     for i, rowData in ipairs(data.rowsFiltered) do
         if i > #parent.rows then
-            self:Print('adding row!')
+            ns.addon:Print('adding row!')
             self:addRow(i)
         end
 
@@ -235,13 +234,6 @@ function MainWindow:setData()
         for j, columnText in ipairs(rowData) do
             local headerColumn = parent.header.columns[j]
             local column = row.columns[j]
-
-            if j == 1 then
-                row.charFullName = columnText
-
-                local nameDash = string.find(columnText, '-')
-                columnText = string.sub(columnText, 0, nameDash - 1)
-            end
 
             column:SetText(columnText)
             column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
@@ -255,7 +247,7 @@ function MainWindow:setData()
 
     if #parent.rows > #data.rowsFiltered then
         for i = #data.rowsFiltered + 1, #parent.rows do
-            self:Print('removing row!')
+            ns.addon:Print('removing row!')
             local row = parent.rows[i]
             row:Hide()
         end
@@ -322,7 +314,7 @@ function MainWindow:handleHeaderClick(headerIndex)
 end
 
 function MainWindow:handleRowClick(row)
-    ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charFullName)
+    ns.ModifyEpgpWindow:show(row.columns[1]:GetText())
 end
 
 function MainWindow:handleAddEpClick()
@@ -365,14 +357,14 @@ function MainWindow:getData()
         ['sorted'] = {}
     }
 
-    for character, charData in pairs(ns.db.profile.standings) do
+    for _, charData in pairs(ns.db.standings) do
         local row = {
-            character,
+            charData.name,
             charData.class,
             charData.inGuild and 'Yes' or 'No',
             charData.rank,
-            charData.ep,
-            charData.gp,
+            tonumber(string.format("%.2f", charData.ep)),
+            tonumber(string.format("%.2f", charData.gp)),
             tonumber(string.format("%.2f", charData.ep / charData.gp))
         }
 

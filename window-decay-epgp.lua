@@ -62,14 +62,14 @@ function DecayEpgpWindow:createWindow()
 
     mainFrame.confirmButton:SetScript('OnClick', function()
         local value = mainFrame.amountEditBox:GetNumber()
-        local reason = mainFrame.reasonEditBox:GetText()
+        local reason = 'decay: ' .. mainFrame.reasonEditBox:GetText()
 
         local changes = {}
 
-        for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
-            local charFullName = charData[1]
-            table.insert(changes, {charFullName, 'EP', -value, reason})
-            table.insert(changes, {charFullName, 'GP', -value, reason})
+        for _, charData in ipairs(ns.MainWindow.data.rows) do
+            local charName = charData[1]
+            table.insert(changes, {charName, 'EP', -value, reason})
+            table.insert(changes, {charName, 'GP', -value, reason})
         end
 
         ns.addon:modifyEpgp(changes, true)
