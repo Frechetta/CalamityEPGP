@@ -9,6 +9,9 @@
 
 embeds.xml
 
-# Main-old.lua
+window-modify-epgp.lua
+window-add-ep.lua
+window-decay-epgp.lua
+window-main.lua
 main.lua
 # main.xml
