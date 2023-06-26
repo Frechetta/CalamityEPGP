@@ -97,30 +97,32 @@ function Config:createAltManagementMenu()
     panel.tableFrame:SetPoint('BOTTOM', synchroniseEpLabel, 'BOTTOM', 0, 15)
 
     importAltMappingButton:SetScript('OnClick', function()
-        if GRM_PlayersThatLeftHistory_Save == nil then
+        if GRM_Alts == nil then
             ns.addon:Print('GRM data not accessible')
             return
         end
 
-        for charFullName, charData in pairs(GRM_PlayersThatLeftHistory_Save[ns.guild]) do
-            ns.addon:Print(charFullName, charData)
+        ns.db.altData.mainAltMapping = {}
 
-            if not charData.isMain then
-                local mainAtTimeOfLeaving = charData.mainAtTimeOfLeaving
-                if mainAtTimeOfLeaving ~= nil then
-                    local main = mainAtTimeOfLeaving[1]
-                    if main ~= nil then
-                        main = ns.addon:getCharName(main)
-                        local alt = ns.addon:getCharName(charFullName)
+        for _, altData in pairs(GRM_Alts[ns.guild]) do
+            if #altData.main > 0 then
+                local main = ns.addon:getCharName(altData.main)
 
-                        ns.db.altData.altMainMapping[alt] = main
+                local alts = {}
+
+                for _, alt in ipairs(altData) do
+                    local name = alt.name
+                    if name ~= nil then
+                        name = ns.addon:getCharName(name)
+                        table.insert(alts, name)
                     end
                 end
+
+                ns.db.altData.mainAltMapping[main] = alts
             end
         end
 
-        self:setMainAltMapping()
-
+        self:setAltMainMapping()
         self:setAltManagementData()
     end)
 
@@ -220,7 +222,7 @@ function Config:setAltManagementData()
     end
 
     for j = i, #parent.contents.rows do
-        local row = parent.content.rows[j]
+        local row = parent.contents.rows[j]
         row:Hide()
     end
 end
@@ -250,15 +252,13 @@ function Config:addAltManagementRow(index)  -- , main, alts)
 end
 
 
-function Config:setMainAltMapping()
-    ns.db.altData.mainAltMapping = {}
+function Config:setAltMainMapping()
+    ns.db.altData.altMainMapping = {}
 
-    for alt, main in pairs(ns.db.altData.altMainMapping) do
-        if ns.db.altData.mainAltMapping[main] == nil then
-            ns.db.altData.mainAltMapping[main] = {}
+    for main, alts in pairs(ns.db.altData.mainAltMapping) do
+        for _, alt in ipairs(alts) do
+            ns.db.altData.altMainMapping[alt] = main
         end
-
-        table.insert(ns.db.altData.mainAltMapping[main], alt)
     end
 end
 
