@@ -9,6 +9,8 @@ Config.aceConfig = LibStub("AceConfig-3.0")
 Config.aceConfigDialog = LibStub("AceConfigDialog-3.0")
 
 local initialDefaultDecay = 10
+local initialSyncAltEp = false
+local initialSyncAltGp = true
 
 
 function Config:init()
@@ -126,11 +128,15 @@ function Config:createAltManagementMenu()
         self:setAltManagementData()
     end)
 
-    ns.cfg.syncAltEp = ns.cfg.syncAltEp or false
+    if ns.cfg.syncAltEp == nil then
+        ns.cfg.syncAltEp = initialSyncAltEp
+    end
     synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
     synchroniseEpCheck:SetScript('OnClick', function() ns.cfg.syncAltEp = synchroniseEpCheck:GetChecked() end)
 
-    ns.cfg.syncAltGp = ns.cfg.syncAltGp or false
+    if ns.cfg.syncAltGp == nil then
+        ns.cfg.syncAltGp = initialSyncAltGp
+    end
     synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
     synchroniseGpCheck:SetScript('OnClick', function() ns.cfg.syncAltGp = synchroniseGpCheck:GetChecked() end)
 
@@ -200,25 +206,44 @@ function Config:setAltManagementData()
         return
     end
 
-    local i = 1
+    local rows = {}
     for main, alts in pairs(ns.db.altData.mainAltMapping) do
-        local row = parent.contents.rows[i]
+        local altsWithoutMain = ns.Lib:deepcopy(alts)
+        ns.Lib:remove(altsWithoutMain, main)
 
-        if row == nil then
-            row = self:addAltManagementRow(i)
-            table.insert(parent.contents.rows, row)
+        if #altsWithoutMain > 0 then
+            table.insert(rows, {main, alts})
         end
+    end
 
-        row:Show()
+    table.sort(rows, function(left, right)
+        return left[1] < right[1]
+    end)
+
+    local i = 1
+    for _, dataRow in ipairs(rows) do
+        local main = dataRow[1]
+        local alts = dataRow[2]
 
         local altsWithoutMain = ns.Lib:deepcopy(alts)
         ns.Lib:remove(altsWithoutMain, main)
 
-        local altsStr = table.concat(alts, ', ')
-        row.mainColumn:SetText(main)
-        row.altsColumn:SetText(altsStr)
+        if #altsWithoutMain > 0 then
+            local row = parent.contents.rows[i]
 
-        i = i + 1
+            if row == nil then
+                row = self:addAltManagementRow(i)
+                table.insert(parent.contents.rows, row)
+            end
+
+            row:Show()
+
+            local altsStr = table.concat(altsWithoutMain, ', ')
+            row.mainColumn:SetText(main)
+            row.altsColumn:SetText(altsStr)
+
+            i = i + 1
+        end
     end
 
     for j = i, #parent.contents.rows do
@@ -228,7 +253,7 @@ function Config:setAltManagementData()
 end
 
 
-function Config:addAltManagementRow(index)  -- , main, alts)
+function Config:addAltManagementRow(index)
     local parent = self.panel.tableFrame
 
     local rowHeight = 15
@@ -240,11 +265,9 @@ function Config:addAltManagementRow(index)  -- , main, alts)
     row:SetHeight(rowHeight)
 
     row.mainColumn = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    row.mainColumn:SetText('temp')
     row.mainColumn:SetPoint('LEFT', row, 'LEFT')
 
     row.altsColumn = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    row.altsColumn:SetText('temp')
     row.altsColumn:SetPoint('RIGHT', row, 'RIGHT')
     row.altsColumn:SetJustifyH('RIGHT')
 

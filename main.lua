@@ -31,6 +31,8 @@ local dbDefaults = {
 
 local initialized = false
 
+local charNameToGuid = {}
+
 
 function addon:OnInitialize()
     -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
@@ -109,6 +111,8 @@ function addon:loadGuildData()
         local fullName, rank, _, level, class, _, _, _, _, _, _, _, _, _, _, _, guid = GetGuildRosterInfo(i)
         local name = self:getCharName(fullName)
 
+        charNameToGuid[name] = guid
+
         local charData = ns.standings[guid]
         if charData ~= nil then
             charData.name = name
@@ -150,6 +154,8 @@ function addon:loadRaidData()
     for i = 1, GetNumGroupMembers() do
         local fullName, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
         local name = self:getCharName(fullName)
+
+        charNameToGuid[name] = guid
 
         local charData = standings[guid]
         if charData ~= nil then
@@ -194,36 +200,67 @@ function addon:modifyEpgp(changes, percent)
         local value = change[3]
         local reason = change[4]
 
+        self:modifyEpgpSingle(charGuid, mode, value, reason, percent)
+
+        -- sync alt ep/gp depending on setting
         local charData = ns.db.standings[charGuid]
-        mode = string.lower(mode)
+        local name = charData.name
 
-        local newValue
+        local main = ns.db.altData.altMainMapping[name]
+        local alts = ns.db.altData.mainAltMapping[main]
 
-        if percent then
-            -- value is expected to be something like -10, meaning decrease by 10%
-            local multiplier = (100 + value) / 100
-            newValue = charData[mode] * multiplier
-        else
-            newValue = charData[mode] + value
+        if alts ~= nil then
+            for _, alt in ipairs(alts) do
+                if alt ~= name then
+                    local altCharGuid = charNameToGuid[alt]
+                    local altCharData = ns.db.standings[altCharGuid]
+
+                    if ns.cfg.syncAltEp then
+                        self:Print('syncing EP for ' .. alt .. ' with ' .. main)
+                        local diff = charData.ep - altCharData.ep
+                        self:modifyEpgpSingle(altCharGuid, 'EP', diff, 'alt_sync: ' .. charGuid)
+                    end
+
+                    if ns.cfg.syncAltGp then
+                        self:Print('syncing GP for ' .. alt .. ' with ' .. main)
+                        local diff = charData.gp - altCharData.gp
+                        self:modifyEpgpSingle(altCharGuid, 'GP', diff, 'alt_sync: ' .. charGuid)
+                    end
+                end
+            end
         end
-
-        if mode == 'gp' and newValue < 1 then
-            newValue = 1
-        end
-
-        local diff = newValue - charData[mode]
-
-        charData[mode] = newValue
-
-        local dt = date('%Y-%m-%dT%H:%M:%S %Z')
-
-        local event = {time(), charGuid, mode, diff, reason}
-        table.insert(ns.db.history, event)
-
-        self:Print(event[1], event[2], event[3], event[4], event[5])
     end
 
     ns.MainWindow:refresh()
+end
+
+
+function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
+    local charData = ns.db.standings[charGuid]
+    mode = string.lower(mode)
+
+    local newValue
+
+    if percent then
+        -- value is expected to be something like -10, meaning decrease by 10%
+        local multiplier = (100 + value) / 100
+        newValue = charData[mode] * multiplier
+    else
+        newValue = charData[mode] + value
+    end
+
+    if mode == 'gp' and newValue < 1 then
+        newValue = 1
+    end
+
+    local diff = newValue - charData[mode]
+
+    charData[mode] = newValue
+
+    local event = {time(), charGuid, mode, diff, reason}
+    table.insert(ns.db.history, event)
+
+    self:Print(event[1], event[2], event[3], event[4], event[5])
 end
 
 
