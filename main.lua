@@ -22,25 +22,19 @@ local dbDefaults = {
         standings = {},
         history = {},
         cfg = {},
+        altData = {
+            mainAltMapping = {},
+            altMainMapping = {},
+        },
     }
 }
 
+local initialized = false
+
 
 function addon:OnInitialize()
-    -- DB
-    ns.db = LibStub('AceDB-3.0'):New(addonName, dbDefaults).profile
-
-    ns.standings = ns.db.standings
-    ns.cfg = ns.db.cfg
-
-    ns.Config:init()
-
     -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
     GuildRoster()
-
-    self:Print('loaded')
-
-    self.showMainWindow(self)
 end
 
 
@@ -51,26 +45,6 @@ end
 
 function addon:OnDisable()
     -- Called when the addon is disabled
-end
-
-
--------------------------
--- OPTION GETTERS/SETTERS
--------------------------
-function addon:getLmMode(info)
-    return ns.cfg.lmMode
-end
-
-function addon:setLmMode(info, input)
-    ns.cfg.lmMode = input
-end
-
-function addon:getDefaultDecay(info)
-    return ns.cfg.defaultDecay
-end
-
-function addon:setDefaultDecay(info, input)
-    ns.cfg.defaultDecay = input
 end
 
 -------------------------
@@ -104,33 +78,67 @@ end
 
 
 function addon:loadGuildData()
-    local standings = ns.db.standings
+    if not initialized then
+        -- Get guild name
+        local guildName = GetGuildInfo('player')
 
+        -- haven't actually received guild data yet. wait 1 second and run this function again
+        if guildName == nil then
+            C_Timer.After(1, self.loadGuildData)
+            return
+        end
+
+        local realmName = GetRealmName()
+        local guildFullName = guildName .. '-' .. realmName
+
+        -- DB
+        local db = LibStub('AceDB-3.0'):New(addonName, dbDefaults)
+        db:SetProfile(guildFullName)
+
+        ns.db = db.profile
+        ns.standings = ns.db.standings
+        ns.cfg = ns.db.cfg
+
+        ns.guild = guildFullName
+    end
+
+    -- Load guild data
     local guildMembers = {}
 
     for i = 1, GetNumGuildMembers() do
-        local fullName, rank, _, level, class, _, _, _, _, _, _ = GetGuildRosterInfo(i)
+        local fullName, rank, _, level, class, _, _, _, _, _, _, _, _, _, _, _, guid = GetGuildRosterInfo(i)
         local name = self:getCharName(fullName)
 
-        if standings[name] ~= nil then
-            local charData = standings[name]
+        local charData = ns.standings[guid]
+        if charData ~= nil then
             charData.name = name
+            charData.fullName = fullName
             charData.level = level
             charData.class = class
             charData.inGuild = true
             charData.rank = rank
         else
-            standings[name] = self:createStandingsEntry(name, level, class, true, rank)
+            ns.standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, true, rank)
         end
 
-        table.insert(guildMembers, name)
+        table.insert(guildMembers, guid)
     end
 
-    for name, charData in pairs(ns.db.standings) do
-        if charData.inGuild and not ns.Lib:contains(guildMembers, name) then
+    for guid, charData in pairs(ns.standings) do
+        if charData.inGuild and not ns.Lib:contains(guildMembers, guid) then
             charData.inGuild = false
             charData.rank = nil
         end
+    end
+
+    if not initialized then
+        -- Load config module
+        ns.Config:init()
+
+        initialized = true
+        self:Print('loaded')
+
+        self.showMainWindow(self)
     end
 end
 
@@ -143,13 +151,14 @@ function addon:loadRaidData()
         local fullName, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
         local name = self:getCharName(fullName)
 
-        if standings[name] ~= nil then
-            local charData = standings[name]
+        local charData = standings[guid]
+        if charData ~= nil then
+            charData.fullName = fullName
             charData.name = name
             charData.level = level
             charData.class = class
         else
-            standings[name] = self:createStandingsEntry(name, level, class, false, nil)
+            standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
         end
     end
 end
@@ -163,27 +172,29 @@ function addon:getCharName(fullName)
 end
 
 
-function addon:createStandingsEntry(name, level, class, inGuild, rank)
+function addon:createStandingsEntry(guid, fullName, name, level, class, inGuild, rank)
     return {
+        ['guid'] = guid,
+        ['fullName'] = fullName,
         ['name'] = name,
         ['level'] = level,
         ['class'] = class,
         ['inGuild'] = inGuild,
         ['rank'] = rank,
         ['ep'] = 0,
-        ['gp'] = 1
+        ['gp'] = 1,
     }
 end
 
 
 function addon:modifyEpgp(changes, percent)
     for _, change in ipairs(changes) do
-        local charName = change[1]
+        local charGuid = change[1]
         local mode = change[2]
         local value = change[3]
         local reason = change[4]
 
-        local charData = ns.db.standings[charName]
+        local charData = ns.db.standings[charGuid]
         mode = string.lower(mode)
 
         local newValue
@@ -206,7 +217,7 @@ function addon:modifyEpgp(changes, percent)
 
         local dt = date('%Y-%m-%dT%H:%M:%S %Z')
 
-        local event = {time(), charName, mode, diff, reason}
+        local event = {time(), charGuid, mode, diff, reason}
         table.insert(ns.db.history, event)
 
         self:Print(event[1], event[2], event[3], event[4], event[5])

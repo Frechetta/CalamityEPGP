@@ -31,7 +31,7 @@ function DecayEpgpWindow:createWindow()
 	mainFrame.amountLabel:SetPoint('TOP', mainFrame, 'TOP', 0, -mainFrame.TitleBg:GetHeight() - 20)
 
     mainFrame.amountEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
-    mainFrame.amountEditBox:SetText(ns.cfg.defaultDecay)
+    mainFrame.amountEditBox:SetText(tostring(ns.Config:getDefaultDecay()))
     mainFrame.amountEditBox:SetPoint('TOP', mainFrame.amountLabel, 'BOTTOM', 0, -7)
     mainFrame.amountEditBox:SetHeight(20)
     mainFrame.amountEditBox:SetWidth(40)
@@ -67,9 +67,9 @@ function DecayEpgpWindow:createWindow()
         local changes = {}
 
         for _, charData in ipairs(ns.MainWindow.data.rows) do
-            local charName = charData[1]
-            table.insert(changes, {charName, 'EP', -value, reason})
-            table.insert(changes, {charName, 'GP', -value, reason})
+            local charGuid = charData[#charData].guid
+            table.insert(changes, {charGuid, 'EP', -value, reason})
+            table.insert(changes, {charGuid, 'GP', -value, reason})
         end
 
         ns.addon:modifyEpgp(changes, true)

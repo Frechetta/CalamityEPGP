@@ -87,7 +87,7 @@ function ModifyEpgpWindow:createWindow()
         local value = mainFrame.amountEditBox:GetNumber()
         local reason = 'manual_single: ' .. mainFrame.reasonEditBox:GetText()
 
-        ns.addon:modifyEpgp({{self.charName, self.mode, value, reason}})
+        ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
 
         mainFrame:Hide()
     end)
@@ -97,8 +97,9 @@ function ModifyEpgpWindow:createWindow()
     return mainFrame
 end
 
-function ModifyEpgpWindow:show(charName)
+function ModifyEpgpWindow:show(charName, charGuid)
     self.charName = charName
+    self.charGuid = charGuid
 
     local window = self.mainFrame or self:createWindow()
     self:fillIn()

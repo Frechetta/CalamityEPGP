@@ -57,6 +57,8 @@ function MainWindow:createWindow()
     mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
     mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
 
+    -- tinsert(UISpecialFrames, mainFrame:GetName())
+
     self:refresh(true)
 
 	return mainFrame;
@@ -222,17 +224,23 @@ function MainWindow:setData()
 
     for i, rowData in ipairs(data.rowsFiltered) do
         if i > #parent.rows then
-            ns.addon:Print('adding row!')
             self:addRow(i)
         end
 
         local row = parent.rows[i]
+        row:Show()
 
         local class = string.upper(rowData[2]):gsub(' ', '')
         local classColorData = RAID_CLASS_COLORS[class]
 
         for j, columnText in ipairs(rowData) do
             local headerColumn = parent.header.columns[j]
+
+            if headerColumn == nil then
+                row.charGuid = columnText['guid']
+                break
+            end
+
             local column = row.columns[j]
 
             column:SetText(columnText)
@@ -247,7 +255,6 @@ function MainWindow:setData()
 
     if #parent.rows > #data.rowsFiltered then
         for i = #data.rowsFiltered + 1, #parent.rows do
-            ns.addon:Print('removing row!')
             local row = parent.rows[i]
             row:Hide()
         end
@@ -314,7 +321,7 @@ function MainWindow:handleHeaderClick(headerIndex)
 end
 
 function MainWindow:handleRowClick(row)
-    ns.ModifyEpgpWindow:show(row.columns[1]:GetText())
+    ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
 end
 
 function MainWindow:handleAddEpClick()
@@ -365,7 +372,8 @@ function MainWindow:getData()
             charData.rank,
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
-            tonumber(string.format("%.2f", charData.ep / charData.gp))
+            tonumber(string.format("%.2f", charData.ep / charData.gp)),
+            {guid = charData.guid}
         }
 
         table.insert(data.rows, row)

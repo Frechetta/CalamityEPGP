@@ -66,7 +66,7 @@ function AddEpWindow:createWindow()
         local changes = {}
 
         for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
-            table.insert(changes, {charData[1], 'EP', value, reason})
+            table.insert(changes, {charData[#charData].guid, 'EP', value, reason})
         end
 
         ns.addon:modifyEpgp(changes)
