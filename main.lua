@@ -25,52 +25,15 @@ local dbDefaults = {
     }
 }
 
-local cfgRoot = {
-    name = addonName,
-    handler = addon,
-    type = 'group',
-    args = {
-        lmMode = {
-            type = 'toggle',
-            name = 'Loot master mode',
-            order = 1,
-            set = 'setLmMode',
-            get = 'getLmMode',
-            width = 'full',
-        },
-        decay = {
-            type = 'input',
-            name = 'Default decay %',
-            set = 'setDefaultDecay',
-            get = 'getDefaultDecay',
-            pattern = '%d+',
-            width = 'half',
-        },
-    }
-}
-
-local cfgAltManagement = {
-    name = 'Alt Management',
-    handler = addon,
-    type = 'group',
-    args = {
-
-    }
-}
-
 
 function addon:OnInitialize()
+    -- DB
     ns.db = LibStub('AceDB-3.0'):New(addonName, dbDefaults).profile
-
-    LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, cfgRoot)
-    LibStub("AceConfig-3.0"):RegisterOptionsTable(cfgAltManagement.name, cfgAltManagement)
-
-    ns.AceConfigDialog = LibStub("AceConfigDialog-3.0")
-    ns.AceConfigDialog:AddToBlizOptions(addonName)
-    ns.AceConfigDialog:AddToBlizOptions(cfgAltManagement.name, cfgAltManagement.name, addonName)
 
     ns.standings = ns.db.standings
     ns.cfg = ns.db.cfg
+
+    ns.Config:init()
 
     -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
     GuildRoster()

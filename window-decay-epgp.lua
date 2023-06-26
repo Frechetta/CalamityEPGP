@@ -31,7 +31,7 @@ function DecayEpgpWindow:createWindow()
 	mainFrame.amountLabel:SetPoint('TOP', mainFrame, 'TOP', 0, -mainFrame.TitleBg:GetHeight() - 20)
 
     mainFrame.amountEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
-    mainFrame.amountEditBox:SetText(10)
+    mainFrame.amountEditBox:SetText(ns.cfg.defaultDecay)
     mainFrame.amountEditBox:SetPoint('TOP', mainFrame.amountLabel, 'BOTTOM', 0, -7)
     mainFrame.amountEditBox:SetHeight(20)
     mainFrame.amountEditBox:SetWidth(40)
