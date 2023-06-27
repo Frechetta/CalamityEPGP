@@ -8,10 +8,11 @@ local LootDistWindow = {
             {'Priority', 'RIGHT'},
             {'Roll', 'RIGHT'},
         },
-        rows = {},
+        rolls = {},
     },
     itemLink = nil,
     rolling = false,
+    rollPattern = ns.Lib:createPattern(RANDOM_ROLL_RESULT),
 }
 
 ns.LootDistWindow = LootDistWindow
@@ -184,9 +185,6 @@ function LootDistWindow:createTable()
         local headerText = header[1]
         local justify = header[2]
 
-        -- local column = CreateFrame('Frame', nil, parent.header)
-        -- column:SetHeight(parent.header:GetHeight())
-
         local xOffset = (i - 1) * columnWidth
 
         local column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
@@ -194,10 +192,6 @@ function LootDistWindow:createTable()
         column:SetJustifyH(justify)
         column:SetPoint('LEFT', parent.header, 'LEFT', xOffset, 0)
         column:SetWidth(columnWidth)
-        -- column:SetTextColor(1, 1, 0)
-
-        -- column.textWidth = column:GetWrappedWidth()
-        -- column.maxWidth = column:GetWrappedWidth()
 
         table.insert(parent.header.columns, column)
     end
@@ -214,14 +208,14 @@ function LootDistWindow:createTable()
     parent.contents.rowHighlight:Hide()
 
     parent.rows = {}
-
-    -- for i = 1, #data.rowsFiltered do
-    --     self:addRow(i)
-    -- end
 end
 
 
 function LootDistWindow:draw(itemLink)
+    if self.rolling then
+        return
+    end
+
     local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
@@ -229,7 +223,8 @@ function LootDistWindow:draw(itemLink)
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
 
-    self.data.rows = {}
+    self.data.rolls = {}
+    self:setData()
 
     self.mainFrame:Show()
 
@@ -244,17 +239,20 @@ function LootDistWindow:startRoll()
     self.mainFrame.stopButton:Enable()
     self.rolling = true
 
-    self:print('You have ' .. ns.cfg.rollDuration .. ' seconds to roll on ' .. self.itemLink, true)
-    self:print('Whisper me MS or OS to roll!')
-
     duration = self.mainFrame.timerEditBox:GetNumber()
     seconds = duration - 1
     onesec = 1
 
-    LootDistWindow.mainFrame.countdownLabel:SetText(duration .. ' seconds left')
-    LootDistWindow.mainFrame.countdownLabel:SetTextColor(0, 1, 0)
+    self:print('You have ' .. duration .. ' seconds to roll on ' .. self.itemLink, true)
+    self:print('"/roll" for MS and "/roll 99" for OS')
+
+    self.mainFrame.countdownLabel:SetText(duration .. ' seconds left')
+    self.mainFrame.countdownLabel:SetTextColor(0, 1, 0)
 
     countDownFrame:Show()
+
+    self.data.rolls = {}
+    self:setData()
 end
 
 function LootDistWindow:stopRoll()
@@ -268,6 +266,8 @@ function LootDistWindow:stopRoll()
     self.rolling = false
     self.mainFrame.startButton:Enable()
     self.mainFrame.stopButton:Disable()
+
+    -- TODO: implement close on award
 end
 
 
@@ -281,11 +281,63 @@ function LootDistWindow:print(msg, rw)
 end
 
 
+function LootDistWindow:handleRoll(roller, roll, rollType)
+    if not self.rolling then
+        return
+    end
+
+    if self.data.rolls[roller] == nil then
+        self.data.rolls[roller] = {}
+    end
+
+    local rollerData = self.data.rolls[roller]
+
+    if rollerData[rollType] == nil then
+        rollerData[rollType] = roll
+    end
+
+    rollerData['type'] = rollType
+
+    self:setData()
+end
+
 function LootDistWindow:setData()
     local parent = self.mainFrame.tableFrame
     local data = self.data
 
-    for i, rowData in ipairs(data.rowsFiltered) do
+    local rows = {}
+
+    for roller, rollData in pairs(data.rolls) do
+        local type = rollData.type
+        local roll = rollData[type]
+
+        local rollerGuid = ns.addon.charNameToGuid[roller]
+        local charData = ns.db.standings[rollerGuid]
+        local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
+
+        tinsert(rows, {roller, type, priority, roll})
+    end
+
+    table.sort(rows, function(left, right)
+        local rollTypeLeft = left[2]
+        local rollTypeRight = right[2]
+        local prLeft = left[3]
+        local prRight = right[3]
+        local rollLeft = left[4]
+        local rollRight = right[4]
+
+        if rollTypeLeft ~= rollTypeRight then
+            return rollTypeLeft < rollTypeRight
+        end
+
+        if prLeft ~= prRight then
+            return prLeft < prRight
+        end
+
+        return rollLeft < rollRight
+    end)
+
+    for i, rowData in ipairs(rows) do
         if i > #parent.rows then
             self:addRow(i)
         end
@@ -293,82 +345,16 @@ function LootDistWindow:setData()
         local row = parent.rows[i]
         row:Show()
 
-        local class = string.upper(rowData[2]):gsub(' ', '')
-        local classColorData = RAID_CLASS_COLORS[class]
-
         for j, columnText in ipairs(rowData) do
-            local headerColumn = parent.header.columns[j]
-
-            if headerColumn == nil then
-                row.charGuid = columnText['guid']
-                break
-            end
-
             local column = row.columns[j]
-
             column:SetText(columnText)
-            column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
-
-            local text_width = column:GetWrappedWidth()
-            if (text_width > headerColumn.maxWidth) then
-                headerColumn.maxWidth = text_width
-            end
         end
     end
 
-    if #parent.rows > #data.rowsFiltered then
-        for i = #data.rowsFiltered + 1, #parent.rows do
+    if #parent.rows > #rows then
+        for i = #rows + 1, #parent.rows do
             local row = parent.rows[i]
             row:Hide()
-        end
-    end
-
-    -- Calculate column padding
-    local columnWidthTotal = 0
-    for _, column in ipairs(parent.header.columns) do
-        columnWidthTotal = columnWidthTotal + column.maxWidth
-    end
-
-    local leftover = parent.header:GetWidth() - columnWidthTotal
-    local columnPadding = leftover / #parent.header.columns
-
-    -- Finally set column widths
-    -- header
-    for i, column in ipairs(parent.header.columns) do
-        local relativeElement = parent.header
-        local relativePoint = 'LEFT'
-        local padding = 0
-        if (i > 1) then
-            relativeElement = parent.header.columns[i - 1]
-            relativePoint = 'RIGHT'
-            padding = relativeElement.padding
-        end
-
-        local xOffset = padding
-        column.padding = column.maxWidth + columnPadding - column.textWidth
-
-        if column.fontString:GetJustifyH() == 'RIGHT' then
-            xOffset = xOffset + column.maxWidth - column.textWidth
-            column.padding = columnPadding
-        end
-
-        column:SetPoint('LEFT', relativeElement, relativePoint, xOffset, 0)
-        column:SetWidth(column.textWidth)
-
-        column.fontString:SetAllPoints()
-    end
-
-    -- data
-    for _, row in ipairs(parent.rows) do
-        for i, column in ipairs(row.columns) do
-            local headerColumn = parent.header.columns[i]
-
-            local textHeight = column:GetLineHeight()
-            local verticalPadding = (row:GetHeight() - textHeight) / 2
-
-            local anchorPoint = headerColumn.fontString:GetJustifyH()
-            column:SetPoint(anchorPoint, headerColumn, anchorPoint, 0, 0)
-            column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
         end
     end
 end
@@ -399,7 +385,7 @@ function LootDistWindow:addRow(index)
         column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
         column:SetWidth(headerColumn:GetWidth())
 
-        table.insert(row.columns, column)
+        tinsert(row.columns, column)
     end
 
     -- Highlight
@@ -409,7 +395,7 @@ function LootDistWindow:addRow(index)
 
     row:SetScript('OnEnter', function()
         highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 1, 0)
         highlightFrame:Show()
     end)
 
@@ -417,7 +403,7 @@ function LootDistWindow:addRow(index)
         highlightFrame:Hide()
     end)
 
-    row:SetScript('OnMouseUp', function(self, button)
+    row:SetScript('OnMouseUp', function(_, button)
         if button == 'LeftButton' then
             LootDistWindow:handleRowClick(row)
         end
@@ -427,20 +413,8 @@ function LootDistWindow:addRow(index)
 end
 
 function LootDistWindow:handleRowClick(row)
-    ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
-end
-
-function LootDistWindow:sortData(columnIndex, order)
-    table.sort(self.data.rows, function(left, right)
-        if order == 'ascending' then
-            return left[columnIndex] < right[columnIndex]
-        else
-            return left[columnIndex] > right[columnIndex]
-        end
-    end)
-
-    self.data.sorted.columnIndex = columnIndex
-    self.data.sorted.order = order
+    local charName = row.columns[1]:GetText()
+    ns.addon:Print('clicked ', charName)
 end
 
 -- function LootDistWindow:getData()

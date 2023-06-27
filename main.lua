@@ -29,9 +29,8 @@ local dbDefaults = {
     }
 }
 
-local initialized = false
-
-local charNameToGuid = {}
+addon.initialized = false
+addon.charNameToGuid = {}
 
 
 function addon:OnInitialize()
@@ -98,9 +97,31 @@ function addon:showLootDistWindow(itemLink)
     ns.LootDistWindow:draw(itemLink)
 end
 
+function addon:handleChatMsg(self, message)
+    for roller, roll, low, high in string.gmatch(message, ns.LootDistWindow.rollPattern) do
+        roll = tonumber(roll) or 0;
+        low = tonumber(low) or 0;
+        high = tonumber(high) or 0;
+
+        local rollType
+        if low == 1 then
+            if high == 100 then
+                rollType = 'MS'
+            elseif high == 99 then
+                rollType = 'OS'
+            end
+        end
+
+        if rollType ~= nil then
+            ns.LootDistWindow:handleRoll(roller, roll, rollType)
+            return
+        end
+    end
+end
+
 
 function addon:loadGuildData()
-    if not initialized then
+    if not self.initialized then
         -- Get guild name
         local guildName = GetGuildInfo('player')
 
@@ -131,7 +152,7 @@ function addon:loadGuildData()
         local fullName, rank, _, level, class, _, _, _, _, _, _, _, _, _, _, _, guid = GetGuildRosterInfo(i)
         local name = self:getCharName(fullName)
 
-        charNameToGuid[name] = guid
+        self.charNameToGuid[name] = guid
 
         local charData = ns.standings[guid]
         if charData ~= nil then
@@ -155,11 +176,11 @@ function addon:loadGuildData()
         end
     end
 
-    if not initialized then
+    if not self.initialized then
         -- Load config module
         ns.Config:init()
 
-        initialized = true
+        self.initialized = true
         addon:Print('loaded')
 
         -- self.showMainWindow(self)
@@ -175,7 +196,7 @@ function addon:loadRaidData()
         local fullName, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
         local name = self:getCharName(fullName)
 
-        charNameToGuid[name] = guid
+        self.charNameToGuid[name] = guid
 
         local charData = standings[guid]
         if charData ~= nil then
@@ -232,7 +253,7 @@ function addon:modifyEpgp(changes, percent)
         if alts ~= nil then
             for _, alt in ipairs(alts) do
                 if alt ~= name then
-                    local altCharGuid = charNameToGuid[alt]
+                    local altCharGuid = self.charNameToGuid[alt]
                     local altCharData = ns.db.standings[altCharGuid]
 
                     if ns.cfg.syncAltEp then
@@ -286,12 +307,7 @@ end
 
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
-
--- hooksecurefunc('ContainerFrameItemButton_OnModifiedClick', function(self, button)
---     local bag, slot = self:GetParent():GetID(), self:GetID()
---     addon:Print
---     addon:Print(button, bag, slot)
--- end)
+addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())

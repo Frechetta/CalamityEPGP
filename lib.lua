@@ -83,3 +83,23 @@ function Lib:getItemIDFromLink(itemLink)
 
     return itemID;
 end
+
+function Lib:createPattern(pattern, maximize)
+    pattern = string.gsub(pattern, "[%(%)%-%+%[%]]", "%%%1");
+
+    if not maximize then
+        pattern = string.gsub(pattern, "%%s", "(.-)");
+    else
+        pattern = string.gsub(pattern, "%%s", "(.+)");
+    end
+
+    pattern = string.gsub(pattern, "%%d", "%(%%d-%)");
+
+    if not maximize then
+        pattern = string.gsub(pattern, "%%%d%$s", "(.-)");
+    else
+        pattern = string.gsub(pattern, "%%%d%$s", "(.+)");
+    end
+
+    return string.gsub(pattern, "%%%d$d", "%(%%d-%)");
+end
