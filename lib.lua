@@ -43,3 +43,43 @@ function Lib:remove(array, value)
     local i = self:find(array, value)
     table.remove(array, i)
 end
+
+
+function Lib:getClickCombination(mouseButton)
+    local keySegments = {};
+
+    if IsControlKeyDown() then
+        tinsert(keySegments, 'CTRL');
+    end
+
+    if IsAltKeyDown() then
+        tinsert(keySegments, 'ALT');
+    end
+
+    if IsShiftKeyDown() then
+        tinsert(keySegments, 'SHIFT');
+    end
+
+    if not mouseButton or mouseButton == 'LeftButton' then
+        tinsert(keySegments, 'CLICK');
+    elseif mouseButton == 'RightButton' then
+        tinsert(keySegments, 'RIGHTCLICK');
+    end
+
+    return table.concat(keySegments, '_');
+end
+
+function Lib:getItemIDFromLink(itemLink)
+    if not itemLink or type(itemLink) ~= 'string' or itemLink == '' then
+        return false;
+    end
+
+    local _, itemID = strsplit(':', itemLink);
+    itemID = tonumber(itemID);
+
+    if not itemID then
+        return false;
+    end
+
+    return itemID;
+end

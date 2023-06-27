@@ -71,11 +71,31 @@ end
 
 function addon:showMainWindow()
     ns.mainWindow = ns.mainWindow or ns.MainWindow:createWindow()
-    ns.mainWindow:SetShown(true)
+    ns.mainWindow:Show()
 end
 
 function addon:openOptions()
     InterfaceOptionsFrame_OpenToCategory(addonName)
+end
+
+function addon:handleItemClick(itemLink, mouseButton)
+    if not itemLink
+            or type(itemLink) ~= "string"
+            or (mouseButton and mouseButton ~= "LeftButton")
+            or not ns.Lib:getItemIDFromLink(itemLink) then
+        return;
+    end
+
+    local keyPressIdentifier = ns.Lib:getClickCombination(mouseButton);
+
+    if keyPressIdentifier == 'SHIFT_CLICK' then
+        self:showLootDistWindow(itemLink)
+    end
+end
+
+function addon:showLootDistWindow(itemLink)
+    ns.LootDistWindow:createWindow()
+    ns.LootDistWindow:draw(itemLink)
 end
 
 
@@ -86,7 +106,7 @@ function addon:loadGuildData()
 
         -- haven't actually received guild data yet. wait 1 second and run this function again
         if guildName == nil then
-            C_Timer.After(1, self.loadGuildData)
+            C_Timer.After(1, addon.loadGuildData)
             return
         end
 
@@ -140,9 +160,9 @@ function addon:loadGuildData()
         ns.Config:init()
 
         initialized = true
-        self:Print('loaded')
+        addon:Print('loaded')
 
-        self.showMainWindow(self)
+        -- self.showMainWindow(self)
     end
 end
 
@@ -266,3 +286,13 @@ end
 
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
+
+-- hooksecurefunc('ContainerFrameItemButton_OnModifiedClick', function(self, button)
+--     local bag, slot = self:GetParent():GetID(), self:GetID()
+--     addon:Print
+--     addon:Print(button, bag, slot)
+-- end)
+
+hooksecurefunc("HandleModifiedItemClick", function(itemLink)
+    addon:handleItemClick(itemLink, GetMouseButtonClicked())
+end);

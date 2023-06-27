@@ -57,7 +57,7 @@ function MainWindow:createWindow()
     mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
     mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
 
-    -- tinsert(UISpecialFrames, mainFrame:GetName())
+    tinsert(UISpecialFrames, mainFrame:GetName())
 
     self:refresh(true)
 

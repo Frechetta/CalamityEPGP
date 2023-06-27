@@ -2,45 +2,78 @@ local addonName, ns = ...  -- Namespace
 
 local Config = {
     initialized = false,
+    defaults = {
+        defaultDecay = 10,
+        syncAltEp = false,
+        syncAltGp = true,
+        rollDuration = 25,
+        closeOnAward = true,
+    }
 }
 ns.Config = Config
 
 Config.aceConfig = LibStub("AceConfig-3.0")
 Config.aceConfigDialog = LibStub("AceConfigDialog-3.0")
 
-local initialDefaultDecay = 10
-local initialSyncAltEp = false
-local initialSyncAltGp = true
-
 
 function Config:init()
-    local cfgRoot = {
-        name = addonName,
-        handler = self,
-        type = 'group',
-        args = {
-            lmMode = {
-                type = 'toggle',
-                name = 'Loot master mode',
-                order = 1,
-                set = 'setLmMode',
-                get = 'getLmMode',
-                width = 'full',
-            },
-            decay = {
-                type = 'input',
-                name = 'Default decay %',
-                set = 'setDefaultDecay',
-                get = 'getDefaultDecay',
-                pattern = '%d+',
-                width = 'half',
-            },
-        }
+    local menus = {
+        root = {
+            name = addonName,
+            handler = self,
+            type = 'group',
+            args = {
+                lmMode = {
+                    type = 'toggle',
+                    name = 'Loot master mode',
+                    order = 1,
+                    set = 'setLmMode',
+                    get = 'getLmMode',
+                    width = 'full',
+                },
+                decay = {
+                    type = 'input',
+                    name = 'Default decay %',
+                    set = 'setDefaultDecay',
+                    get = 'getDefaultDecay',
+                    pattern = '%d+',
+                    width = 'half',
+                },
+            }
+        },
+        lootDistribution = {
+            name = 'Loot Distribution',
+            handler = self,
+            type = 'group',
+            args = {
+                duration = {
+                    type = 'input',
+                    name = 'Roll Duration',
+                    set = 'setRollDuration',
+                    get = 'getRollDuration',
+                    width = 'half'
+                },
+                closeOnAward = {
+                    type = 'toggle',
+                    name = 'Close distribution window on award',
+                    set = 'setCloseOnAward',
+                    get = 'getCloseOnAward',
+                    order = 1,
+                    width = 'full',
+                },
+            }
+        },
     }
 
-    self:addOptionsMenu(addonName, cfgRoot)
+    for optName, default in pairs(self.defaults) do
+        if ns.cfg[optName] == nil then
+            ns.cfg[optName] = default
+        end
+    end
+
+    self:addOptionsMenu(addonName, menus.root)
     self:initAltManagementMenu()
-    -- Config:addOptionsMenu(addonName .. '_AltManagement', cfgAltManagement, addonName)
+    self:addOptionsMenu(addonName .. '_LootDistribution', menus.lootDistribution, addonName)
 end
 
 
@@ -128,15 +161,9 @@ function Config:createAltManagementMenu()
         self:setAltManagementData()
     end)
 
-    if ns.cfg.syncAltEp == nil then
-        ns.cfg.syncAltEp = initialSyncAltEp
-    end
     synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
     synchroniseEpCheck:SetScript('OnClick', function() ns.cfg.syncAltEp = synchroniseEpCheck:GetChecked() end)
 
-    if ns.cfg.syncAltGp == nil then
-        ns.cfg.syncAltGp = initialSyncAltGp
-    end
     synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
     synchroniseGpCheck:SetScript('OnClick', function() ns.cfg.syncAltGp = synchroniseGpCheck:GetChecked() end)
 
@@ -298,13 +325,25 @@ function Config:setLmMode(info, input)
 end
 
 function Config:getDefaultDecay(info)
-    if ns.cfg.defaultDecay == nil then
-        ns.cfg.defaultDecay = initialDefaultDecay
-    end
-
     return tostring(ns.cfg.defaultDecay)
 end
 
 function Config:setDefaultDecay(info, input)
     ns.cfg.defaultDecay = input
+end
+
+function Config:getRollDuration(info)
+    return tostring(ns.cfg.rollDuration)
+end
+
+function Config:setRollDuration(info, input)
+    ns.cfg.rollDuration = input
+end
+
+function Config:getCloseOnAward(info)
+    return ns.cfg.closeOnAward
+end
+
+function Config:setCloseOnAward(info, input)
+    ns.cfg.closeOnAward = input
 end
