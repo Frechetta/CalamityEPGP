@@ -11,13 +11,13 @@ local LootDistWindow = {
         rolls = {},
     },
     itemLink = nil,
+    defaultItemIcon = 'Interface\\Icons\\INV_Misc_QuestionMark',
     rolling = false,
     rollPattern = ns.Lib:createPattern(RANDOM_ROLL_RESULT),
+    selectedRoller = nil,
 }
 
 ns.LootDistWindow = LootDistWindow
-
-local defaultItemIcon = 'Interface\\Icons\\INV_Misc_QuestionMark'
 
 local duration, seconds, onesec
 local countDownFrame = CreateFrame("Frame")
@@ -66,7 +66,7 @@ function LootDistWindow:createWindow()
     mainFrame.itemIcon = mainFrame:CreateTexture(nil, 'OVERLAY')
     mainFrame.itemIcon:SetSize(30, 30)
     mainFrame.itemIcon:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -15)
-    mainFrame.itemIcon:SetTexture(defaultItemIcon)
+    mainFrame.itemIcon:SetTexture(self.defaultItemIcon)
 
     mainFrame.itemLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.itemLabel:SetText('Invalid item')
@@ -135,11 +135,15 @@ function LootDistWindow:createWindow()
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
     mainFrame.startButton:SetScript('OnClick', self.startRoll)
     mainFrame.stopButton:SetScript('OnClick', function() duration = 0 end)
+    mainFrame.clearButton:SetScript('OnClick', self.clearRolls)
+    mainFrame.awardButton:SetScript('OnClick', self.award)
+    mainFrame.deButton:SetScript('OnClick', self.disenchant)
 
     self:createTable()
 
 	return mainFrame;
 end
+
 
 function LootDistWindow:createTable()
     local parent = self.mainFrame.tableFrame
@@ -207,6 +211,13 @@ function LootDistWindow:createTable()
     highlightTexture:SetBlendMode('ADD')
     parent.contents.rowHighlight:Hide()
 
+    parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
+    local highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
+    highlightTexture:SetBlendMode('ADD')
+    parent.contents.rowSelectedHighlight:Hide()
+
     parent.rows = {}
 end
 
@@ -223,6 +234,8 @@ function LootDistWindow:draw(itemLink)
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
 
+    self.selectedRoller = nil
+    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
 
@@ -237,6 +250,9 @@ function LootDistWindow:startRoll()
 
     self.mainFrame.startButton:Disable()
     self.mainFrame.stopButton:Enable()
+    self.mainFrame.awardButton:Disable()
+    self.mainFrame.clearButton:Disable()
+    self.mainFrame.deButton:Disable()
     self.rolling = true
 
     duration = self.mainFrame.timerEditBox:GetNumber()
@@ -251,9 +267,12 @@ function LootDistWindow:startRoll()
 
     countDownFrame:Show()
 
+    self.selectedRoller = nil
+    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
 end
+
 
 function LootDistWindow:stopRoll()
     self = LootDistWindow
@@ -266,8 +285,51 @@ function LootDistWindow:stopRoll()
     self.rolling = false
     self.mainFrame.startButton:Enable()
     self.mainFrame.stopButton:Disable()
+    self.mainFrame.awardButton:Enable()
+    self.mainFrame.clearButton:Enable()
+    self.mainFrame.deButton:Enable()
 
     -- TODO: implement close on award
+end
+
+
+function LootDistWindow:clearRolls()
+    self = LootDistWindow
+    self.selectedRoller = nil
+    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
+    self.data.rolls = {}
+    self:setData()
+end
+
+
+function LootDistWindow:award()
+    self = LootDistWindow
+
+    if self.selectedRoller == nil then
+        return
+    end
+
+    ns.addon:Print('awarded to', self.selectedRoller)
+
+    --[[
+        if distributing from bags, need to trade
+            func: InitiateTrade(name)
+            try to trade immediately
+                if success, trade
+                if fail, add player[item] to trades list
+            whenever trade is opened (to OR from player), check if player is in trade list
+                if so, auto insert awarded items and accept trade
+                remove player[item] from trades list
+        else
+            func: GiveMasterLoot(slot, index)
+
+    ]]
+end
+
+
+function LootDistWindow:disenchant()
+    self = LootDistWindow
+    ns.addon:Print('disenchant', self.itemLink)
 end
 
 
@@ -300,6 +362,7 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 
     self:setData()
 end
+
 
 function LootDistWindow:setData()
     local parent = self.mainFrame.tableFrame
@@ -359,6 +422,7 @@ function LootDistWindow:setData()
     end
 end
 
+
 function LootDistWindow:addRow(index)
     local parent = self.mainFrame.tableFrame
     local data = self.data
@@ -395,7 +459,7 @@ function LootDistWindow:addRow(index)
 
     row:SetScript('OnEnter', function()
         highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 1, 0)
+        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 0)
         highlightFrame:Show()
     end)
 
@@ -412,39 +476,15 @@ function LootDistWindow:addRow(index)
     table.insert(parent.rows, row)
 end
 
+
 function LootDistWindow:handleRowClick(row)
     local charName = row.columns[1]:GetText()
-    ns.addon:Print('clicked ', charName)
+    self.selectedRoller = charName
+
+    local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
+    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 0)
+    selectedHighlightFrame:Show()
+
+    ns.addon:Print('selected', self.selectedRoller)
 end
-
--- function LootDistWindow:getData()
---     local data = {
---         ['header'] = {
---             {'Name', 'LEFT'},
---             {'Class', 'LEFT'},
---             {'Guildie', 'LEFT'},
---             {'Rank', 'LEFT'},
---             {'EP', 'RIGHT'},
---             {'GP', 'RIGHT'},
---             {'PR', 'RIGHT'}
---         },
---         ['rows'] = {},
---     }
-
---     for _, charData in pairs(ns.db.standings) do
---         local row = {
---             charData.name,
---             charData.class,
---             charData.inGuild and 'Yes' or 'No',
---             charData.rank,
---             tonumber(string.format("%.2f", charData.ep)),
---             tonumber(string.format("%.2f", charData.gp)),
---             tonumber(string.format("%.2f", charData.ep / charData.gp)),
---             {guid = charData.guid}
---         }
-
---         table.insert(data.rows, row)
---     end
-
---     self.data = data
--- end
