@@ -15,6 +15,11 @@ local LootDistWindow = {
     rolling = false,
     rollPattern = ns.Lib:createPattern(RANDOM_ROLL_RESULT),
     selectedRoller = nil,
+    awarding = {
+        candidates = {},
+        items = {},
+        trading = {},
+    },
 }
 
 ns.LootDistWindow = LootDistWindow
@@ -38,6 +43,8 @@ countDownFrame:SetScript("OnUpdate", function(self, elapsed)
         onesec = 1
     end
 end)
+
+local toTrade = ns.db.loot.toTrade
 
 
 function LootDistWindow:createWindow()
@@ -239,9 +246,12 @@ function LootDistWindow:draw(itemLink)
     self.data.rolls = {}
     self:setData()
 
-    self.mainFrame:Show()
+    self:getLootCandidates()
+    self:getLootItems()
 
     self.itemLink = itemLink
+
+    self.mainFrame:Show()
 end
 
 
@@ -299,37 +309,6 @@ function LootDistWindow:clearRolls()
     self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
-end
-
-
-function LootDistWindow:award()
-    self = LootDistWindow
-
-    if self.selectedRoller == nil then
-        return
-    end
-
-    ns.addon:Print('awarded to', self.selectedRoller)
-
-    --[[
-        if distributing from bags, need to trade
-            func: InitiateTrade(name)
-            try to trade immediately
-                if success, trade
-                if fail, add player[item] to trades list
-            whenever trade is opened (to OR from player), check if player is in trade list
-                if so, auto insert awarded items and accept trade
-                remove player[item] from trades list
-        else
-            func: GiveMasterLoot(slot, index)
-
-    ]]
-end
-
-
-function LootDistWindow:disenchant()
-    self = LootDistWindow
-    ns.addon:Print('disenchant', self.itemLink)
 end
 
 
@@ -487,4 +466,166 @@ function LootDistWindow:handleRowClick(row)
     selectedHighlightFrame:Show()
 
     ns.addon:Print('selected', self.selectedRoller)
+end
+
+
+function LootDistWindow:getLootCandidates()
+	self.awarding.candidates = {}
+	for i = 1, GetNumGroupMembers() do
+		local candidate = GetMasterLootCandidate(i)
+		self.awarding.candidates[candidate] = i
+	end
+end
+
+
+function LootDistWindow:getLootItems()
+	self.awarding.items = {}
+	for i = 1, GetNumLootItems() do
+		local itemLink = GetLootSlotLink(1)
+		self.awarding.items[itemLink] = i
+	end
+end
+
+
+function LootDistWindow:award()
+	if not IsMasterLooter() then
+		self:print('You are not the master looter!')
+		return
+	end
+
+    self = LootDistWindow
+    local candidate = self.selectedRoller
+
+    if candidate == nil then
+        return
+    end
+
+    ns.addon:Print('awarded to', candidate)
+
+	local itemIndex = self.awarding.items[self.itemLink]
+	if itemIndex ~= nil then
+		local playerIndex = self.awarding.candidates[candidate]
+
+		if playerIndex == nil then
+			self:print(candidate .. ' is ineligible for receiving loot')
+			self:markAsToTrade(self.itemLink, candidate)
+		else
+			GiveMasterLoot(itemIndex, playerIndex)
+
+			-- if item is still in loot table, add to toTrade
+			self:getLootItems()
+			if self.awarding.items[self.itemLink] ~= nil then
+				self:markAsToTrade(self.itemLink, candidate)
+			else
+				self:successfulAward(self.itemLink, candidate)
+			end
+		end
+	else
+		self:markAsToTrade(self.itemLink, candidate)
+	end
+
+	self:print('Item ' .. self.itemLink .. ' awarded to ' .. candidate .. ' for ' .. gp .. ' GP')
+
+	-- TODO: add GP
+	-- TODO: mark as awarded in db, associate with time, raid ID
+end
+
+
+function LootDistWindow:markAsToTrade(itemLink, player)
+	if toTrade[player] == nil then
+		toTrade[player] = {}
+	end
+
+	tinsert(toTrade[player], itemLink)
+end
+
+
+function LootDistWindow:successfulAward(itemLink, player)
+	local itemsToTrade = toTrade[player]
+	if itemsToTrade ~= nil then
+		local i
+		for j, itemLinkToTrade in ipairs(itemsToTrade) do
+			if itemLinkToTrade == itemLink then
+				i = j
+				break
+			end
+		end
+
+		if i ~= nil then
+			itemsToTrade[i] = nil
+		end
+	end
+end
+
+
+function LootDistWindow:handleTradeRequest(player)
+	if toTrade[player] == nil then
+		return
+	end
+
+	InitiateTrade(player)
+end
+
+
+function LootDistWindow:handleTradeShow()
+	local player, _ = UnitName('npc')
+	self.awarding.trading.player = player
+	self.awarding.trading.items = {}
+
+	local items = toTrade[player]
+	if items == nil then
+		return
+	end
+
+	for i, itemLink in ipairs(items) do
+		local container
+		local slot
+
+		-- iterate through bags (j), and items (k) to find self.itemLink
+		for j = 0, NUM_BAG_SLOTS do
+			for k = 0, GetContainerNumSlots(j) do
+				local containerItemLink = GetContainerItemLink(j, k)
+				if containerItemLink == itemLink then
+					container = j
+					slot = k
+					break
+				end
+			end
+
+			if container ~= nil then
+				break
+			end
+		end
+
+		PickupContainerItem(container, slot)
+		ClickTradeButton(i)
+
+		tinsert(self.awarding.trading.items, itemLink)
+	end
+
+	AcceptTrade()
+end
+
+
+function LootDistWindow:handleTradeAccepted()
+	local player = self.awarding.trading.player
+
+	if player == nil then
+		return
+	end
+
+	for _, itemLink in ipairs(self.awarding.trading.items) do
+		self:successfulAward(itemLink, player)
+	end
+end
+
+
+function LootDistWindow:handleTradeClosed()
+	self.awarding.trading = {}
+end
+
+
+function LootDistWindow:disenchant()
+    self = LootDistWindow
+    ns.addon:Print('disenchant', self.itemLink)
 end

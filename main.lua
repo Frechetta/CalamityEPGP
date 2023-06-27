@@ -26,6 +26,9 @@ local dbDefaults = {
             mainAltMapping = {},
             altMainMapping = {},
         },
+        loot = {
+            toTrade = {},
+        },
     }
 }
 
@@ -95,28 +98,6 @@ end
 function addon:showLootDistWindow(itemLink)
     ns.LootDistWindow:createWindow()
     ns.LootDistWindow:draw(itemLink)
-end
-
-function addon:handleChatMsg(self, message)
-    for roller, roll, low, high in string.gmatch(message, ns.LootDistWindow.rollPattern) do
-        roll = tonumber(roll) or 0;
-        low = tonumber(low) or 0;
-        high = tonumber(high) or 0;
-
-        local rollType
-        if low == 1 then
-            if high == 100 then
-                rollType = 'MS'
-            elseif high == 99 then
-                rollType = 'OS'
-            end
-        end
-
-        if rollType ~= nil then
-            ns.LootDistWindow:handleRoll(roller, roll, rollType)
-            return
-        end
-    end
 end
 
 
@@ -305,9 +286,61 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
 end
 
 
+-----------------
+-- EVENT HANDLERS
+-----------------
+function addon:handleChatMsg(self, message)
+    for roller, roll, low, high in string.gmatch(message, ns.LootDistWindow.rollPattern) do
+        roll = tonumber(roll) or 0;
+        low = tonumber(low) or 0;
+        high = tonumber(high) or 0;
+
+        local rollType
+        if low == 1 then
+            if high == 100 then
+                rollType = 'MS'
+            elseif high == 99 then
+                rollType = 'OS'
+            end
+        end
+
+        if rollType ~= nil then
+            ns.LootDistWindow:handleRoll(roller, roll, rollType)
+            return
+        end
+    end
+end
+
+
+function addon:handleTradeRequest(player)
+	ns.LootDistWindow:handleTradeRequest(player)
+end
+
+
+function addon:handleTradeShow()
+	ns.LootDistWindow:handleTradeShow()
+end
+
+
+function addon:handleTradeAcceptUpdate(player1Accept, player2Accept)
+	if player1Accept == 1 and player2Accept == 1 then
+		ns.LootDistWindow:handleTradeAccepted()
+	end
+end
+
+
+function addon:handleTradeClosed()
+	ns.LootDistWindow:handleTradeClosed()
+end
+
+
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
+addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
+addon:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
+addon:RegisterEvent('TRADE_ACCEPT_UPDATE', 'handleTradeAcceptUpdate')
+addon:RegisterEvent('TRADE_CLOSED', 'handleTradeClosed')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())
