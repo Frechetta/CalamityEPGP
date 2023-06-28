@@ -119,17 +119,22 @@ function Lib:getGp(itemLink)
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
 
     local slotMod = ns.cfg.gpSlotMods[slot]
-    ns.addon:Print(slotMod)
     if slotMod == nil then
         local itemId = itemLink:match("item:(%d+):")
+        if itemId ~= nil then
+            itemId = tonumber(itemId)
+        end
         ilvl = ns.values.tokenGp[itemId]
-        ns.addon:Print(itemLink, ilvl)
-        slotMod = 1
+        slotMod = 0.75
+    end
+
+    if ilvl == nil then
+        return 0
     end
 
     local gp = math.floor(4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * slotMod) * 0.1)
 
-    ns.addon:Print(itemLink, ilvl, rarity, slot, gp)
+    ns.addon:Print(itemLink, ilvl, rarity, gp)
 
     return gp
 end
