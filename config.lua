@@ -3,13 +3,17 @@ local addonName, ns = ...  -- Namespace
 local Config = {
     initialized = false,
     defaults = {
+        lmMode = false,
         defaultDecay = 10,
         syncAltEp = false,
         syncAltGp = true,
         rollDuration = 25,
         closeOnAward = true,
+        gpInitial = ns.values.gpDefaults.initial,
+        gpSlotMods = ns.values.gpDefaults.slotModifiers,
     }
 }
+
 ns.Config = Config
 
 Config.aceConfig = LibStub("AceConfig-3.0")

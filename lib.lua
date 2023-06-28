@@ -4,6 +4,7 @@ Lib = {}
 
 ns.Lib = Lib
 
+
 function Lib:find(array, value)
     for i, v in ipairs(array) do
         if v == value then
@@ -14,9 +15,11 @@ function Lib:find(array, value)
     return -1
 end
 
+
 function Lib:contains(array, value)
     return self:find(array, value) ~= -1
 end
+
 
 function Lib:deepcopy(orig, copies)
     copies = copies or {}
@@ -38,6 +41,7 @@ function Lib:deepcopy(orig, copies)
     end
     return copy
 end
+
 
 function Lib:remove(array, value)
     local i = self:find(array, value)
@@ -69,6 +73,7 @@ function Lib:getClickCombination(mouseButton)
     return table.concat(keySegments, '_');
 end
 
+
 function Lib:getItemIDFromLink(itemLink)
     if not itemLink or type(itemLink) ~= 'string' or itemLink == '' then
         return false;
@@ -83,6 +88,7 @@ function Lib:getItemIDFromLink(itemLink)
 
     return itemID;
 end
+
 
 function Lib:createPattern(pattern, maximize)
     pattern = string.gsub(pattern, "[%(%)%-%+%[%]]", "%%%1");
@@ -102,4 +108,28 @@ function Lib:createPattern(pattern, maximize)
     end
 
     return string.gsub(pattern, "%%%d$d", "%(%%d-%)");
+end
+
+
+function Lib:getGp(itemLink)
+    -- TODO: deal with tier tokens
+
+    local _, _, rarity, ilvl, _, class, subClass, _, slot, _, _ = GetItemInfo(itemLink)
+
+    if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
+
+    local slotMod = ns.cfg.gpSlotMods[slot]
+    ns.addon:Print(slotMod)
+    if slotMod == nil then
+        local itemId = itemLink:match("item:(%d+):")
+        ilvl = ns.values.tokenGp[itemId]
+        ns.addon:Print(itemLink, ilvl)
+        slotMod = 1
+    end
+
+    local gp = math.floor(4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * slotMod) * 0.1)
+
+    ns.addon:Print(itemLink, ilvl, rarity, slot, gp)
+
+    return gp
 end

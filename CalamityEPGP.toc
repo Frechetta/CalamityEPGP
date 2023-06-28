@@ -9,6 +9,7 @@
 
 embeds.xml
 
+values.lua
 lib.lua
 config.lua
 window-modify-epgp.lua

@@ -34,6 +34,7 @@ local dbDefaults = {
 
 addon.initialized = false
 addon.charNameToGuid = {}
+addon.useForRaid = false
 
 
 function addon:OnInitialize()
@@ -102,6 +103,10 @@ end
 
 
 function addon:loadGuildData()
+    if self == nil then
+        return
+    end
+
     if not self.initialized then
         -- Get guild name
         local guildName = GetGuildInfo('player')
@@ -166,6 +171,11 @@ function addon:loadGuildData()
 
         -- self.showMainWindow(self)
     end
+
+    local _, type = GetInstanceInfo()
+    if type == 'raid' then
+        self:handleEnteredRaid()
+    end
 end
 
 
@@ -174,19 +184,21 @@ function addon:loadRaidData()
     local standings = ns.db.standings
 
     for i = 1, GetNumGroupMembers() do
-        local fullName, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
-        local name = self:getCharName(fullName)
+        local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
+        local realm = GetNormalizedRealmName()
+        local fullName = name .. '-' .. realm
+        local guid = UnitGUID(name)
 
         self.charNameToGuid[name] = guid
 
         local charData = standings[guid]
-        if charData ~= nil then
+        if charData == nil then
+            standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
+        elseif not charData.inGuild then
             charData.fullName = fullName
             charData.name = name
             charData.level = level
             charData.class = class
-        else
-            standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
         end
     end
 end
@@ -334,6 +346,17 @@ function addon:handleTradeClosed()
 end
 
 
+function addon:handleEnteredRaid()
+    self:loadRaidData()
+
+    -- check if you want to use addon for raid if LM mode
+    if not self.useForRaid and ns.cfg.lmMode then
+        -- open confirm window
+        -- on yes, self.useForRaid = true
+    end
+end
+
+
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
@@ -341,6 +364,8 @@ addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
 addon:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
 addon:RegisterEvent('TRADE_ACCEPT_UPDATE', 'handleTradeAcceptUpdate')
 addon:RegisterEvent('TRADE_CLOSED', 'handleTradeClosed')
+addon:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
+addon:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())
