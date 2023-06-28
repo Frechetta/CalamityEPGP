@@ -354,7 +354,7 @@ function LootDistWindow:setData()
         local type = rollData.type
         local roll = rollData[type]
 
-        local rollerGuid = ns.addon.charNameToGuid[roller]
+        local rollerGuid = ns.Lib:getPlayerGuid(roller)
         local charData = ns.db.standings[rollerGuid]
         local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
 
@@ -374,10 +374,10 @@ function LootDistWindow:setData()
         end
 
         if prLeft ~= prRight then
-            return prLeft < prRight
+            return prLeft > prRight
         end
 
-        return rollLeft < rollRight
+        return rollLeft > rollRight
     end)
 
     for i, rowData in ipairs(rows) do
@@ -388,12 +388,15 @@ function LootDistWindow:setData()
         local row = parent.rows[i]
         row:Show()
 
+        local name = rowData[1]
+        local _, classFileName = UnitClass(name)
+        local classColorData = RAID_CLASS_COLORS[classFileName]
+
         for j, columnText in ipairs(rowData) do
             local column = row.columns[j]
             column:SetText(columnText)
+            column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
         end
-
-        -- TODO: color row by class
     end
 
     if #parent.rows > #rows then
@@ -440,8 +443,8 @@ function LootDistWindow:addRow(index)
     local highlightFrame = parent.contents.rowHighlight
 
     row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 0)
+        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
+        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
         highlightFrame:Show()
     end)
 
@@ -464,8 +467,8 @@ function LootDistWindow:handleRowClick(row)
     self.selectedRoller = charName
 
     local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
-    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 0)
+    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
+    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
     selectedHighlightFrame:Show()
 end
 
@@ -542,8 +545,11 @@ function LootDistWindow:award()
         self.mainFrame:Hide()
     end
 
-	-- TODO: add GP
+    -- add GP
+    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(candidate), 'GP', gp, 'award: ' .. self.itemLink}})
+
 	-- TODO: mark as awarded in db, associate with time, raid ID
+
 end
 
 

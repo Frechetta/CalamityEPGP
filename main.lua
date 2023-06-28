@@ -28,13 +28,14 @@ local dbDefaults = {
         },
         loot = {
             toTrade = {},
+            awarded = {},
         },
     }
 }
 
 addon.initialized = false
-addon.charNameToGuid = {}
 addon.useForRaid = false
+addon.raidRoster = {}
 
 
 function addon:OnInitialize()
@@ -138,7 +139,7 @@ function addon:loadGuildData()
         local fullName, rank, _, level, class, _, _, _, _, _, _, _, _, _, _, _, guid = GetGuildRosterInfo(i)
         local name = self:getCharName(fullName)
 
-        self.charNameToGuid[name] = guid
+        ns.Lib.playerNameToGuid[name] = guid
 
         local charData = ns.standings[guid]
         if charData ~= nil then
@@ -182,14 +183,13 @@ end
 -- TODO: call when joining a raid and when it updates
 function addon:loadRaidData()
     local standings = ns.db.standings
+    self.raidRoster = {}
 
     for i = 1, GetNumGroupMembers() do
         local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
         local realm = GetNormalizedRealmName()
         local fullName = name .. '-' .. realm
-        local guid = UnitGUID(name)
-
-        self.charNameToGuid[name] = guid
+        local guid = ns.Lib:getPlayerGuid(name)
 
         local charData = standings[guid]
         if charData == nil then
@@ -200,6 +200,8 @@ function addon:loadRaidData()
             charData.level = level
             charData.class = class
         end
+
+        tinsert(self.raidRoster, name)
     end
 end
 
@@ -246,7 +248,7 @@ function addon:modifyEpgp(changes, percent)
         if alts ~= nil then
             for _, alt in ipairs(alts) do
                 if alt ~= name then
-                    local altCharGuid = self.charNameToGuid[alt]
+                    local altCharGuid = ns.Lib:getPlayerGuid(alt)
                     local altCharData = ns.db.standings[altCharGuid]
 
                     if ns.cfg.syncAltEp then

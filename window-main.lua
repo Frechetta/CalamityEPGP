@@ -56,6 +56,7 @@ function MainWindow:createWindow()
     mainFrame.optionsButton:SetScript('OnClick', ns.addon.openOptions)
     mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
     mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
+    mainFrame.raidOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 
@@ -332,8 +333,37 @@ function MainWindow:handleDecayEpgpClick()
     ns.DecayEpgpWindow:show()
 end
 
+function MainWindow:filterData()
+    self.data.rowsFiltered = {}
+
+    for _, row in ipairs(self.data.rows) do
+        local keep = true
+        if self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil then
+            keep = false
+        end
+
+        if keep then
+            tinsert(self.data.rowsFiltered, row)
+        end
+    end
+
+    self:sortData()
+end
+
 function MainWindow:sortData(columnIndex, order)
-    table.sort(self.data.rows, function(left, right)
+    if columnIndex == nil then
+        columnIndex = self.data.sorted.columnIndex
+    end
+
+    if order == nil then
+        order = self.data.sorted.order
+    end
+
+    if columnIndex == nil or order == nil then
+        return
+    end
+
+    table.sort(self.data.rowsFiltered, function(left, right)
         if order == 'ascending' then
             return left[columnIndex] < right[columnIndex]
         else
@@ -343,9 +373,6 @@ function MainWindow:sortData(columnIndex, order)
 
     self.data.sorted.columnIndex = columnIndex
     self.data.sorted.order = order
-
-    -- TODO: filtering
-    self.data.rowsFiltered = self.data.rows
 end
 
 function MainWindow:getData()
@@ -376,13 +403,11 @@ function MainWindow:getData()
             {guid = charData.guid}
         }
 
-        table.insert(data.rows, row)
+        tinsert(data.rows, row)
     end
-
-    -- TODO: filtering
-    data.rowsFiltered = data.rows
 
     self.data = data
 
+    self:filterData()
     self:sortData(7, 'descending')
 end

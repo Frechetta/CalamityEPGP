@@ -1,6 +1,8 @@
 local addonName, ns = ...  -- Namespace
 
-Lib = {}
+Lib = {
+    playerNameToGuid = {}
+}
 
 ns.Lib = Lib
 
@@ -46,6 +48,18 @@ end
 function Lib:remove(array, value)
     local i = self:find(array, value)
     table.remove(array, i)
+end
+
+
+function Lib:getPlayerGuid(playerName)
+    local guid = self.playerNameToGuid[playerName]
+
+    if guid == nil then
+        guid = UnitGUID(playerName)
+        self.playerNameToGuid[playerName] = guid
+    end
+
+    return guid
 end
 
 
