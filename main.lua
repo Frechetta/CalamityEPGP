@@ -351,6 +351,7 @@ function addon:handleEnteredRaid()
     if not self.useForRaid and ns.cfg.lmMode then
         -- open confirm window
         -- on yes, self.useForRaid = true
+        self.useForRaid = true
     end
 end
 
@@ -376,10 +377,36 @@ function addon:handleChatMsgLoot(_, msg)
 end
 
 
-function addon:handleUiInfoMessage(_, _, msg)
+function addon:handleUiInfoMessage(self, _, msg)
     if msg == ERR_TRADE_COMPLETE then
         ns.LootDistWindow:handleTradeComplete()
     end
+end
+
+
+function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, success)
+    if not addon.useForRaid or
+            success ~= 1 then
+        return
+    end
+
+    local ep = ns.cfg.encounterEp[encounterId]
+
+    if ep == nil then
+        addon:Print('Encounter (' .. encounterId .. ') not in encounters table!')
+        return
+    end
+
+    local reason = 'boss kill: ' .. encounterName .. ' (' .. encounterId .. ')'
+
+    local changes = {}
+
+    for _, player in ipairs(addon.raidRoster) do
+        local guid = ns.Lib:getPlayerGuid(player)
+        table.insert(changes, {guid, 'EP', ep, reason})
+    end
+
+    addon:modifyEpgp(changes)
 end
 
 
@@ -396,6 +423,7 @@ addon:RegisterEvent('LOOT_READY', 'handleLootReady')
 addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
 addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
 addon:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
+addon:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())

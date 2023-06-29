@@ -32,96 +32,222 @@ ns.values.gpDefaults = {
 }
 
 ns.values.epDefaults = {
-    ['Vanilla'] = {
-        ['Onyxia\'s Lair'] = {
-		    ["Onyxia"] = 5,
-        },
-        ['Molten Core'] = {
-            ["Lucifron"] = 5,
-            ["Magmadar"] = 5,
-            ["Gehennas"] = 5,
-            ["Garr"] = 5,
-            ["Baron Geddon"] = 5,
-            ["Shazzrah"] = 5,
-            ["Sulfuron Harbinger"] = 5,
-            ["Golemagg the Incinerator"] = 5,
-            ["Majordomo Executus"] = 5,
-            ["Ragnaros"] = 7,
-        },
-        ['Blackwing Lair'] = {
-            ["Razorgore the Untamed"] = 7,
-            ["Vaelastrasz the Corrupt"] = 7,
-            ["Broodlord Lashlayer"] = 7,
-            ["Firemaw"] = 7,
-            ["Ebonroc"] = 7,
-            ["Flamegor"] = 7,
-            ["Chromaggus"] = 7,
-            ["Nefarian"] = 10,
-        },
-        ['Zul\'Gurub'] = {
-            ["High Priest Venoxis"] = 2,
-            ["High Priestess Jeklik"] = 2,
-            ["High Priestess Mar'li"] = 2,
-            ["High Priest Thekal"] = 2,
-            ["High Priestess Arlokk"] = 2,
-            ["Edge of Madness"] = 2,
-            ["Bloodlord Mandokir"] = 2,
-            ["Jin'do the Hexxer"] = 2,
-            ["Gahz'ranka"] = 2,
-            ["Hakkar"] = 3,
-        },
-        ['Ruins of Ahn\'Qiraj'] = {
-            ["Kurinnaxx"] = 3,
-            ["General Rajaxx"] = 3,
-            ["Moam"] = 3,
-            ["Buru the Gorger"] = 3,
-            ["Ayamiss the Hunter"] = 3,
-            ["Ossirian the Unscarred"] = 4,
-        },
-        ['Ahn\'Qiraj'] = {
-            ["The Prophet Skeram"] = 10,
-            ["Battleguard Sartura"] = 10,
-            ["Fankriss the Unyielding"] = 10,
-            ["Princess Huhuran"] = 10,
-            ["The Silithid Royalty"] = 10,
-            ["Viscidus"] = 10,
-            ["Ouro"] = 10,
-            ["The Twin Emperors"] = 10,
-            ["C'Thun"] = 12,
-        },
-        ['Naxxramas'] = {
-            ["Anub'Rekhan"] = 12,
-            ["Grand Widow Faerlina"] = 12,
-            ["Maexxna"] = 15,
+    -- ['Vanilla'] = {
+    --     ['Onyxia\'s Lair'] = {
+	-- 	    ["Onyxia"] = {1084, 5}
+    --     },
+    --     ['Molten Core'] = {
+    --         ["Lucifron"] = {663, 5},
+    --         ["Magmadar"] = {664, 5},
+    --         ["Gehennas"] = {665, 5},
+    --         ["Garr"] = {666, 5},
+    --         ["Baron Geddon"] = {668, 5},
+    --         ["Shazzrah"] = {667, 5},
+    --         ["Sulfuron Harbinger"] = {669, 5},
+    --         ["Golemagg the Incinerator"] = {670, 5},
+    --         ["Majordomo Executus"] = {671, 5},
+    --         ["Ragnaros"] = {672, 7},
+    --     },
+    --     ['Blackwing Lair'] = {
+    --         ["Razorgore the Untamed"] = {610, 7},
+    --         ["Vaelastrasz the Corrupt"] = {611, 7},
+    --         ["Broodlord Lashlayer"] = {612, 7},
+    --         ["Firemaw"] = {613, 7},
+    --         ["Ebonroc"] = {614, 7},
+    --         ["Flamegor"] = {615, 7},
+    --         ["Chromaggus"] = {616, 7},
+    --         ["Nefarian"] = {617, 10},
+    --     },
+    --     ['Zul\'Gurub'] = {
+    --         ["High Priest Venoxis"] = 2,
+    --         ["High Priestess Jeklik"] = 2,
+    --         ["High Priestess Mar'li"] = 2,
+    --         ["High Priest Thekal"] = 2,
+    --         ["High Priestess Arlokk"] = 2,
+    --         ["Edge of Madness"] = 2,
+    --         ["Bloodlord Mandokir"] = 2,
+    --         ["Jin'do the Hexxer"] = 2,
+    --         ["Gahz'ranka"] = 2,
+    --         ["Hakkar"] = 3,
+    --     },
+    --     ['Ruins of Ahn\'Qiraj'] = {
+    --         ["Kurinnaxx"] = 3,
+    --         ["General Rajaxx"] = 3,
+    --         ["Moam"] = 3,
+    --         ["Buru the Gorger"] = 3,
+    --         ["Ayamiss the Hunter"] = 3,
+    --         ["Ossirian the Unscarred"] = 4,
+    --     },
+    --     ['Ahn\'Qiraj'] = {
+    --         ["The Prophet Skeram"] = 10,
+    --         ["Battleguard Sartura"] = 10,
+    --         ["Fankriss the Unyielding"] = 10,
+    --         ["Princess Huhuran"] = 10,
+    --         ["The Silithid Royalty"] = 10,
+    --         ["Viscidus"] = 10,
+    --         ["Ouro"] = 10,
+    --         ["The Twin Emperors"] = 10,
+    --         ["C'Thun"] = 12,
+    --     },
+    --     ['Naxxramas'] = {
+    --         ["Anub'Rekhan"] = 12,
+    --         ["Grand Widow Faerlina"] = 12,
+    --         ["Maexxna"] = 15,
 
-            ["Noth the Plaguebringer"] = 12,
-            ["Heigan the Unclean"] = 12,
-            ["Loatheb"] = 15,
+    --         ["Noth the Plaguebringer"] = 12,
+    --         ["Heigan the Unclean"] = 12,
+    --         ["Loatheb"] = 15,
 
-            ["Instructor Razuvious"] = 12,
-            ["Gothik the Harvester"] = 12,
-            ["The Four Horsemen"] = 15,
+    --         ["Instructor Razuvious"] = 12,
+    --         ["Gothik the Harvester"] = 12,
+    --         ["The Four Horsemen"] = 15,
 
-            ["Patchwerk"] = 12,
-            ["Grobbulus"] = 12,
-            ["Gluth"] = 12,
-            ["Thaddius"] = 15,
+    --         ["Patchwerk"] = 12,
+    --         ["Grobbulus"] = 12,
+    --         ["Gluth"] = 12,
+    --         ["Thaddius"] = 15,
 
-            ["Sapphiron"] = 15,
-            ["Kel'Thuzad"] = 15,
+    --         ["Sapphiron"] = 15,
+    --         ["Kel'Thuzad"] = 15,
+    --     },
+    --     ['Other'] = {
+    --         ["Lord Kazzak"] = 7,
+    --         ["Azuregos"] = 7,
+    --         ["Emeriss"] = 7,
+    --         ["Lethon"] = 7,
+    --         ["Ysondre"] = 7,
+    --         ["Taerar"] = 7,
+    --     },
+	-- },
+    {
+        'Vanilla',  -- expansion name
+        {
+            {
+                'Zul\'Gurub',  -- instance name
+                {
+                    -- boss, encounterID, default EP
+                    {'High Priest Venoxis', 784, 2},
+                    {'High Priestess Jeklik', 785, 2},
+                    {"High Priestess Mar'li", 786, 2},
+                    {"High Priest Thekal", 789, 2},
+                    {"High Priestess Arlokk", 791, 2},
+                    {"Edge of Madness", 788, 2},
+                    {"Bloodlord Mandokir", 787, 2},
+                    {"Jin'do the Hexxer", 792, 2},
+                    {"Gahz'ranka", 790, 2},
+                    {"Hakkar", 793, 3},
+                },
+            },
         },
-        ['Other'] = {
-            ["Lord Kazzak"] = 7,
-            ["Azuregos"] = 7,
-            ["Emeriss"] = 7,
-            ["Lethon"] = 7,
-            ["Ysondre"] = 7,
-            ["Taerar"] = 7,
-        },
-	}
+    },
+    {
+        'WotLK',
+        {
+            {
+                "Naxxramas",
+                {
+                    {"Anub'Rekhan", 1107, 26},
+                    {"Grand Widow Faerlina", 1110, 26},
+                    {"Maexxna", 1116, 26},
+                    {"Noth the Plaguebringer", 1117, 26},
+                    {"Heigan the Unclean", 1112, 26},
+                    {"Loatheb", 1115, 26},
+                    {"Instructor Razuvious", 1113, 26},
+                    {"Gothik the Harvester", 1109, 26},
+                    {"The Four Horsemen", 1121, 26},
+                    {"Patchwerk", 1118, 26},
+                    {"Grobbulus", 1111, 26},
+                    {"Gluth", 1108, 26},
+                    {"Thaddius", 1120, 26},
+                    {"Sapphiron", 1119, 28},
+                    {"Kel'Thuzad", 1114, 28},
+                }
+            },
+            {
+                "Obsidian Sanctum",
+                {
+                    {"Sartharion", 742, 26},
+                }
+            },
+            {
+                "Eye of Eternity",
+                {
+                    {"Malygos", 734, 26},
+                }
+            },
+            {
+                "Ulduar",
+                {
+                    {"Flame Leviathan", 744, 28},
+                    {"Ignis the Furnace Master", 745, 28},
+                    {"Razorscale", 746, 28},
+                    {"XT-002 Deconstructor", 747, 28},
+                    {"The Iron Council", 748, 28},
+                    {"Kologarn", 749, 28},
+                    {"Auriaya", 750, 28},
+                    {"Hodir", 751, 28},
+                    {"Thorim", 752, 28},
+                    {"Freya", 753, 28},
+                    {"Mimiron", 754, 28},
+                    {"General Vezax", 755, 28},
+                    {"Algalon the Observer", 757, 30},
+                    {"Yogg-Saron", 756, 30},
+                }
+            },
+            {
+                "Trial of the Crusader",
+                {
+                    {"Northrend Beasts", 629, 30},
+                    {"Lord Jaraxxus", 633, 30},
+                    {"Faction Champions", 637, 30},
+                    {"Val'kyr Twins", 641, 30},
+                    {"Anub'arak", 645, 32},
+                }
+            },
+            {
+                "Icecrown Citadel",
+                {
+                    {"Lord Marrowgar", 845, 32},
+                    {"Lady Deathwhisper", 846, 32},
+                    {"Icecrown Gunship Battle", 847, 32},
+                    {"Deathbringer Saurfang", 848, 32},
+                    {"Festergut", 849, 32},
+                    {"Rotface", 850, 32},
+                    {"Professor Putricide", 851, 32},
+                    {"Blood Council", 852, 32},
+                    {"Queen Lana'thel", 853, 32},
+                    {"Valithria Dreamwalker", 854, 32},
+                    {"Sindragosa", 855, 32},
+                    {"The Lich King", 856, 34},
+                }
+            },
+            {
+                "Ruby Sanctum",
+                {
+                    {"Halion", 887, 34},
+                }
+            },
+            {
+                "Vault of Archavon",
+                {
+                    {"Archavon the Stone Watcher", 772, 26},
+                    {"Emalon the Storm Watcher", 774, 28},
+                    {"Koralon the Flame Watcher", 776, 30},
+                    {"Toravon the Ice Watcher", 885, 32},
+                }
+            },
+            {
+                "Onyxias Lair",
+                {
+                    {"Onyxia", 1084, 30},
+                }
+            }
+        }
+    }
 }
 
 ns.values.tokenGp = {
+    --- WOTLK ---
     -- Onyxia's Layer
     -- head
     [49644] = 245,

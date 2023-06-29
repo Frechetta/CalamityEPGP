@@ -11,6 +11,7 @@ local Config = {
         closeOnAward = true,
         gpInitial = ns.values.gpDefaults.initial,
         gpSlotMods = ns.values.gpDefaults.slotModifiers,
+        encounterEp = {},
     }
 }
 
@@ -68,6 +69,16 @@ function Config:init()
             }
         },
     }
+
+    for _, expansion in ipairs(ns.values.epDefaults) do
+        for _, instance in ipairs(expansion[2]) do
+            for _, encounter in ipairs(instance[2]) do
+                local encounterId = encounter[2]
+                local ep = encounter[3]
+                self.defaults.encounterEp[encounterId] = ep
+            end
+        end
+    end
 
     for optName, default in pairs(self.defaults) do
         if ns.cfg[optName] == nil then

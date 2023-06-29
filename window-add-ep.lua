@@ -61,7 +61,7 @@ function AddEpWindow:createWindow()
 
     mainFrame.confirmButton:SetScript('OnClick', function()
         local value = mainFrame.amountEditBox:GetNumber()
-        local reason = 'manual_multiple:' .. mainFrame.reasonEditBox:GetText()
+        local reason = 'manual_multiple: ' .. mainFrame.reasonEditBox:GetText()
 
         local changes = {}
 
