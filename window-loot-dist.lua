@@ -18,8 +18,8 @@ local LootDistWindow = {
     awarding = {
         candidates = {},
         items = {},
-        trading = {},
     },
+    trading = {},
 }
 
 ns.LootDistWindow = LootDistWindow
@@ -526,25 +526,38 @@ function LootDistWindow:award()
     ns.addon:Print('awarded to', awardee)
 
 	local itemIndex = self.awarding.items[self.itemLink]
+
+    -- item is from loot window
 	if itemIndex ~= nil then
 		local playerIndex = self.awarding.candidates[awardee]
 
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			self:print(awardee .. ' is ineligible for receiving loot')
+			self:print(awardee .. ' is ineligible for receiving loot; marked as to trade')
 		end
+    -- item is in inventory
     else
         self:markAsToTrade(self.itemLink, awardee)
 	end
 
-    ns.db.loot.awarded[self.itemLink] = {
-        player = awardee,
+    -- add item to awarded table
+    if ns.db.loot.awarded[self.itemLink] == nil then
+        ns.db.loot.awarded[self.itemLink] = {}
+    end
+
+    if ns.db.loot.awarded[self.itemLink][awardee] == nil then
+        ns.db.loot.awarded[self.itemLink][awardee] = {}
+    end
+
+    tinsert(ns.db.loot.awarded[self.itemLink][awardee], {
         awardTime = time(),
         given = false,
         givenTime = nil,
-    }
+        collected = false,
+    })
 
+    -- get and award gp
     local gp = ns.Lib:getGp(self.itemLink)
     ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, 'award: ' .. self.itemLink}})
 	self:print('Item ' .. self.itemLink .. ' awarded to ' .. awardee .. ' for ' .. gp .. ' GP')
@@ -558,17 +571,35 @@ end
 function LootDistWindow:handleLootReceived(itemLink, player)
     local awardedData = ns.db.loot.awarded[itemLink]
 
+    -- if this item hasn't been awarded to anyone
     if awardedData == nil then
         return
     end
 
-    if player == 'You' and awardedData.player ~= UnitName('player') then
-        self:markAsToTrade(itemLink, player)
-        return
-    end
+    -- I received the item
+    if player == 'You' then
+        local myName = UnitName('player')
 
-    awardedData.given = true
-    awardedData.givenTime = time()
+        -- iterate over awarded items for ones that haven't been collected
+        for awardedPlayer, awardedItem in pairs(awardedData) do
+            if not awardedItem.given and not awardedItem.collected then
+                awardedItem.collected = true
+
+                -- if this item was awarded to me, mark it as successful
+                if awardedPlayer == myName then
+                    self:successfulAward(itemLink, myName)
+                -- else, mark it as to trade
+                else
+                    self:markAsToTrade(itemLink, awardedPlayer)
+                end
+
+                return
+            end
+        end
+    -- item went to someone else, mark it as successful
+    else
+        self:successfulAward(itemLink, player)
+    end
 end
 
 
@@ -599,78 +630,98 @@ end
 function LootDistWindow:handleTradeShow()
 	local player, _ = UnitName('npc')
 
-	self.awarding.trading.player = player
-	self.awarding.trading.items = {}
+	self.trading.player = player
+	-- self.trading.items = {}
 
 	local itemsToTrade = ns.db.loot.toTrade[player]
 	if itemsToTrade == nil then
+        ns.addon:Print('nothing to trade with player', player)
 		return
 	end
 
     ns.addon:Print(player)
 
-    local tradeSlot = 1
+    ns.addon:Print('-- items to trade')
+
+    for _, item in ipairs(itemsToTrade) do
+        ns.addon:Print('----', item)
+    end
+
+    local i = 1
 
     -- iterate through bags (j), and items (k) to find self.itemLink
-    for j = 0, NUM_BAG_SLOTS do
-        for k = 0, C_Container.GetContainerNumSlots(j) do
-            local containerItemLink = C_Container.GetContainerItemLink(j, k)
+    for container = 0, NUM_BAG_SLOTS do
+        local numSlots = C_Container.GetContainerNumSlots(container)
+        for slot = 0, numSlots do
+            local containerItemLink = C_Container.GetContainerItemLink(container, slot)
             if ns.Lib:contains(itemsToTrade, containerItemLink) then
-                ns.addon:Print('-- trade', j, k, containerItemLink, tradeSlot)
-                C_Container.PickupContainerItem(j, k)
-                ClickTradeButton(tradeSlot)
-                ClearCursor()
-                tradeSlot = tradeSlot + 1
+                ns.addon:Print('-- trade', container, slot, containerItemLink, tradeSlot)
 
-                tinsert(self.awarding.trading.items, containerItemLink)
+                C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
+                i = i + 1
             end
         end
     end
+end
 
-	AcceptTrade()
+
+function LootDistWindow:addItemToTrade(container, slot)
+    if (UseContainerItem) then
+        UseContainerItem(container, slot)
+    else
+        C_Container.UseContainerItem(container, slot);
+    end
 end
 
 
 function LootDistWindow:handleTradeClosed()
-	local player = self.awarding.trading.player
-    local itemsToTrade = ns.db.loot.toTrade[player]
-
-    ns.addon:Print('trade closed; player:', player, 'toTrade:', itemsToTrade)
-
-	if itemsToTrade == nil then
-        ns.addon:Print('-- no items to trade')
-		return
-	end
-
-    C_Timer.After(1, function()
-        local traded = ns.Lib:deepcopy(itemsToTrade)
-
-        for _, itemLink in ipairs(itemsToTrade) do
-            ns.addon:Print('-- to trade: ', itemLink)
-            -- iterate through bags (j), and items (k) to find self.itemLink
-            -- if we find an item that still needs to be traded, remove from traded array
-            for j = 0, NUM_BAG_SLOTS do
-                for k = 0, C_Container.GetContainerNumSlots(j) do
-                    local containerItemLink = C_Container.GetContainerItemLink(j, k)
-                    if containerItemLink == itemLink then
-                        ns.addon:Print('--', itemLink, 'still in bags')
-                        ns.Lib:remove(traded, itemLink)
-                    end
-                end
-            end
-        end
-
-        for _, itemLink in ipairs(traded) do
-            self:successfulAwardTrade(itemLink, player)
-        end
-    end)
-
-	self.awarding.trading = {}
+	-- no need?
 end
 
 
-function LootDistWindow:successfulAwardTrade(itemLink, player)
-    ns.addon:Print('successful trade of', itemLink, 'to', player)
+function LootDistWindow:handleTradePlayerItemChanged()
+    self.trading.items = {}
+
+    for i = 1, MAX_TRADABLE_ITEMS do
+        local itemLink = GetTradePlayerItemLink(i);
+
+        if itemLink ~= nil then
+            tinsert(self.trading.items, itemLink)
+        end
+    end
+end
+
+
+function LootDistWindow:handleTradeComplete()
+    local player = self.trading.player
+    local items = self.trading.items
+    ns.addon:Print('handle trade complete with', player)
+
+    local itemsToTrade = ns.db.loot.toTrade[player]
+
+    ns.addon:Print(player, itemsToTrade)
+    if itemsToTrade == nil then
+        return
+    end
+
+    for _, itemLink in ipairs(items) do
+        self:successfulAward(itemLink, player)
+    end
+end
+
+
+function LootDistWindow:successfulAward(itemLink, player)
+    ns.addon:Print(itemLink, 'given to', player)
+
+    for _, awardedItem in ipairs(ns.db.loot.awarded[itemLink][player]) do
+        ns.addon:Print(awardedItem)
+        if not awardedItem.given then
+            ns.addon:Print('set given')
+            awardedItem.given = true
+            awardedItem.givenTime = time()
+        end
+    end
+
     ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
 end
 

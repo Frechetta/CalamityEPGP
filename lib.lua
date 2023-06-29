@@ -55,6 +55,17 @@ function Lib:remove(array, value)
 end
 
 
+function Lib:keys(table)
+    local keys = {}
+
+    for k, _ in pairs(table) do
+        tinsert(keys, k)
+    end
+
+    return keys
+end
+
+
 function Lib:getPlayerGuid(playerName)
     local guid = self.playerNameToGuid[playerName]
 

@@ -31,6 +31,96 @@ ns.values.gpDefaults = {
     },
 }
 
+ns.values.epDefaults = {
+    ['Vanilla'] = {
+        ['Onyxia\'s Lair'] = {
+		    ["Onyxia"] = 5,
+        },
+        ['Molten Core'] = {
+            ["Lucifron"] = 5,
+            ["Magmadar"] = 5,
+            ["Gehennas"] = 5,
+            ["Garr"] = 5,
+            ["Baron Geddon"] = 5,
+            ["Shazzrah"] = 5,
+            ["Sulfuron Harbinger"] = 5,
+            ["Golemagg the Incinerator"] = 5,
+            ["Majordomo Executus"] = 5,
+            ["Ragnaros"] = 7,
+        },
+        ['Blackwing Lair'] = {
+            ["Razorgore the Untamed"] = 7,
+            ["Vaelastrasz the Corrupt"] = 7,
+            ["Broodlord Lashlayer"] = 7,
+            ["Firemaw"] = 7,
+            ["Ebonroc"] = 7,
+            ["Flamegor"] = 7,
+            ["Chromaggus"] = 7,
+            ["Nefarian"] = 10,
+        },
+        ['Zul\'Gurub'] = {
+            ["High Priest Venoxis"] = 2,
+            ["High Priestess Jeklik"] = 2,
+            ["High Priestess Mar'li"] = 2,
+            ["High Priest Thekal"] = 2,
+            ["High Priestess Arlokk"] = 2,
+            ["Edge of Madness"] = 2,
+            ["Bloodlord Mandokir"] = 2,
+            ["Jin'do the Hexxer"] = 2,
+            ["Gahz'ranka"] = 2,
+            ["Hakkar"] = 3,
+        },
+        ['Ruins of Ahn\'Qiraj'] = {
+            ["Kurinnaxx"] = 3,
+            ["General Rajaxx"] = 3,
+            ["Moam"] = 3,
+            ["Buru the Gorger"] = 3,
+            ["Ayamiss the Hunter"] = 3,
+            ["Ossirian the Unscarred"] = 4,
+        },
+        ['Ahn\'Qiraj'] = {
+            ["The Prophet Skeram"] = 10,
+            ["Battleguard Sartura"] = 10,
+            ["Fankriss the Unyielding"] = 10,
+            ["Princess Huhuran"] = 10,
+            ["The Silithid Royalty"] = 10,
+            ["Viscidus"] = 10,
+            ["Ouro"] = 10,
+            ["The Twin Emperors"] = 10,
+            ["C'Thun"] = 12,
+        },
+        ['Naxxramas'] = {
+            ["Anub'Rekhan"] = 12,
+            ["Grand Widow Faerlina"] = 12,
+            ["Maexxna"] = 15,
+
+            ["Noth the Plaguebringer"] = 12,
+            ["Heigan the Unclean"] = 12,
+            ["Loatheb"] = 15,
+
+            ["Instructor Razuvious"] = 12,
+            ["Gothik the Harvester"] = 12,
+            ["The Four Horsemen"] = 15,
+
+            ["Patchwerk"] = 12,
+            ["Grobbulus"] = 12,
+            ["Gluth"] = 12,
+            ["Thaddius"] = 15,
+
+            ["Sapphiron"] = 15,
+            ["Kel'Thuzad"] = 15,
+        },
+        ['Other'] = {
+            ["Lord Kazzak"] = 7,
+            ["Azuregos"] = 7,
+            ["Emeriss"] = 7,
+            ["Lethon"] = 7,
+            ["Ysondre"] = 7,
+            ["Taerar"] = 7,
+        },
+	}
+}
+
 ns.values.tokenGp = {
     -- Onyxia's Layer
     -- head

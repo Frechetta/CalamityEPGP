@@ -339,6 +339,11 @@ function addon:handleTradeClosed()
 end
 
 
+function addon:handleTradePlayerItemChanged()
+    ns.LootDistWindow:handleTradePlayerItemChanged()
+end
+
+
 function addon:handleEnteredRaid()
     self:loadRaidRoster()
 
@@ -367,11 +372,14 @@ function addon:handleChatMsgLoot(_, msg)
         return
     end
 
-    -- if player == 'You' then
-    --     player = UnitName('player')
-    -- end
-
     ns.LootDistWindow:handleLootReceived(itemLink, player)
+end
+
+
+function addon:handleUiInfoMessage(_, _, msg)
+    if msg == ERR_TRADE_COMPLETE then
+        ns.LootDistWindow:handleTradeComplete()
+    end
 end
 
 
@@ -381,11 +389,13 @@ addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
 addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
 addon:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
 addon:RegisterEvent('TRADE_CLOSED', 'handleTradeClosed')
+addon:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
 addon:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
 addon:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
 addon:RegisterEvent('LOOT_READY', 'handleLootReady')
 addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
 addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
+addon:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())
