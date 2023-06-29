@@ -163,6 +163,11 @@ function addon:loadGuildData()
         end
     end
 
+    -- load raid data
+    if IsInRaid() then
+        self:handleEnteredRaid()
+    end
+
     if not self.initialized then
         -- Load config module
         ns.Config:init()
@@ -172,23 +177,16 @@ function addon:loadGuildData()
 
         -- self.showMainWindow(self)
     end
-
-    local _, type = GetInstanceInfo()
-    if type == 'raid' then
-        self:handleEnteredRaid()
-    end
 end
 
 
--- TODO: call when joining a raid and when it updates
-function addon:loadRaidData()
+function addon:loadRaidRoster()
     local standings = ns.db.standings
     self.raidRoster = {}
 
     for i = 1, GetNumGroupMembers() do
         local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
-        local realm = GetNormalizedRealmName()
-        local fullName = name .. '-' .. realm
+        local fullName = GetUnitName(name, true)
         local guid = ns.Lib:getPlayerGuid(name)
 
         local charData = standings[guid]
@@ -336,26 +334,44 @@ function addon:handleTradeShow()
 end
 
 
-function addon:handleTradeAcceptUpdate(player1Accept, player2Accept)
-	if player1Accept == 1 and player2Accept == 1 then
-		ns.LootDistWindow:handleTradeAccepted()
-	end
-end
-
-
 function addon:handleTradeClosed()
 	ns.LootDistWindow:handleTradeClosed()
 end
 
 
 function addon:handleEnteredRaid()
-    self:loadRaidData()
+    self:loadRaidRoster()
 
-    -- check if you want to use addon for raid if LM mode
+    -- TODO: check if you want to use addon for raid if LM mode
     if not self.useForRaid and ns.cfg.lmMode then
         -- open confirm window
         -- on yes, self.useForRaid = true
     end
+end
+
+
+function addon:handleLootReady()
+    ns.LootDistWindow:getLoot()
+end
+
+
+function addon:handleLootClosed()
+    ns.LootDistWindow:clearLoot()
+end
+
+
+function addon:handleChatMsgLoot(_, msg)
+    local player, itemLink = msg:match('(%a+) receives? loot: (.+)%.')
+
+    if player == nil or itemLink == nil then
+        return
+    end
+
+    -- if player == 'You' then
+    --     player = UnitName('player')
+    -- end
+
+    ns.LootDistWindow:handleLootReceived(itemLink, player)
 end
 
 
@@ -364,10 +380,12 @@ addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
 addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
 addon:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
-addon:RegisterEvent('TRADE_ACCEPT_UPDATE', 'handleTradeAcceptUpdate')
 addon:RegisterEvent('TRADE_CLOSED', 'handleTradeClosed')
 addon:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
 addon:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
+addon:RegisterEvent('LOOT_READY', 'handleLootReady')
+addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
+addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())

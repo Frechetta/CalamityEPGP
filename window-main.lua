@@ -31,6 +31,10 @@ function MainWindow:createWindow()
     mainFrame.raidOnlyButton = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
     mainFrame.raidOnlyButton:SetPoint('LEFT', mainFrame.raidOnlyLabel, 'RIGHT', 5, 0)
 
+    if IsInRaid() then
+        mainFrame.raidOnlyButton:SetChecked(true)
+    end
+
     mainFrame.optionsButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.optionsButton:SetText('Options')
     mainFrame.optionsButton:SetPoint('TOP', mainFrame.TitleBg, 'BOTTOM', 0, -15)
@@ -338,7 +342,7 @@ function MainWindow:filterData()
 
     for _, row in ipairs(self.data.rows) do
         local keep = true
-        if self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil then
+        if self.mainFrame.raidOnlyButton:GetChecked() and not ns.Lib:contains(ns.addon.raidRoster, row[1]) then
             keep = false
         end
 
@@ -376,6 +380,11 @@ function MainWindow:sortData(columnIndex, order)
 end
 
 function MainWindow:getData()
+    local sorted = {}
+    if self.data.sorted ~= nil and self.data.sorted.columnIndex ~= nil then
+        sorted = self.data.sorted
+    end
+
     local data = {
         ['header'] = {
             {'Name', 'LEFT'},
@@ -388,7 +397,7 @@ function MainWindow:getData()
         },
         ['rows'] = {},
         ['rowsFiltered'] = {},
-        ['sorted'] = {}
+        ['sorted'] = sorted,
     }
 
     for _, charData in pairs(ns.db.standings) do

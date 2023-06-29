@@ -46,6 +46,10 @@ end
 
 
 function Lib:remove(array, value)
+    if array == nil then
+        return
+    end
+
     local i = self:find(array, value)
     table.remove(array, i)
 end
@@ -126,8 +130,6 @@ end
 
 
 function Lib:getGp(itemLink)
-    -- TODO: deal with tier tokens
-
     local _, _, rarity, ilvl, _, class, subClass, _, slot, _, _ = GetItemInfo(itemLink)
 
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
@@ -147,8 +149,6 @@ function Lib:getGp(itemLink)
     end
 
     local gp = math.floor(4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * slotMod) * 0.1)
-
-    ns.addon:Print(itemLink, ilvl, rarity, gp)
 
     return gp
 end

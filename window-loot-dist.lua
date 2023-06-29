@@ -244,8 +244,6 @@ function LootDistWindow:draw(itemLink)
     self.data.rolls = {}
     self:setData()
 
-    self:getLootItemsAndCandidates()
-
     self.itemLink = itemLink
 
     self.mainFrame:Show()
@@ -338,7 +336,17 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
         rollerData[rollType] = roll
     end
 
+    roll = rollerData[rollType]
+
+    local rollerGuid = ns.Lib:getPlayerGuid(roller)
+    local charData = ns.db.standings[rollerGuid]
+    local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
+
     rollerData['type'] = rollType
+    rollerData['pr'] = priority
+
+    -- don't print if roll is already there unless response is changed
+    self:print(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
 
     self:setData()
 end
@@ -353,12 +361,9 @@ function LootDistWindow:setData()
     for roller, rollData in pairs(data.rolls) do
         local type = rollData.type
         local roll = rollData[type]
+        local pr = rollData['pr']
 
-        local rollerGuid = ns.Lib:getPlayerGuid(roller)
-        local charData = ns.db.standings[rollerGuid]
-        local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
-
-        tinsert(rows, {roller, type, priority, roll})
+        tinsert(rows, {roller, type, pr, roll})
     end
 
     table.sort(rows, function(left, right)
@@ -473,9 +478,8 @@ function LootDistWindow:handleRowClick(row)
 end
 
 
-function LootDistWindow:getLootItemsAndCandidates()
-	self.awarding.items = {}
-	self.awarding.candidates = {}
+function LootDistWindow:getLoot()
+	self:clearLoot()
 
 	for i = 1, GetNumLootItems() do
         if LootSlotHasItem(i) then
@@ -487,7 +491,7 @@ function LootDistWindow:getLootItemsAndCandidates()
 
                 for j = 1, GetNumGroupMembers() do
                     local candidate = GetMasterLootCandidate(i, j)
-                    ns.addon:Print(j, candidate)
+                    ns.addon:Print('--', j, candidate)
 
                     if candidate ~= nil then
                         self.awarding.candidates[candidate] = j
@@ -499,6 +503,12 @@ function LootDistWindow:getLootItemsAndCandidates()
 end
 
 
+function LootDistWindow:clearLoot()
+    self.awarding.items = {}
+	self.awarding.candidates = {}
+end
+
+
 function LootDistWindow:award()
     self = LootDistWindow
 
@@ -507,53 +517,64 @@ function LootDistWindow:award()
 		return
 	end
 
-    local candidate = self.selectedRoller
+    local awardee = self.selectedRoller
 
-    if candidate == nil then
+    if awardee == nil then
         return
     end
 
-    ns.addon:Print('awarded to', candidate)
+    ns.addon:Print('awarded to', awardee)
 
 	local itemIndex = self.awarding.items[self.itemLink]
 	if itemIndex ~= nil then
-		local playerIndex = self.awarding.candidates[candidate]
+		local playerIndex = self.awarding.candidates[awardee]
 
-		if playerIndex == nil then
-			self:print(candidate .. ' is ineligible for receiving loot')
-			self:markAsToTrade(self.itemLink, candidate)
-		else
+		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
-
-			-- if item is still in loot table, add to toTrade
-			self:getLootItemsAndCandidates()
-			if self.awarding.items[self.itemLink] ~= nil then
-				self:markAsToTrade(self.itemLink, candidate)
-			else
-				self:successfulAward(self.itemLink, candidate)
-			end
+		else
+			self:print(awardee .. ' is ineligible for receiving loot')
 		end
-	else
-		self:markAsToTrade(self.itemLink, candidate)
+    else
+        self:markAsToTrade(self.itemLink, awardee)
 	end
 
-    local gp = ns.Lib:getGp(self.itemLink)
+    ns.db.loot.awarded[self.itemLink] = {
+        player = awardee,
+        awardTime = time(),
+        given = false,
+        givenTime = nil,
+    }
 
-	self:print('Item ' .. self.itemLink .. ' awarded to ' .. candidate .. ' for ' .. gp .. ' GP')
+    local gp = ns.Lib:getGp(self.itemLink)
+    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, 'award: ' .. self.itemLink}})
+	self:print('Item ' .. self.itemLink .. ' awarded to ' .. awardee .. ' for ' .. gp .. ' GP')
 
     if ns.cfg.closeOnAward then
         self.mainFrame:Hide()
     end
+end
 
-    -- add GP
-    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(candidate), 'GP', gp, 'award: ' .. self.itemLink}})
 
-	-- TODO: mark as awarded in db, associate with time, raid ID
+function LootDistWindow:handleLootReceived(itemLink, player)
+    local awardedData = ns.db.loot.awarded[itemLink]
 
+    if awardedData == nil then
+        return
+    end
+
+    if player == 'You' and awardedData.player ~= UnitName('player') then
+        self:markAsToTrade(itemLink, player)
+        return
+    end
+
+    awardedData.given = true
+    awardedData.givenTime = time()
 end
 
 
 function LootDistWindow:markAsToTrade(itemLink, player)
+    ns.addon:Print('marked as to trade', itemLink, player)
+
     local toTrade = ns.db.loot.toTrade
 
 	if toTrade[player] == nil then
@@ -564,28 +585,12 @@ function LootDistWindow:markAsToTrade(itemLink, player)
 end
 
 
-function LootDistWindow:successfulAward(itemLink, player)
-	local itemsToTrade = ns.db.loot.toTrade[player]
-	if itemsToTrade ~= nil then
-		local i
-		for j, itemLinkToTrade in ipairs(itemsToTrade) do
-			if itemLinkToTrade == itemLink then
-				i = j
-				break
-			end
-		end
-
-		if i ~= nil then
-			itemsToTrade[i] = nil
-		end
-	end
-end
-
-
 function LootDistWindow:handleTradeRequest(player)
 	if ns.db.loot.toTrade[player] == nil then
 		return
 	end
+
+    ns.addon:Print('trade request with to trade player')
 
 	InitiateTrade(player)
 end
@@ -593,59 +598,80 @@ end
 
 function LootDistWindow:handleTradeShow()
 	local player, _ = UnitName('npc')
+
 	self.awarding.trading.player = player
 	self.awarding.trading.items = {}
 
-	local items = ns.db.loot.toTrade[player]
-	if items == nil then
+	local itemsToTrade = ns.db.loot.toTrade[player]
+	if itemsToTrade == nil then
 		return
 	end
 
-	for i, itemLink in ipairs(items) do
-		local container
-		local slot
+    ns.addon:Print(player)
 
-		-- iterate through bags (j), and items (k) to find self.itemLink
-		for j = 0, NUM_BAG_SLOTS do
-			for k = 0, C_Container.GetContainerNumSlots(j) do
-				local containerItemLink = GetContainerItemLink(j, k)
-				if containerItemLink == itemLink then
-					container = j
-					slot = k
-					break
-				end
-			end
+    local tradeSlot = 1
 
-			if container ~= nil then
-				break
-			end
-		end
+    -- iterate through bags (j), and items (k) to find self.itemLink
+    for j = 0, NUM_BAG_SLOTS do
+        for k = 0, C_Container.GetContainerNumSlots(j) do
+            local containerItemLink = C_Container.GetContainerItemLink(j, k)
+            if ns.Lib:contains(itemsToTrade, containerItemLink) then
+                ns.addon:Print('-- trade', j, k, containerItemLink, tradeSlot)
+                C_Container.PickupContainerItem(j, k)
+                ClickTradeButton(tradeSlot)
+                ClearCursor()
+                tradeSlot = tradeSlot + 1
 
-		PickupContainerItem(container, slot)
-		ClickTradeButton(i)
-
-		tinsert(self.awarding.trading.items, itemLink)
-	end
+                tinsert(self.awarding.trading.items, containerItemLink)
+            end
+        end
+    end
 
 	AcceptTrade()
 end
 
 
-function LootDistWindow:handleTradeAccepted()
+function LootDistWindow:handleTradeClosed()
 	local player = self.awarding.trading.player
+    local itemsToTrade = ns.db.loot.toTrade[player]
 
-	if player == nil then
+    ns.addon:Print('trade closed; player:', player, 'toTrade:', itemsToTrade)
+
+	if itemsToTrade == nil then
+        ns.addon:Print('-- no items to trade')
 		return
 	end
 
-	for _, itemLink in ipairs(self.awarding.trading.items) do
-		self:successfulAward(itemLink, player)
-	end
+    C_Timer.After(1, function()
+        local traded = ns.Lib:deepcopy(itemsToTrade)
+
+        for _, itemLink in ipairs(itemsToTrade) do
+            ns.addon:Print('-- to trade: ', itemLink)
+            -- iterate through bags (j), and items (k) to find self.itemLink
+            -- if we find an item that still needs to be traded, remove from traded array
+            for j = 0, NUM_BAG_SLOTS do
+                for k = 0, C_Container.GetContainerNumSlots(j) do
+                    local containerItemLink = C_Container.GetContainerItemLink(j, k)
+                    if containerItemLink == itemLink then
+                        ns.addon:Print('--', itemLink, 'still in bags')
+                        ns.Lib:remove(traded, itemLink)
+                    end
+                end
+            end
+        end
+
+        for _, itemLink in ipairs(traded) do
+            self:successfulAwardTrade(itemLink, player)
+        end
+    end)
+
+	self.awarding.trading = {}
 end
 
 
-function LootDistWindow:handleTradeClosed()
-	self.awarding.trading = {}
+function LootDistWindow:successfulAwardTrade(itemLink, player)
+    ns.addon:Print('successful trade of', itemLink, 'to', player)
+    ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
 end
 
 
