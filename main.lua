@@ -250,13 +250,11 @@ function addon:modifyEpgp(changes, percent)
                     local altCharData = ns.db.standings[altCharGuid]
 
                     if ns.cfg.syncAltEp then
-                        self:Print('syncing EP for ' .. alt .. ' with ' .. main)
                         local diff = charData.ep - altCharData.ep
                         self:modifyEpgpSingle(altCharGuid, 'EP', diff, 'alt_sync: ' .. charGuid)
                     end
 
                     if ns.cfg.syncAltGp then
-                        self:Print('syncing GP for ' .. alt .. ' with ' .. main)
                         local diff = charData.gp - altCharData.gp
                         self:modifyEpgpSingle(altCharGuid, 'GP', diff, 'alt_sync: ' .. charGuid)
                     end
@@ -294,7 +292,19 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
     local event = {time(), charGuid, mode, diff, reason}
     table.insert(ns.db.history, event)
 
-    self:Print(event[1], event[2], event[3], event[4], event[5])
+    if diff ~= 0 then
+        local verb = 'gained'
+        local amount = diff
+
+        if diff < 0 then
+            verb = 'lost'
+            amount = -diff
+        end
+
+        local baseReason = ns.Lib:split(reason, ':')[1]
+
+        self:Print(string.format('%s %s %d %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
+    end
 end
 
 
@@ -393,11 +403,11 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
     local ep = ns.cfg.encounterEp[encounterId]
 
     if ep == nil then
-        addon:Print('Encounter (' .. encounterId .. ') not in encounters table!')
+        addon:Print('Encounter "' .. encounterName .. '" (' .. encounterId .. ') not in encounters table!')
         return
     end
 
-    local reason = 'boss kill: ' .. encounterName .. ' (' .. encounterId .. ')'
+    local reason = 'boss kill: "' .. encounterName .. '" (' .. encounterId .. ')'
 
     local changes = {}
 

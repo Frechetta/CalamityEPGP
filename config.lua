@@ -1,7 +1,7 @@
 local addonName, ns = ...  -- Namespace
 
 local Config = {
-    initialized = false,
+    altManagementMenuInitialized = false,
     defaults = {
         lmMode = false,
         defaultDecay = 10,
@@ -14,6 +14,17 @@ local Config = {
         encounterEp = {},
     }
 }
+
+-- add default encounter EP to defaults
+for _, expansion in ipairs(ns.values.epDefaults) do
+    for _, instance in ipairs(expansion[2]) do
+        for _, encounter in ipairs(instance[2]) do
+            local encounterId = encounter[2]
+            local ep = encounter[3]
+            Config.defaults.encounterEp[encounterId] = ep
+        end
+    end
+end
 
 ns.Config = Config
 
@@ -70,22 +81,14 @@ function Config:init()
         },
     }
 
-    for _, expansion in ipairs(ns.values.epDefaults) do
-        for _, instance in ipairs(expansion[2]) do
-            for _, encounter in ipairs(instance[2]) do
-                local encounterId = encounter[2]
-                local ep = encounter[3]
-                self.defaults.encounterEp[encounterId] = ep
-            end
-        end
-    end
-
+    -- add defaults to ns.cfg if it's not already poulated
     for optName, default in pairs(self.defaults) do
         if ns.cfg[optName] == nil then
             ns.cfg[optName] = default
         end
     end
 
+    -- create options menus
     self:addOptionsMenu(addonName, menus.root)
     self:initAltManagementMenu()
     self:addOptionsMenu(addonName .. '_LootDistribution', menus.lootDistribution, addonName)
@@ -109,9 +112,9 @@ end
 
 
 function Config:refreshAltManagementMenu()
-    if not Config.initialized and Config.panel:GetWidth() ~= 0 then
+    if not Config.altManagementMenuInitialized and Config.panel:GetWidth() ~= 0 then
         Config:createAltManagementMenu()
-        Config.initialized = true
+        Config.altManagementMenuInitialized = true
     end
 
     Config:setAltManagementData()

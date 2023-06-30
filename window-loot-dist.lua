@@ -296,7 +296,15 @@ function LootDistWindow:stopRoll()
     self.mainFrame.clearButton:Enable()
     self.mainFrame.deButton:Enable()
 
-    -- TODO: implement close on award
+    -- announce all rolls in order
+    self:print('Rolls:')
+    for roller, rollData in pairs(self.data.rolls) do
+        local type = rollData.type
+        local roll = rollData[type]
+        local pr = rollData['pr']
+
+        self:print(string.format('%s: %s, PR: %f, Roll: %d', roller, type, pr, roll))
+    end
 end
 
 
@@ -326,8 +334,15 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
         return
     end
 
+    local rollerGuid = ns.Lib:getPlayerGuid(roller)
+    local charData = ns.db.standings[rollerGuid]
+    local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
+
+    local newRoll = false
+
     if self.data.rolls[roller] == nil then
         self.data.rolls[roller] = {}
+        newRoll = true
     end
 
     local rollerData = self.data.rolls[roller]
@@ -338,14 +353,10 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 
     roll = rollerData[rollType]
 
-    local rollerGuid = ns.Lib:getPlayerGuid(roller)
-    local charData = ns.db.standings[rollerGuid]
-    local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
-
     rollerData['type'] = rollType
     rollerData['pr'] = priority
 
-    -- don't print if roll is already there unless response is changed
+    -- TODO: don't print if roll is already there unless response is changed
     self:print(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
 
     self:setData()
@@ -631,7 +642,6 @@ function LootDistWindow:handleTradeShow()
 	local player, _ = UnitName('npc')
 
 	self.trading.player = player
-	-- self.trading.items = {}
 
 	local itemsToTrade = ns.db.loot.toTrade[player]
 	if itemsToTrade == nil then
@@ -655,7 +665,7 @@ function LootDistWindow:handleTradeShow()
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
             if ns.Lib:contains(itemsToTrade, containerItemLink) then
-                ns.addon:Print('-- trade', container, slot, containerItemLink, tradeSlot)
+                ns.addon:Print('-- trade', container, slot, containerItemLink)
 
                 C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
                 i = i + 1
@@ -699,7 +709,7 @@ function LootDistWindow:handleTradeComplete()
 
     local itemsToTrade = ns.db.loot.toTrade[player]
 
-    ns.addon:Print(player, itemsToTrade)
+    ns.addon:Print('--', player, itemsToTrade)
     if itemsToTrade == nil then
         return
     end
@@ -716,7 +726,7 @@ function LootDistWindow:successfulAward(itemLink, player)
     for _, awardedItem in ipairs(ns.db.loot.awarded[itemLink][player]) do
         ns.addon:Print(awardedItem)
         if not awardedItem.given then
-            ns.addon:Print('set given')
+            ns.addon:Print('-- set given')
             awardedItem.given = true
             awardedItem.givenTime = time()
         end

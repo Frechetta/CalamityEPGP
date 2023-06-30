@@ -66,6 +66,21 @@ function Lib:keys(table)
 end
 
 
+function split(str, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+
+    local elements = {}
+
+    for s in string.gmatch(str, "([^"..sep.."]+)") do
+        tinsert(elements, s)
+    end
+
+    return  elements
+end
+
+
 function Lib:getPlayerGuid(playerName)
     local guid = self.playerNameToGuid[playerName]
 
