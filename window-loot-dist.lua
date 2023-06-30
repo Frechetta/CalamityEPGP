@@ -15,10 +15,7 @@ local LootDistWindow = {
     rolling = false,
     rollPattern = ns.Lib:createPattern(RANDOM_ROLL_RESULT),
     selectedRoller = nil,
-    awarding = {
-        candidates = {},
-        items = {},
-    },
+    currentLoot = {},
     trading = {},
 }
 
@@ -304,14 +301,14 @@ function LootDistWindow:stopRoll()
     self.mainFrame.deButton:Enable()
 
     -- announce all rolls in order
-    if #self.data.rolls > 0 then
+    if ns.Lib:len(self.data.rolls) > 0 then
         self:print('Rolls:')
         for roller, rollData in pairs(self.data.rolls) do
             local type = rollData.type
             local roll = rollData[type]
             local pr = rollData['pr']
 
-            self:print(string.format('%s: %s, PR: %f, Roll: %d', roller, type, pr, roll))
+            self:print(string.format('- %s: %s, PR: %.2f, Roll: %d', roller, type, pr, roll))
         end
     end
 end
@@ -507,7 +504,7 @@ function LootDistWindow:getLoot()
             ns.addon:Print(i, itemLink)
 
             if itemLink ~= nil then
-                self.awarding.items[itemLink] = i
+                self.currentLoot[itemLink] = i
             end
         end
 	end
@@ -515,8 +512,7 @@ end
 
 
 function LootDistWindow:clearLoot()
-    self.awarding.items = {}
-	self.awarding.candidates = {}
+    self.currentLoot = {}
 end
 
 
@@ -542,23 +538,7 @@ end
 function LootDistWindow:award(awardee)
     self = LootDistWindow
 
-    ns.addon:Print('awarded to', awardee)
-
-	local itemIndex = self.awarding.items[self.itemLink]
-
-    -- item is from loot window
-	if itemIndex ~= nil then
-		local playerIndex = ns.addon.raidRoster[awardee]
-
-		if playerIndex ~= nil then
-			GiveMasterLoot(itemIndex, playerIndex)
-		else
-			self:print(awardee .. ' is not in the raid')
-		end
-    -- item is in inventory
-    else
-        self:markAsToTrade(self.itemLink, awardee)
-	end
+    ns.addon:Print(self.itemLink, 'awarded to', awardee)
 
     -- add item to awarded table
     if ns.db.loot.awarded[self.itemLink] == nil then
@@ -570,18 +550,38 @@ function LootDistWindow:award(awardee)
     end
 
     tinsert(ns.db.loot.awarded[self.itemLink][awardee], {
+        itemLink = self.itemLink,
         awardTime = time(),
         given = false,
         givenTime = nil,
         collected = false,
     })
 
+	local itemIndex = self.currentLoot[self.itemLink]
+
+	if itemIndex ~= nil then
+        -- item is from loot window
+		local playerIndex = ns.addon.raidRoster[awardee]
+
+		if playerIndex ~= nil then
+			GiveMasterLoot(itemIndex, playerIndex)
+		else
+			self:print(awardee .. ' is not in the raid')
+		end
+    elseif awardee == UnitName('player') then
+        -- item is in inventory and was awarded to me
+        self:successfulAward(self.itemLink, awardee)
+    else
+        -- item is in inventory and awarded to someone else and must be traded
+        self:markAsToTrade(self.itemLink, awardee)
+	end
+
     -- get and award gp
     local gp = ns.Lib:getGp(self.itemLink)
     ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, 'award: ' .. self.itemLink}})
 	self:print('Item ' .. self.itemLink .. ' awarded to ' .. awardee .. ' for ' .. gp .. ' GP')
 
-    if ns.cfg.closeOnAward then
+    if self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()
     end
 end
@@ -597,12 +597,16 @@ function LootDistWindow:handleLootReceived(itemLink, player)
 
     -- I received the item
     if player == 'You' then
+        ns.addon:Print('i received', itemLink)
         local myName = UnitName('player')
+        ns.addon:Print('-- my name:', myName)
 
         -- iterate over awarded items for ones that haven't been collected
         for awardedPlayer, awardedItem in pairs(awardedData) do
             if not awardedItem.given and not awardedItem.collected then
                 awardedItem.collected = true
+
+                ns.addon:Print(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, awardedItem))
 
                 -- TODO: fix
                 -- if this item was awarded to me, mark it as successful
@@ -730,15 +734,15 @@ end
 
 
 function LootDistWindow:successfulAward(itemLink, player)
-    ns.addon:Print(itemLink, 'given to', player)
+    ns.addon:Print(itemLink, 'successfully given to', player)
 
     local awardedItems = ns.db.loot.awarded[itemLink][player]
 
     if awardedItems ~= nil then
         for _, awardedItem in ipairs(awardedItems) do
-            ns.addon:Print(awardedItem)
+            ns.addon:Print('-- awardedItem:', awardedItem.itemLink)
             if not awardedItem.given then
-                ns.addon:Print('-- set given')
+                ns.addon:Print('---- set given')
                 awardedItem.given = true
                 awardedItem.givenTime = time()
             end

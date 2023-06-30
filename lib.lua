@@ -156,6 +156,10 @@ end
 
 
 function Lib:getGp(itemLink)
+    if ns.cfg == nil then
+        return
+    end
+
     local _, _, rarity, ilvl, _, class, subClass, _, slot, _, _ = GetItemInfo(itemLink)
 
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
@@ -208,4 +212,14 @@ function Lib:getItemID(itemString)
 
 	local itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
 	return string.sub(itemString, 1, string.find(itemString, ":") - 1);
+end
+
+function Lib:len(table)
+    local count = 0
+
+    for item in pairs(table) do
+        count = count + 1
+    end
+
+    return count
 end
