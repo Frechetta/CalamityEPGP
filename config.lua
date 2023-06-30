@@ -12,6 +12,9 @@ local Config = {
         gpInitial = ns.values.gpDefaults.initial,
         gpSlotMods = ns.values.gpDefaults.slotModifiers,
         encounterEp = {},
+        minimap = {
+            hide = false,
+        },
     }
 }
 
@@ -48,13 +51,21 @@ function Config:init()
                     get = 'getLmMode',
                     width = 'full',
                 },
+                showMinimapButton = {
+                    type = 'toggle',
+                    name = 'Show minimap button',
+                    order = 2,
+                    width = 'full',
+                    set = 'setShowMinimapButton',
+                    get = 'getShowMinimapButton',
+                },
                 decay = {
                     type = 'input',
                     name = 'Default decay %',
-                    set = 'setDefaultDecay',
-                    get = 'getDefaultDecay',
                     pattern = '%d+',
                     width = 'half',
+                    set = 'setDefaultDecay',
+                    get = 'getDefaultDecay',
                 },
             }
         },
@@ -365,4 +376,12 @@ end
 
 function Config:setCloseOnAward(info, input)
     ns.cfg.closeOnAward = input
+end
+
+function Config:getShowMinimapButton(info)
+    return not ns.cfg.minimap.hide
+end
+
+function Config:setShowMinimapButton(info, input)
+    ns.cfg.minimap.hide = not input
 end

@@ -39,6 +39,9 @@ addon.raidRoster = {}
 
 addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
 
+local ldb = LibStub("LibDataBroker-1.1", true)
+local ldbi = LibStub("LibDBIcon-1.0", true)
+
 
 function addon:OnInitialize()
     self.initialized = false
@@ -185,6 +188,8 @@ function addon:loadGuildData()
         -- Load config module
         ns.Config:init()
 
+        self:initMinimapButton();
+
         self.initialized = true
         addon:Print(string.format('v%s loaded', addon.version))
     end
@@ -319,6 +324,61 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
         self:Print(string.format('%s %s %d %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
     end
+end
+
+
+function addon:initMinimapButton()
+    local minimapButton = ldb:NewDataObject("CalamityEPGP", {
+        type = "launcher",
+        text = "CalamityEPGP",
+        icon = "Interface\\AddOns\\CalamityEPGP\\Icons\\icon",
+        OnClick = function(self, button)
+            if button == "LeftButton" then
+                addon:showMainWindow()
+            elseif button == "RightButton" then
+                addon:openOptions();
+            elseif button == "MiddleButton" then
+                -- CEPGP_Info.Version.List = {};
+                -- CEPGP_Info.Version.ListSearch = "GUILD";
+                -- for i = 1, GetNumGuildMembers() do
+                --     local name, _, _, _, class, _, _, _, online, _, classFileName = GetGuildRosterInfo(i);
+                --     name = Ambiguate(name, "all");
+                --     if online then
+                --         CEPGP_Info.Version.List[name] = CEPGP_Info.Version.List[name] or {
+                --             [1] = "Addon not enabled",
+                --             [2] = class,
+                --             [3] = classFileName,
+                --         };
+                --     else
+                --         CEPGP_Info.Version.List[name] = {
+                --             [1] = "Offline",
+                --             [2] = class,
+                --             [3] = classFileName
+                --         };
+                --     end
+                -- end
+                -- CEPGP_addAddonMsg("version-check", "GUILD");
+                -- ShowUIPanel(CEPGP_version);
+                -- if CEPGP_version:IsVisible() then
+                --     CEPGP_UpdateVersionScrollBar();
+                -- end
+            end
+        end,
+        OnEnter = function(self)
+            local inRaidText = ''
+            if IsInRaid() and IsMasterLooter() then
+                inRaidText = string.format('\n%s is %s for this raid\n', addonName, addon.useForRaid and "|cFF00FF00active|r|c00FFC100" or "|cFFFF0000inactive|r|c00FFC100")
+            end
+            local text = string.format('%s\nVersion: %s\n%s\nLeft Click: Open the main window\nRight Click: Open the configuration menu', addonName, addon.version, inRaidText)
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+            GameTooltip:SetText(text)
+        end,
+        OnLeave = function()
+            GameTooltip:Hide();
+        end
+    })
+
+    ldbi:Register('CalamityEPGP', minimapButton, ns.cfg.minimap);
 end
 
 
@@ -472,8 +532,6 @@ end
 
 
 function addon:handleTooltipUpdate(frame)
-    self = addon
-
     if frame == nil then
         return
     end
@@ -485,13 +543,49 @@ function addon:handleTooltipUpdate(frame)
     end
 
     local itemId = ns.Lib:getItemID(ns.Lib:getItemString(itemLink))
-
     if not ns.Lib:itemExists(itemId) then
         return
     end
 
     local gp = ns.Lib:getGp(itemLink)
+
+    if gp == nil then
+        gp = '?'
+    end
+
     frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
+
+    local awardedList = {}
+
+    local itemAwardedData = ns.db.loot.awarded[itemLink]
+    if itemAwardedData ~= nil then
+        for player, items in pairs(itemAwardedData) do
+            for _, item in ipairs(items) do
+                local given = item.given
+                tinsert(awardedList, {player, given})
+            end
+        end
+    end
+
+    table.sort(awardedList, function(left, right)
+        return left[1] < right[1]
+    end)
+
+    if #awardedList > 0 then
+        frame:AddLine('Awarded To')
+
+        for _, awardedItem in ipairs(awardedList) do
+            local player = awardedItem[1]
+            local given = awardedItem[2] and 'yes' or 'no'
+
+            local _, classFileName = UnitClass(player)
+            local classColor = RAID_CLASS_COLORS[classFileName]
+
+            local playerColored = classColor:WrapTextInColorCode(player)
+
+            frame:AddLine(string.format('  %s | Given: %s', playerColored, given))
+        end
+    end
 end
 
 

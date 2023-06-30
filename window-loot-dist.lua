@@ -17,6 +17,7 @@ local LootDistWindow = {
     selectedRoller = nil,
     currentLoot = {},
     trading = {},
+    disenchanter = nil,
 }
 
 ns.LootDistWindow = LootDistWindow
@@ -69,10 +70,12 @@ function LootDistWindow:createWindow()
     mainFrame.itemIcon:SetSize(30, 30)
     mainFrame.itemIcon:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -15)
     mainFrame.itemIcon:SetTexture(self.defaultItemIcon)
+    mainFrame.itemIcon:EnableMouse(true)
 
     mainFrame.itemLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.itemLabel:SetText('Invalid item')
     mainFrame.itemLabel:SetPoint('LEFT', mainFrame.itemIcon, 'RIGHT', 10, 0)
+    mainFrame.itemLabel:EnableMouse(true)
 
     mainFrame.stopButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.stopButton:SetText('Stop')
@@ -86,6 +89,11 @@ function LootDistWindow:createWindow()
     mainFrame.startButton:SetPoint('RIGHT', mainFrame.stopButton, 'LEFT', 0, 0)
     mainFrame.startButton:SetWidth(80)
 
+    mainFrame.gpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.gpLabel:SetPoint('RIGHT', mainFrame.startButton, 'LEFT', -15, 0)
+    mainFrame.gpLabel:SetJustifyH('RIGHT')
+    mainFrame.gpLabel:SetTextColor(1, 1, 0)
+
     mainFrame.timerLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.timerLabel:SetText('Timer (s):')
     mainFrame.timerLabel:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -17)
@@ -97,10 +105,6 @@ function LootDistWindow:createWindow()
     mainFrame.timerEditBox:SetWidth(30)
     mainFrame.timerEditBox:SetNumeric(true)
     mainFrame.timerEditBox:SetAutoFocus(false)
-
-    mainFrame.gpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.gpLabel:SetPoint('LEFT', mainFrame.timerEditBox, 'RIGHT', 25, 0)
-    self.mainFrame.gpLabel:SetTextColor(1, 1, 0)
 
     mainFrame.deButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.deButton:SetText('Disenchant')
@@ -236,7 +240,12 @@ function LootDistWindow:draw(itemLink)
     local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
+    self.mainFrame.itemIcon:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end);
+    self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end);
+
     self.mainFrame.itemLabel:SetText(itemLink)
+    self.mainFrame.itemLabel:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end);
+    self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end);
 
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
@@ -620,8 +629,8 @@ function LootDistWindow:handleLootReceived(itemLink, player)
                 return
             end
         end
-    -- item went to someone else, mark it as successful
     else
+        -- item went to someone else, mark it as successful
         self:successfulAward(itemLink, player)
     end
 end
@@ -736,24 +745,50 @@ end
 function LootDistWindow:successfulAward(itemLink, player)
     ns.addon:Print(itemLink, 'successfully given to', player)
 
+    ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
+
     local awardedItems = ns.db.loot.awarded[itemLink][player]
 
     if awardedItems ~= nil then
         for _, awardedItem in ipairs(awardedItems) do
-            ns.addon:Print('-- awardedItem:', awardedItem.itemLink)
+            ns.addon:Print(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
             if not awardedItem.given then
                 ns.addon:Print('---- set given')
                 awardedItem.given = true
                 awardedItem.givenTime = time()
+                return
             end
         end
     end
-
-    ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
 end
 
 
 function LootDistWindow:disenchant()
     self = LootDistWindow
-    ns.addon:Print('disenchant', self.itemLink)
+
+    if self.disenchanter == nil then
+        ns.DeSelectWindow:createWindow()
+        ns.DeSelectWindow:show()
+        return
+    end
+
+	self:print(string.format('Item %s will be disenchanted by %s', self.itemLink, self.disenchanter))
+
+    local itemIndex = self.currentLoot[self.itemLink]
+
+	if itemIndex ~= nil then
+        -- item is from loot window
+		local playerIndex = ns.addon.raidRoster[self.disenchanter]
+
+		if playerIndex ~= nil then
+			GiveMasterLoot(itemIndex, playerIndex)
+		else
+			self:print(self.disenchanter .. ' is not in the raid')
+            return
+		end
+	end
+
+    if self.mainFrame.closeOnAwardCheck:GetChecked() then
+        self.mainFrame:Hide()
+    end
 end
