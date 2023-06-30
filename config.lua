@@ -39,6 +39,7 @@ function Config:init()
             handler = self,
             type = 'group',
             args = {
+                -- TODO: disable if not officer
                 lmMode = {
                     type = 'toggle',
                     name = 'Loot master mode',

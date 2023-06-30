@@ -178,3 +178,34 @@ function Lib:getGp(itemLink)
 
     return gp
 end
+
+
+function Lib:itemExists(itemId)
+	if not itemId or not tonumber(itemId) then return false; end
+
+	if C_Item.DoesItemExistByID(tonumber(itemId)) then
+		return true;
+	else
+		return false;
+	end
+end
+
+function Lib:getItemString(itemLink)
+	if not itemLink then
+		return nil;
+	end
+
+	local itemString = string.find(itemLink, "item[%-?%d:]+");
+	if not itemString then return nil; end
+	itemString = strsub(itemLink, itemString, string.len(itemLink) - (string.len(itemLink) - 2) - 6);
+	return itemString;
+end
+
+function Lib:getItemID(itemString)
+	if not itemString or not string.find(itemString, "item:") then
+		return nil;
+	end
+
+	local itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
+	return string.sub(itemString, 1, string.find(itemString, ":") - 1);
+end

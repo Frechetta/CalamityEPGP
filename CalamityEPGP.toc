@@ -11,6 +11,7 @@ embeds.xml
 
 values.lua
 lib.lua
+window-confirm.lua
 config.lua
 window-modify-epgp.lua
 window-add-ep.lua

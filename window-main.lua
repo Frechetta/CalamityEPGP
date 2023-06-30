@@ -41,11 +41,13 @@ function MainWindow:createWindow()
     mainFrame.optionsButton:SetPoint('RIGHT', mainFrame, 'RIGHT', -20, 0)
     mainFrame.optionsButton:SetWidth(97)
 
+    -- TODO: disable for non officers
     mainFrame.addEpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.addEpButton:SetText('Add EP')
     mainFrame.addEpButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 10, 8)
     mainFrame.addEpButton:SetWidth(90)
 
+    -- TODO: disable for non officers
     mainFrame.decayEpgpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.decayEpgpButton:SetText('Decay EPGP')
     mainFrame.decayEpgpButton:SetPoint('LEFT', mainFrame.addEpButton, 'RIGHT', 2, 0)
@@ -174,55 +176,6 @@ function MainWindow:createTable()
     end
 end
 
-function MainWindow:addRow(index)
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    local rowHeight = 15
-
-    local row = CreateFrame('Frame', nil, parent.contents)
-
-    local yOffset = (rowHeight + 3) * (index - 1)
-
-    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-    row:SetWidth(parent.header:GetWidth())
-    row:SetHeight(rowHeight)
-
-    row.columns = {}
-
-    for i = 1, #data.header do
-        -- We will set the size later, once we've computed the column width based on the data
-        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-
-        column:SetPoint('TOP', row, 'TOP', 0, 0)
-
-        table.insert(row.columns, column)
-    end
-
-    -- Highlight
-    row:EnableMouse()
-
-    local highlightFrame = parent.contents.rowHighlight
-
-    row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-        highlightFrame:Show()
-    end)
-
-    row:SetScript('OnLeave', function()
-        highlightFrame:Hide()
-    end)
-
-    row:SetScript('OnMouseUp', function(self, button)
-        if button == 'LeftButton' then
-            MainWindow:handleRowClick(row)
-        end
-    end)
-
-    table.insert(parent.rows, row)
-end
-
 function MainWindow:setData()
     local parent = self.mainFrame.tableFrame
     local data = self.data
@@ -315,6 +268,55 @@ function MainWindow:setData()
     end
 end
 
+function MainWindow:addRow(index)
+    local parent = self.mainFrame.tableFrame
+    local data = self.data
+
+    local rowHeight = 15
+
+    local row = CreateFrame('Frame', nil, parent.contents)
+
+    local yOffset = (rowHeight + 3) * (index - 1)
+
+    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
+    row:SetWidth(parent.header:GetWidth())
+    row:SetHeight(rowHeight)
+
+    row.columns = {}
+
+    for i = 1, #data.header do
+        -- We will set the size later, once we've computed the column width based on the data
+        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+
+        column:SetPoint('TOP', row, 'TOP', 0, 0)
+
+        table.insert(row.columns, column)
+    end
+
+    -- Highlight
+    row:EnableMouse()
+
+    local highlightFrame = parent.contents.rowHighlight
+
+    row:SetScript('OnEnter', function()
+        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+        highlightFrame:Show()
+    end)
+
+    row:SetScript('OnLeave', function()
+        highlightFrame:Hide()
+    end)
+
+    row:SetScript('OnMouseUp', function(self, button)
+        if button == 'LeftButton' then
+            MainWindow:handleRowClick(row)
+        end
+    end)
+
+    table.insert(parent.rows, row)
+end
+
 function MainWindow:handleHeaderClick(headerIndex)
     local order = 'ascending'
     if self.data.sorted.columnIndex == headerIndex and self.data.sorted.order == order then
@@ -326,14 +328,20 @@ function MainWindow:handleHeaderClick(headerIndex)
 end
 
 function MainWindow:handleRowClick(row)
+    -- TODO: if not officer, return
+
     ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
 end
 
 function MainWindow:handleAddEpClick()
+    -- TODO: if not officer, return
+
     ns.AddEpWindow:show()
 end
 
 function MainWindow:handleDecayEpgpClick()
+    -- TODO: if not officer, return
+
     ns.DecayEpgpWindow:show()
 end
 

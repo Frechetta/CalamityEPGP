@@ -37,8 +37,13 @@ addon.initialized = false
 addon.useForRaid = false
 addon.raidRoster = {}
 
+addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
+
 
 function addon:OnInitialize()
+    self.initialized = false
+    self.useForRaid = false
+
     -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
     GuildRoster()
 end
@@ -83,6 +88,10 @@ function addon:openOptions()
 end
 
 function addon:handleItemClick(itemLink, mouseButton)
+    if not ns.cfg.lmMode then
+        return
+    end
+
     if not itemLink
             or type(itemLink) ~= "string"
             or (mouseButton and mouseButton ~= "LeftButton")
@@ -98,6 +107,10 @@ function addon:handleItemClick(itemLink, mouseButton)
 end
 
 function addon:showLootDistWindow(itemLink)
+    if not ns.cfg.lmMode then
+        return
+    end
+
     ns.LootDistWindow:createWindow()
     ns.LootDistWindow:draw(itemLink)
 end
@@ -173,9 +186,7 @@ function addon:loadGuildData()
         ns.Config:init()
 
         self.initialized = true
-        addon:Print('loaded')
-
-        -- self.showMainWindow(self)
+        addon:Print(string.format('v%s loaded', addon.version))
     end
 end
 
@@ -227,6 +238,8 @@ end
 
 
 function addon:modifyEpgp(changes, percent)
+    -- TODO: if not officer, return
+
     for _, change in ipairs(changes) do
         local charGuid = change[1]
         local mode = change[2]
@@ -267,6 +280,8 @@ end
 
 
 function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
+    -- TODO: if not officer, return
+
     local charData = ns.db.standings[charGuid]
     mode = string.lower(mode)
 
@@ -311,6 +326,10 @@ end
 -- EVENT HANDLERS
 -----------------
 function addon:handleChatMsg(self, message)
+    if not ns.cfg.lmMode then
+        return
+    end
+
     for roller, roll, low, high in string.gmatch(message, ns.LootDistWindow.rollPattern) do
         roll = tonumber(roll) or 0;
         low = tonumber(low) or 0;
@@ -334,48 +353,77 @@ end
 
 
 function addon:handleTradeRequest(player)
+    if not ns.cfg.lmMode then
+        return
+    end
+
 	ns.LootDistWindow:handleTradeRequest(player)
 end
 
 
 function addon:handleTradeShow()
+    if not ns.cfg.lmMode then
+        return
+    end
+
 	ns.LootDistWindow:handleTradeShow()
 end
 
 
 function addon:handleTradeClosed()
+    if not ns.cfg.lmMode then
+        return
+    end
+
 	ns.LootDistWindow:handleTradeClosed()
 end
 
 
 function addon:handleTradePlayerItemChanged()
+    if not ns.cfg.lmMode then
+        return
+    end
+
     ns.LootDistWindow:handleTradePlayerItemChanged()
 end
 
 
 function addon:handleEnteredRaid()
+    self = addon
+
     self:loadRaidRoster()
 
-    -- TODO: check if you want to use addon for raid if LM mode
-    if not self.useForRaid and ns.cfg.lmMode then
-        -- open confirm window
-        -- on yes, self.useForRaid = true
-        self.useForRaid = true
+    if ns.cfg.lmMode and not self.useForRaid then
+        ns.ConfirmWindow:show('Use CalamityEPGP for this raid?',
+                              function() addon.useForRaid = true; self:Print('use for raid') end,   -- callback for "Yes"
+                              function() addon.useForRaid = false; self:Print('do not use for raid') end)  -- callback for "No"
     end
 end
 
 
 function addon:handleLootReady()
+    if not ns.cfg.lmMode then
+        return
+    end
+
     ns.LootDistWindow:getLoot()
 end
 
 
 function addon:handleLootClosed()
+    if not ns.cfg.lmMode then
+        return
+    end
+
     ns.LootDistWindow:clearLoot()
 end
 
 
 function addon:handleChatMsgLoot(_, msg)
+    if not ns.cfg.lmMode then
+        return
+    end
+
     local player, itemLink = msg:match('(%a+) receives? loot: (.+)%.')
 
     if player == nil or itemLink == nil then
@@ -387,6 +435,10 @@ end
 
 
 function addon:handleUiInfoMessage(self, _, msg)
+    if not ns.cfg.lmMode then
+        return
+    end
+
     if msg == ERR_TRADE_COMPLETE then
         ns.LootDistWindow:handleTradeComplete()
     end
@@ -419,6 +471,30 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
 end
 
 
+function addon:handleTooltipUpdate(frame)
+    self = addon
+
+    if frame == nil then
+        return
+    end
+
+    local _, itemLink = frame:GetItem()
+
+    if not itemLink or itemLink == nil or itemLink == '' then
+        return
+    end
+
+    local itemId = ns.Lib:getItemID(ns.Lib:getItemString(itemLink))
+
+    if not ns.Lib:itemExists(itemId) then
+        return
+    end
+
+    local gp = ns.Lib:getGp(itemLink)
+    frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
+end
+
+
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
@@ -437,3 +513,7 @@ addon:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())
 end);
+
+hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
+    addon:handleTooltipUpdate(frame)
+end)

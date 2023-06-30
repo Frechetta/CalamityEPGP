@@ -101,6 +101,10 @@ function LootDistWindow:createWindow()
     mainFrame.timerEditBox:SetNumeric(true)
     mainFrame.timerEditBox:SetAutoFocus(false)
 
+    mainFrame.gpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.gpLabel:SetPoint('LEFT', mainFrame.timerEditBox, 'RIGHT', 25, 0)
+    self.mainFrame.gpLabel:SetTextColor(1, 1, 0)
+
     mainFrame.deButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.deButton:SetText('Disenchant')
     mainFrame.deButton:SetPoint('TOPRIGHT', mainFrame.stopButton, 'BOTTOMRIGHT', 0, -15)
@@ -141,7 +145,7 @@ function LootDistWindow:createWindow()
     mainFrame.startButton:SetScript('OnClick', self.startRoll)
     mainFrame.stopButton:SetScript('OnClick', function() duration = 0 end)
     mainFrame.clearButton:SetScript('OnClick', self.clearRolls)
-    mainFrame.awardButton:SetScript('OnClick', self.award)
+    mainFrame.awardButton:SetScript('OnClick', self.checkAward)
     mainFrame.deButton:SetScript('OnClick', self.disenchant)
 
     self:createTable()
@@ -236,8 +240,11 @@ function LootDistWindow:draw(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
     self.mainFrame.itemLabel:SetText(itemLink)
+
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
+
+    self.mainFrame.gpLabel:SetText('GP: ' .. ns.Lib:getGp(itemLink))
 
     self.selectedRoller = nil
     self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
@@ -297,13 +304,15 @@ function LootDistWindow:stopRoll()
     self.mainFrame.deButton:Enable()
 
     -- announce all rolls in order
-    self:print('Rolls:')
-    for roller, rollData in pairs(self.data.rolls) do
-        local type = rollData.type
-        local roll = rollData[type]
-        local pr = rollData['pr']
+    if #self.data.rolls > 0 then
+        self:print('Rolls:')
+        for roller, rollData in pairs(self.data.rolls) do
+            local type = rollData.type
+            local roll = rollData[type]
+            local pr = rollData['pr']
 
-        self:print(string.format('%s: %s, PR: %f, Roll: %d', roller, type, pr, roll))
+            self:print(string.format('%s: %s, PR: %f, Roll: %d', roller, type, pr, roll))
+        end
     end
 end
 
@@ -511,12 +520,12 @@ function LootDistWindow:clearLoot()
 end
 
 
-function LootDistWindow:award()
+function LootDistWindow:checkAward()
     self = LootDistWindow
 
-	if not IsMasterLooter() then
+    if not IsMasterLooter() then
 		self:print('You are not the master looter!')
-		return
+		-- return
 	end
 
     local awardee = self.selectedRoller
@@ -524,6 +533,14 @@ function LootDistWindow:award()
     if awardee == nil then
         return
     end
+
+    ns.ConfirmWindow:show(string.format('Award %s to %s?', self.itemLink, awardee),
+                          function() self:award(awardee) end)
+end
+
+
+function LootDistWindow:award(awardee)
+    self = LootDistWindow
 
     ns.addon:Print('awarded to', awardee)
 
@@ -587,6 +604,7 @@ function LootDistWindow:handleLootReceived(itemLink, player)
             if not awardedItem.given and not awardedItem.collected then
                 awardedItem.collected = true
 
+                -- TODO: fix
                 -- if this item was awarded to me, mark it as successful
                 if awardedPlayer == myName then
                     self:successfulAward(itemLink, myName)
