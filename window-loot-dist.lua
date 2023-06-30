@@ -499,15 +499,6 @@ function LootDistWindow:getLoot()
 
             if itemLink ~= nil then
                 self.awarding.items[itemLink] = i
-
-                for j = 1, GetNumGroupMembers() do
-                    local candidate = GetMasterLootCandidate(i, j)
-                    ns.addon:Print('--', j, candidate)
-
-                    if candidate ~= nil then
-                        self.awarding.candidates[candidate] = j
-                    end
-                end
             end
         end
 	end
@@ -540,12 +531,12 @@ function LootDistWindow:award()
 
     -- item is from loot window
 	if itemIndex ~= nil then
-		local playerIndex = self.awarding.candidates[awardee]
+		local playerIndex = ns.addon.raidRoster[awardee]
 
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			self:print(awardee .. ' is ineligible for receiving loot; marked as to trade')
+			self:print(awardee .. ' is not in the raid')
 		end
     -- item is in inventory
     else
@@ -723,12 +714,16 @@ end
 function LootDistWindow:successfulAward(itemLink, player)
     ns.addon:Print(itemLink, 'given to', player)
 
-    for _, awardedItem in ipairs(ns.db.loot.awarded[itemLink][player]) do
-        ns.addon:Print(awardedItem)
-        if not awardedItem.given then
-            ns.addon:Print('-- set given')
-            awardedItem.given = true
-            awardedItem.givenTime = time()
+    local awardedItems = ns.db.loot.awarded[itemLink][player]
+
+    if awardedItems ~= nil then
+        for _, awardedItem in ipairs(awardedItems) do
+            ns.addon:Print(awardedItem)
+            if not awardedItem.given then
+                ns.addon:Print('-- set given')
+                awardedItem.given = true
+                awardedItem.givenTime = time()
+            end
         end
     end
 

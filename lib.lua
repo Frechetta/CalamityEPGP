@@ -66,7 +66,7 @@ function Lib:keys(table)
 end
 
 
-function split(str, sep)
+function Lib:split(str, sep)
     if sep == nil then
         sep = "%s"
     end

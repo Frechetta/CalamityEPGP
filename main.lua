@@ -199,7 +199,7 @@ function addon:loadRaidRoster()
             charData.class = class
         end
 
-        tinsert(self.raidRoster, name)
+        self.raidRoster[name] = i
     end
 end
 
@@ -207,7 +207,6 @@ end
 function addon:getCharName(fullName)
     local nameDash = string.find(fullName, '-')
     local name = string.sub(fullName, 0, nameDash - 1)
-
     return name
 end
 
@@ -411,7 +410,7 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
 
     local changes = {}
 
-    for _, player in ipairs(addon.raidRoster) do
+    for player in pairs(addon.raidRoster) do
         local guid = ns.Lib:getPlayerGuid(player)
         table.insert(changes, {guid, 'EP', ep, reason})
     end

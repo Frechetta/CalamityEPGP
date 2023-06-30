@@ -342,7 +342,7 @@ function MainWindow:filterData()
 
     for _, row in ipairs(self.data.rows) do
         local keep = true
-        if self.mainFrame.raidOnlyButton:GetChecked() and not ns.Lib:contains(ns.addon.raidRoster, row[1]) then
+        if self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil then
             keep = false
         end
 
@@ -405,7 +405,7 @@ function MainWindow:getData()
             charData.name,
             charData.class,
             charData.inGuild and 'Yes' or 'No',
-            charData.rank,
+            charData.rank and charData.rank or 'N/A',
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
             tonumber(string.format("%.2f", charData.ep / charData.gp)),
@@ -419,4 +419,8 @@ function MainWindow:getData()
 
     self:filterData()
     self:sortData(7, 'descending')
+
+    -- for _, row in ipairs(data.rowsFiltered) do
+    --     ns.addon:Print(unpack(row))
+    -- end
 end
