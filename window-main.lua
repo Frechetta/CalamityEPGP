@@ -349,6 +349,10 @@ function MainWindow:handleHistoryClick()
     ns.HistoryWindow:createWindow()
     ns.HistoryWindow:show()
 
+    ns.ModifyEpgpWindow:hide()
+    ns.AddEpWindow:hide()
+    ns.DecayEpgpWindow:hide()
+
     ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
 end
 

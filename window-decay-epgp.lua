@@ -98,9 +98,17 @@ end
 function DecayEpgpWindow:confirm()
     self = DecayEpgpWindow
 
-    local value = self.mainFrame.amountEditBox:GetNumber()
+    local value = self.mainFrame.amountEditBox:GetText()
 
-    if value == nil or value == 0 or value > 100 or value < -1000 then
+    if not ns.Lib:validateEpgpValue(value) then
+        return
+    end
+
+    local value = tonumber(value)
+
+    if value == 0
+            or value < -1000
+            or value > 100 then
         return
     end
 

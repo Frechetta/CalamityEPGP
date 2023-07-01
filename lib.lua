@@ -1,16 +1,26 @@
 local addonName, ns = ...  -- Namespace
 
 Lib = {
-    playerNameToGuid = {}
+    playerNameToGuid = {},
+    epgpAllowedCharacters = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '-'}
 }
 
 ns.Lib = Lib
 
 
 function Lib:find(array, value)
-    for i, v in ipairs(array) do
-        if v == value then
-            return i
+    if type(array) == 'table' then
+        for i, v in ipairs(array) do
+            if v == value then
+                return i
+            end
+        end
+    elseif type(array) == 'string' then
+        for i = 1, #array do
+            local c = array:sub(i, i)
+            if c == value then
+                return i
+            end
         end
     end
 
@@ -228,4 +238,24 @@ function Lib:len(table)
     end
 
     return count
+end
+
+function Lib:validateEpgpValue(value)
+    if value == nil then
+        return false
+    end
+
+    for i = 1, #value do
+        local c = value:sub(i, i)
+        if not self:contains(self.epgpAllowedCharacters, c) then
+            return false
+        end
+    end
+
+    local minusIndex = self:find(value, '-')
+    if minusIndex ~= -1 and minusIndex ~= 1 then
+        return false
+    end
+
+    return true
 end
