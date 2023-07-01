@@ -63,13 +63,17 @@ end
 -- HANDLERS
 -------------------------
 function addon:handleSlashCommand(input)
-    if (input == 'show') then
+    if input == 'show' then
         self.showMainWindow(self)
-    elseif (input == 'cfg') then
+    elseif input == 'history' then
+        ns.HistoryWindow:createWindow()
+        ns.HistoryWindow:show()
+    elseif input == 'cfg' then
         self:openOptions()
     else
         self:Print('Usage:')
         self:Print('show - Opens the main window')
+        self:Print('history - Opens the history window')
         self:Print('cfg - Opens the configuration menu')
     end
 end
@@ -347,30 +351,8 @@ function addon:initMinimapButton()
             elseif button == 'RightButton' then
                 addon:openOptions();
             elseif button == 'MiddleButton' then
-                -- CEPGP_Info.Version.List = {};
-                -- CEPGP_Info.Version.ListSearch = "GUILD";
-                -- for i = 1, GetNumGuildMembers() do
-                --     local name, _, _, _, class, _, _, _, online, _, classFileName = GetGuildRosterInfo(i);
-                --     name = Ambiguate(name, "all");
-                --     if online then
-                --         CEPGP_Info.Version.List[name] = CEPGP_Info.Version.List[name] or {
-                --             [1] = "Addon not enabled",
-                --             [2] = class,
-                --             [3] = classFileName,
-                --         };
-                --     else
-                --         CEPGP_Info.Version.List[name] = {
-                --             [1] = "Offline",
-                --             [2] = class,
-                --             [3] = classFileName
-                --         };
-                --     end
-                -- end
-                -- CEPGP_addAddonMsg("version-check", "GUILD");
-                -- ShowUIPanel(CEPGP_version);
-                -- if CEPGP_version:IsVisible() then
-                --     CEPGP_UpdateVersionScrollBar();
-                -- end
+                ns.HistoryWindow:createWindow()
+                ns.HistoryWindow:show()
             end
         end,
         OnEnter = function(self)
@@ -378,7 +360,7 @@ function addon:initMinimapButton()
             if IsInRaid() and IsMasterLooter() then
                 inRaidText = string.format('\n%s is %s for this raid\n', addonName, addon.useForRaid and "|cFF00FF00active|r|c00FFC100" or "|cFFFF0000inactive|r|c00FFC100")
             end
-            local text = string.format('%s\nVersion: %s\n%s\nLeft Click: Open the main window\nRight Click: Open the configuration menu', addonName, addon.version, inRaidText)
+            local text = string.format('%s\nVersion: %s\n%s\nLeft Click: Open the main window\nMiddle Click: Open the history window\nRight Click: Open the configuration menu', addonName, addon.version, inRaidText)
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
             GameTooltip:SetText(text)
         end,
