@@ -34,13 +34,11 @@ local dbDefaults = {
 }
 
 addon.initialized = false
+addon.minimapButtonInitialized = false
 addon.useForRaid = false
 addon.raidRoster = {}
 
 addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
-
-local ldb = LibStub("LibDataBroker-1.1", true)
-local ldbi = LibStub("LibDBIcon-1.0", true)
 
 
 function addon:OnInitialize()
@@ -146,6 +144,9 @@ function addon:loadGuildData()
         ns.cfg = ns.db.cfg
 
         ns.guild = guildFullName
+
+        self.ldb = LibStub("LibDataBroker-1.1", true)
+        self.ldbi = LibStub("LibDBIcon-1.0", true)
     end
 
     -- Load guild data
@@ -184,11 +185,15 @@ function addon:loadGuildData()
         self:handleEnteredRaid()
     end
 
+    -- if not self.minimapButtonInitialized then
+    --     self:initMinimapButton()
+    -- end
+
     if not self.initialized then
         -- Load config module
         ns.Config:init()
 
-        self:initMinimapButton();
+        self:initMinimapButton()
 
         self.initialized = true
         addon:Print(string.format('v%s loaded', addon.version))
@@ -328,16 +333,16 @@ end
 
 
 function addon:initMinimapButton()
-    local minimapButton = ldb:NewDataObject("CalamityEPGP", {
-        type = "launcher",
-        text = "CalamityEPGP",
-        icon = "Interface\\AddOns\\CalamityEPGP\\Icons\\icon",
+    local minimapButton = self.ldb:NewDataObject(addonName, {
+        type = 'launcher',
+        text = addonName,
+        icon = 'Interface\\AddOns\\' ..  addonName .. '\\Icons\\icon',
         OnClick = function(self, button)
-            if button == "LeftButton" then
+            if button == 'LeftButton' then
                 addon:showMainWindow()
-            elseif button == "RightButton" then
+            elseif button == 'RightButton' then
                 addon:openOptions();
-            elseif button == "MiddleButton" then
+            elseif button == 'MiddleButton' then
                 -- CEPGP_Info.Version.List = {};
                 -- CEPGP_Info.Version.ListSearch = "GUILD";
                 -- for i = 1, GetNumGuildMembers() do
@@ -374,11 +379,13 @@ function addon:initMinimapButton()
             GameTooltip:SetText(text)
         end,
         OnLeave = function()
-            GameTooltip:Hide();
+            GameTooltip:Hide()
         end
     })
 
-    ldbi:Register('CalamityEPGP', minimapButton, ns.cfg.minimap);
+    self.ldbi:Register(addonName, minimapButton, ns.cfg.minimap)
+
+    self.minimapButtonInitialized = true
 end
 
 

@@ -384,4 +384,10 @@ end
 
 function Config:setShowMinimapButton(info, input)
     ns.cfg.minimap.hide = not input
+
+    if ns.cfg.minimap.hide then
+        ns.addon.ldbi:Hide(addonName)
+    else
+        ns.addon.ldbi:Show(addonName)
+    end
 end
