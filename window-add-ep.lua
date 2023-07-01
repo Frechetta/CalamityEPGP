@@ -61,6 +61,11 @@ function AddEpWindow:createWindow()
 
     mainFrame.confirmButton:SetScript('OnClick', function()
         local value = mainFrame.amountEditBox:GetNumber()
+
+        if value == nil or value == 0 or value < 1000000 or value > 1000000 then
+            return
+        end
+
         local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, mainFrame.reasonEditBox:GetText())
 
         local changes = {}

@@ -85,6 +85,11 @@ function ModifyEpgpWindow:createWindow()
 
     mainFrame.confirmButton:SetScript('OnClick', function()
         local value = mainFrame.amountEditBox:GetNumber()
+
+        if value == nil or value == 0 or value < 1000000 or value > 1000000 then
+            return
+        end
+
         local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, mainFrame.reasonEditBox:GetText())
 
         ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
