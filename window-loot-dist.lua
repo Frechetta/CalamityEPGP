@@ -588,7 +588,8 @@ function LootDistWindow:award(awardee)
 
     -- get and award gp
     local gp = ns.Lib:getGp(self.itemLink)
-    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, 'award: ' .. self.itemLink}})
+    local reason = string.format('%s: %s', ns.values.epgpReasons.AWARD, self.itemLink)
+    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
 	self:print('Item ' .. self.itemLink .. ' awarded to ' .. awardee .. ' for ' .. gp .. ' GP')
 
     if self.mainFrame.closeOnAwardCheck:GetChecked() then

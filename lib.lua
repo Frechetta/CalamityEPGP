@@ -77,7 +77,7 @@ function Lib:split(str, sep)
         tinsert(elements, s)
     end
 
-    return  elements
+    return elements
 end
 
 

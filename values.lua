@@ -2,6 +2,14 @@ local _, ns = ...  -- Namespace
 
 ns.values = {}
 
+ns.values.epgpReasons = {
+    MANUAL_SINGLE = 'manual_single',
+    MANUAL_MULTIPLE = 'manual_multiple',
+    DECAY = 'decay',
+    AWARD = 'award',
+    ALT_SYNC = 'alt_sync',
+}
+
 ns.values.gpDefaults = {
     initial = 1,
     -- https://wowpedia.fandom.com/wiki/Enum.InventoryType

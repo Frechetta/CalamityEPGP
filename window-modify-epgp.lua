@@ -85,7 +85,7 @@ function ModifyEpgpWindow:createWindow()
 
     mainFrame.confirmButton:SetScript('OnClick', function()
         local value = mainFrame.amountEditBox:GetNumber()
-        local reason = 'manual_single: ' .. mainFrame.reasonEditBox:GetText()
+        local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, mainFrame.reasonEditBox:GetText())
 
         ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
 

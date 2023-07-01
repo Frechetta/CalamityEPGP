@@ -258,7 +258,7 @@ function addon:modifyEpgp(changes, percent)
 
         self:modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
-        -- sync alt ep/gp depending on setting
+        -- sync alt epgp
         local charData = ns.db.standings[charGuid]
         local name = charData.name
 
@@ -271,14 +271,16 @@ function addon:modifyEpgp(changes, percent)
                     local altCharGuid = ns.Lib:getPlayerGuid(alt)
                     local altCharData = ns.db.standings[altCharGuid]
 
+                    local reason = string.format('%s: %s', ns.values.epgpReasons.ALT_SYNC, charGuid)
+
                     if ns.cfg.syncAltEp then
                         local diff = charData.ep - altCharData.ep
-                        self:modifyEpgpSingle(altCharGuid, 'EP', diff, 'alt_sync: ' .. charGuid)
+                        self:modifyEpgpSingle(altCharGuid, 'EP', diff, reason)
                     end
 
                     if ns.cfg.syncAltGp then
                         local diff = charData.gp - altCharData.gp
-                        self:modifyEpgpSingle(altCharGuid, 'GP', diff, 'alt_sync: ' .. charGuid)
+                        self:modifyEpgpSingle(altCharGuid, 'GP', diff, reason)
                     end
                 end
             end
@@ -540,7 +542,9 @@ end
 
 
 function addon:handleTooltipUpdate(frame)
-    if frame == nil then
+    self = addon
+
+    if frame == nil or not self.initialized then
         return
     end
 
@@ -555,14 +559,15 @@ function addon:handleTooltipUpdate(frame)
         return
     end
 
+    -- add GP to tooltip
     local gp = ns.Lib:getGp(itemLink)
-
     if gp == nil then
         gp = '?'
     end
 
     frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
 
+    -- add awarded list to tooltip
     local awardedList = {}
 
     local itemAwardedData = ns.db.loot.awarded[itemLink]

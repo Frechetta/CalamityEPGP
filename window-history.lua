@@ -2,7 +2,7 @@ local addonName, ns = ...  -- Namespace
 
 local HistoryWindow = {
     data = {
-        ['header'] = {
+        header = {
             {'Time', 'LEFT'},
             {'Player', 'LEFT'},
             {'Issued By', 'LEFT'},
@@ -12,14 +12,23 @@ local HistoryWindow = {
             {'GP Delta', 'RIGHT'},
             {'PR Delta', 'RIGHT'},
         },
-        ['rows'] = {},
-        ['rowsFiltered'] = {},
-    }
+        rows = {},
+        rowsFiltered = {},
+    },
+    epgpReasonsPretty = {
+        [ns.values.epgpReasons.MANUAL_SINGLE] = 'Manual',
+        [ns.values.epgpReasons.MANUAL_MULTIPLE] = 'Manual',
+        [ns.values.epgpReasons.DECAY] = 'Decay',
+        [ns.values.epgpReasons.AWARD] = 'Award',
+        [ns.values.epgpReasons.ALT_SYNC] = 'Alt Sync',
+    },
+    dropDownRows = 8,
+    dropDownItemWidth = 70,
+    dropDownItemHeight = 20,
+    playerName = nil,
 }
 
 ns.HistoryWindow = HistoryWindow
-
-local fontSize = 10
 
 
 function HistoryWindow:createWindow()
@@ -41,22 +50,59 @@ function HistoryWindow:createWindow()
 
     self.mainFrame = mainFrame
 
-	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight');
+	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0);
 	mainFrame.title:SetText('CalamityEPGP History');
 
-    mainFrame.searchLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.searchLabel:SetText('Search:')
-    mainFrame.searchLabel:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -20)
+    mainFrame.playerLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.playerLabel:SetText('Player:')
+    mainFrame.playerLabel:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -20)
 
-    mainFrame.searchEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
-	mainFrame.searchEditBox:SetPoint('LEFT', mainFrame.searchLabel, 'RIGHT', 10, 0)
-    mainFrame.searchEditBox:SetWidth(175)
-    mainFrame.searchEditBox:SetHeight(20)
-    mainFrame.searchEditBox:SetAutoFocus(false)
+    mainFrame.dropDown = CreateFrame('Frame', nil, mainFrame, 'UIDropDownMenuTemplate')
+    mainFrame.dropDown:SetPoint('LEFT', mainFrame.playerLabel, 'RIGHT', -10, 0)
+    mainFrame.dropDown:SetWidth(100)
+    mainFrame.dropDown.Text:SetText('All')
+    mainFrame.dropDown.Button:SetScript('onClick', self.handleDropdownClick)
+
+    mainFrame.reasonsLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.reasonsLabel:SetText('Reason:')
+    mainFrame.reasonsLabel:SetPoint('TOPLEFT', mainFrame.dropDown, 'BOTTOMLEFT', 0, -20)
+
+    mainFrame.reasonChecks = {}
+    for _, reason in pairs(self.epgpReasonsPretty) do
+        local name = mainFrame:GetName() .. '_Check' .. reason
+
+        if _G[name .. 'Text'] == nil then
+            local reasonCheck = CreateFrame('CheckButton', name, mainFrame, 'UICheckButtonTemplate')
+
+            local numChecks = #mainFrame.reasonChecks
+            local relativeFrame
+            local extraOffset
+            if numChecks == 0 then
+                relativeFrame = mainFrame.reasonsLabel
+                extraOffset = 0
+            else
+                relativeFrame = mainFrame.reasonChecks[numChecks]
+                extraOffset = relativeFrame.textWidth
+            end
+
+            reasonCheck:SetPoint('LEFT', relativeFrame, 'RIGHT', 2 + extraOffset, 0)
+            reasonCheck:SetChecked(true)
+
+            local fontString = _G[name .. 'Text']
+            fontString:SetText(reason)
+
+            reasonCheck.textWidth = fontString:GetWidth()
+            reasonCheck.text = reason
+
+            reasonCheck:SetScript('OnClick', function() HistoryWindow:filterData(); HistoryWindow:setData() end)
+
+            tinsert(mainFrame.reasonChecks, reasonCheck)
+        end
+    end
 
     mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
-    mainFrame.tableFrame:SetPoint('TOP', mainFrame.searchLabel, 'BOTTOM', 0, -20)
+    mainFrame.tableFrame:SetPoint('TOP', mainFrame.reasonsLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -8, 7)
@@ -64,8 +110,56 @@ function HistoryWindow:createWindow()
     tinsert(UISpecialFrames, mainFrame:GetName())
 
     self:createTable()
+    self:createDropdownItemsFrame()
 
 	return mainFrame;
+end
+
+function HistoryWindow:createDropdownItemsFrame()
+    local dropDown = self.mainFrame.dropDown
+
+    dropDown.itemsFrame = CreateFrame('Frame', nil, self.mainFrame, 'InsetFrameTemplate2')
+    dropDown.itemsFrame:SetPoint('TOPLEFT', dropDown, 'BOTTOMLEFT', 0, 0)
+    dropDown.itemsFrame:SetAlpha(1)
+    -- dropDown.itemsFrame:SetFrameStrata('DIALOG')
+
+    dropDown.itemsFrame.items = {}
+
+    -- local itemsFrameTexture = dropDown.itemsFrame:CreateTexture(nil, 'BACKGROUND')
+    -- itemsFrameTexture:SetAllPoints()
+    -- itemsFrameTexture:SetColorTexture(0.8, 0, 0, 0)
+    -- itemsFrameTexture:SetBlendMode('ADD')
+
+    dropDown.itemsFrame.itemHighlight = CreateFrame('Frame', nil, dropDown.itemsFrame)
+    local highlightTexture = dropDown.itemsFrame.itemHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
+    highlightTexture:SetBlendMode('ADD')
+    dropDown.itemsFrame.itemHighlight:Hide()
+
+    dropDown.itemsFrame:Hide()
+end
+
+function HistoryWindow:handleDropdownClick()
+    local itemsFrame = HistoryWindow.mainFrame.dropDown.itemsFrame
+
+    if itemsFrame:IsShown() then
+        itemsFrame:Hide()
+        for _, item in ipairs(itemsFrame.items) do
+            item:Hide()
+        end
+    else
+        itemsFrame:Show()
+        for _, item in ipairs(itemsFrame.items) do
+            if item.active then
+                item:Show()
+            end
+        end
+    end
+end
+
+function HistoryWindow:handleDropdownItemClick(player)
+    ns.addon:Print('clicked item', player)
 end
 
 function HistoryWindow:createTable()
@@ -119,7 +213,7 @@ function HistoryWindow:createTable()
         column:SetText(headerText)
         column:SetJustifyH(justify)
         column:SetTextColor(1, 1, 0)
-        column:SetFont('Fonts\\ARIALN.TTF', 10)
+        column:SetFont('Fonts\\ARIAL.TTF', 10)
 
         column.textWidth = column:GetWrappedWidth()
         column.maxWidth = column.textWidth
@@ -148,6 +242,7 @@ function HistoryWindow:show()
 end
 
 function HistoryWindow:setData()
+    -- set table data
     local parent = self.mainFrame.tableFrame
     local data = self.data
 
@@ -160,6 +255,10 @@ function HistoryWindow:setData()
         row:Show()
 
         for j, columnText in ipairs(rowData) do
+            if type(columnText) == 'table' then
+                break
+            end
+
             local headerColumn = parent.header.columns[j]
 
             local column = row.columns[j]
@@ -225,6 +324,80 @@ function HistoryWindow:setData()
             column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
         end
     end
+
+    -- set dropdown data
+    local dropDown = self.mainFrame.dropDown
+
+    local players = {}
+    for _, playerData in pairs(ns.standings) do
+        tinsert(players, playerData.name)
+    end
+
+    table.sort(players)
+    tinsert(players, 1, 'All')
+
+    local items = dropDown.itemsFrame.items
+
+    for i, player in ipairs(players) do
+        if i > #items then
+            self:addDropDownItem(i)
+        end
+
+        local item = items[i]
+        item.text:SetText(player)
+        item.active = true
+
+        item:SetScript('OnMouseUp', function()
+            ns.addon:Print('clicked', player)
+        end)
+    end
+
+    for i = #players + 1, #items do
+        local item = items[i]
+        item.active = false
+    end
+
+    local rowCount = #players > self.dropDownRows and self.dropDownRows or #players  -- set rowCount to self.dropDownRows if there are more items than rows
+    local height = rowCount * self.dropDownItemHeight
+
+    local columnCount = math.floor(#players / self.dropDownRows) + 1
+    local width = columnCount * self.dropDownItemWidth
+
+    dropDown.itemsFrame:SetSize(width, height)
+end
+
+function HistoryWindow:addDropDownItem(index)
+    local dropDown = self.mainFrame.dropDown
+
+    local row = (index - 1) % self.dropDownRows
+    local column = math.floor((index - 1) / self.dropDownRows)
+
+    local xOffset = column * self.dropDownItemWidth
+    local yOffset = row * self.dropDownItemHeight
+
+    local item = CreateFrame('Frame', nil, dropDown)
+    item:SetPoint('TOPLEFT', dropDown.itemsFrame, 'TOPLEFT', xOffset, -yOffset)
+    item:SetSize(self.dropDownItemWidth, self.dropDownItemHeight)
+    item:Hide()
+
+    item.text = item:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    item.text:SetAllPoints()
+    item.text:SetJustifyH('LEFT')
+
+    -- Highlight
+    item:EnableMouse()
+
+    item:SetScript('OnEnter', function()
+        dropDown.itemsFrame.itemHighlight:SetPoint('TOPLEFT', item, 'TOPLEFT')
+        dropDown.itemsFrame.itemHighlight:SetPoint('BOTTOMRIGHT', item, 'BOTTOMRIGHT')
+        dropDown.itemsFrame.itemHighlight:Show()
+    end)
+
+    item:SetScript('OnLeave', function()
+        dropDown.itemsFrame.itemHighlight:Hide()
+    end)
+
+    tinsert(dropDown.itemsFrame.items, item)
 end
 
 function HistoryWindow:addRow(index)
@@ -248,7 +421,7 @@ function HistoryWindow:addRow(index)
         local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
 
         column:SetPoint('TOP', row, 'TOP', 0, 0)
-        column:SetFont('Fonts\\ARIALN.TTF', 10)
+        column:SetFont('Fonts\\ARIAL.TTF', 10)
 
         table.insert(row.columns, column)
     end
@@ -272,18 +445,27 @@ function HistoryWindow:addRow(index)
 end
 
 function HistoryWindow:filterData()
-    self.data.rowsFiltered = self.data.rows
+    self.data.rowsFiltered = {}
 
-    -- for _, row in ipairs(self.data.rows) do
-    --     local keep = true
-    --     if self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil then
-    --         keep = false
-    --     end
+    local filters = {}
+    for _, reasonCheck in ipairs(self.mainFrame.reasonChecks) do
+        filters[reasonCheck.text] = reasonCheck:GetChecked()
+    end
 
-    --     if keep then
-    --         tinsert(self.data.rowsFiltered, row)
-    --     end
-    -- end
+    for _, row in ipairs(self.data.rows) do
+        local keep = true
+
+        local metadata = row[#row]
+        local baseReason = metadata.baseReason
+
+        if not filters[baseReason] then
+            keep = false
+        end
+
+        if keep then
+            tinsert(self.data.rowsFiltered, row)
+        end
+    end
 end
 
 function HistoryWindow:getData()
@@ -318,15 +500,20 @@ function HistoryWindow:getData()
             local mode = string.upper(event[4])
             local reason = event[6]
 
-            local reasonSplit = ns.Lib:split(reason, ':')
-            local baseReason = reasonSplit[1]
-            local enteredReason = strtrim(reasonSplit[2])
-
-            if string.find(baseReason, 'manual') then
-                baseReason = 'manual'
+            local baseReason = ''
+            local enteredReason = ''
+            if reason ~= nil then
+                local reasonSplit = ns.Lib:split(reason, ':')
+                baseReason = reasonSplit[1]
+                enteredReason = strtrim(reasonSplit[2])
             end
 
-            reason = baseReason
+            if baseReason == ns.values.epgpReasons.ALT_SYNC then
+                enteredReason = playerGuidToName[enteredReason]
+            end
+
+            local prettyReason = self.epgpReasonsPretty[baseReason]
+            reason = prettyReason
             if #enteredReason > 0 then
                 reason = string.format('%s (%s)', reason, enteredReason)
             end
@@ -371,6 +558,7 @@ function HistoryWindow:getData()
                 epDelta,
                 gpDelta,
                 prDelta,
+                {baseReason = prettyReason}
             }
 
             standings['EP'] = epBefore

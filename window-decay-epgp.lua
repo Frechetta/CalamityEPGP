@@ -62,7 +62,7 @@ function DecayEpgpWindow:createWindow()
 
     mainFrame.confirmButton:SetScript('OnClick', function()
         local value = mainFrame.amountEditBox:GetNumber()
-        local reason = 'decay: ' .. mainFrame.reasonEditBox:GetText()
+        local reason = string.format('%s: %s', ns.values.epgpReasons.DECAY, mainFrame.reasonEditBox:GetText())
 
         local changes = {}
 
