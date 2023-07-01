@@ -41,6 +41,11 @@ function MainWindow:createWindow()
     mainFrame.optionsButton:SetPoint('RIGHT', mainFrame, 'RIGHT', -20, 0)
     mainFrame.optionsButton:SetWidth(97)
 
+    mainFrame.historyButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.historyButton:SetText('View History')
+    mainFrame.historyButton:SetPoint('RIGHT', mainFrame.optionsButton, 'LEFT', -5, 0)
+    mainFrame.historyButton:SetWidth(97)
+
     -- TODO: disable for non officers
     mainFrame.addEpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.addEpButton:SetText('Add EP')
@@ -60,6 +65,7 @@ function MainWindow:createWindow()
     mainFrame.tableFrame:SetPoint('BOTTOMLEFT', mainFrame.addEpButton, 'TOPLEFT', 0, 2)
 
     mainFrame.optionsButton:SetScript('OnClick', ns.addon.openOptions)
+    mainFrame.historyButton:SetScript('OnClick', self.handleHistoryClick)
     mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
     mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
     mainFrame.raidOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
@@ -331,6 +337,11 @@ function MainWindow:handleRowClick(row)
     -- TODO: if not officer, return
 
     ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
+end
+
+function MainWindow:handleHistoryClick()
+    ns.HistoryWindow:createWindow()
+    ns.HistoryWindow:show()
 end
 
 function MainWindow:handleAddEpClick()

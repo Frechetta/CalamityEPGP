@@ -232,7 +232,7 @@ function LootDistWindow:createTable()
 end
 
 
-function LootDistWindow:draw(itemLink)
+function LootDistWindow:show(itemLink)
     if self.rolling then
         return
     end
@@ -261,6 +261,7 @@ function LootDistWindow:draw(itemLink)
 
     self.mainFrame:Show()
 
+    -- TODO: remove?
     ns.Lib:getGp(itemLink)
 end
 

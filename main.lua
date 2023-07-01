@@ -113,7 +113,7 @@ function addon:showLootDistWindow(itemLink)
     end
 
     ns.LootDistWindow:createWindow()
-    ns.LootDistWindow:draw(itemLink)
+    ns.LootDistWindow:show(itemLink)
 end
 
 
@@ -295,25 +295,26 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
     local charData = ns.db.standings[charGuid]
     mode = string.lower(mode)
 
+    local oldValue = charData[mode]
     local newValue
 
     if percent then
         -- value is expected to be something like -10, meaning decrease by 10%
         local multiplier = (100 + value) / 100
-        newValue = charData[mode] * multiplier
+        newValue = oldValue * multiplier
     else
-        newValue = charData[mode] + value
+        newValue = oldValue + value
     end
 
     if mode == 'gp' and newValue < 1 then
         newValue = 1
     end
 
-    local diff = newValue - charData[mode]
+    local diff = newValue - oldValue
 
     charData[mode] = newValue
 
-    local event = {time(), charGuid, mode, diff, reason}
+    local event = {time(), UnitGUID('player'), charGuid, mode, diff, reason}
     table.insert(ns.db.history, event)
 
     if diff ~= 0 then

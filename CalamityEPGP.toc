@@ -17,7 +17,7 @@ window-de-select.lua
 window-modify-epgp.lua
 window-add-ep.lua
 window-decay-epgp.lua
+window-history.lua
 window-main.lua
 window-loot-dist.lua
 main.lua
-# main.xml
