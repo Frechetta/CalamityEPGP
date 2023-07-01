@@ -24,8 +24,10 @@ local HistoryWindow = {
     },
     dropDownRows = 8,
     dropDownItemWidth = 70,
-    dropDownItemHeight = 20,
-    playerName = nil,
+    dropDownItemHeight = 15,
+    dropDownItemPadding = 2.5,
+    mouseInDropdown = false,
+    selectedPlayer = 'All',
 }
 
 ns.HistoryWindow = HistoryWindow
@@ -61,7 +63,7 @@ function HistoryWindow:createWindow()
     mainFrame.dropDown = CreateFrame('Frame', nil, mainFrame, 'UIDropDownMenuTemplate')
     mainFrame.dropDown:SetPoint('LEFT', mainFrame.playerLabel, 'RIGHT', -10, 0)
     mainFrame.dropDown:SetWidth(100)
-    mainFrame.dropDown.Text:SetText('All')
+    mainFrame.dropDown.Text:SetText(self.selectedPlayer)
     mainFrame.dropDown.Button:SetScript('onClick', self.handleDropdownClick)
 
     mainFrame.reasonsLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
@@ -95,7 +97,7 @@ function HistoryWindow:createWindow()
             reasonCheck.textWidth = fontString:GetWidth()
             reasonCheck.text = reason
 
-            reasonCheck:SetScript('OnClick', function() HistoryWindow:filterData(); HistoryWindow:setData() end)
+            reasonCheck:SetScript('OnClick', function() HistoryWindow:filterData(); HistoryWindow:setTableData() end)
 
             tinsert(mainFrame.reasonChecks, reasonCheck)
         end
@@ -118,16 +120,19 @@ end
 function HistoryWindow:createDropdownItemsFrame()
     local dropDown = self.mainFrame.dropDown
 
-    dropDown.itemsFrame = CreateFrame('Frame', nil, self.mainFrame, 'InsetFrameTemplate2')
+    dropDown.itemsFrame = CreateFrame('Frame', nil, dropDown, 'InsetFrameTemplate2')
     dropDown.itemsFrame:SetPoint('TOPLEFT', dropDown, 'BOTTOMLEFT', 0, 0)
-    dropDown.itemsFrame:SetAlpha(1)
-    -- dropDown.itemsFrame:SetFrameStrata('DIALOG')
+    dropDown.itemsFrame:SetFrameLevel(self.mainFrame:GetFrameLevel() + 50)
+
+    dropDown.itemsFrame:EnableMouse()
+    dropDown.itemsFrame:SetScript('OnEnter', function() HistoryWindow.mouseInDropdown = true end)
+    dropDown.itemsFrame:SetScript('OnLeave', function() HistoryWindow.mouseInDropdown = false end)
 
     dropDown.itemsFrame.items = {}
 
-    -- local itemsFrameTexture = dropDown.itemsFrame:CreateTexture(nil, 'BACKGROUND')
-    -- itemsFrameTexture:SetAllPoints()
-    -- itemsFrameTexture:SetColorTexture(0.8, 0, 0, 0)
+    local itemsFrameTexture = dropDown.itemsFrame:CreateTexture(nil, 'BACKGROUND')
+    itemsFrameTexture:SetAllPoints()
+    itemsFrameTexture:SetColorTexture(0.05, 0.01, 0.01, 1)
     -- itemsFrameTexture:SetBlendMode('ADD')
 
     dropDown.itemsFrame.itemHighlight = CreateFrame('Frame', nil, dropDown.itemsFrame)
@@ -156,10 +161,6 @@ function HistoryWindow:handleDropdownClick()
             end
         end
     end
-end
-
-function HistoryWindow:handleDropdownItemClick(player)
-    ns.addon:Print('clicked item', player)
 end
 
 function HistoryWindow:createTable()
@@ -237,12 +238,58 @@ end
 
 function HistoryWindow:show()
     self:getData()
-    self:setData()
+    self:setDropDownData()
+    self:setTableData()
     self.mainFrame:Show()
 end
 
-function HistoryWindow:setData()
-    -- set table data
+function HistoryWindow:setDropDownData()
+    local dropDown = self.mainFrame.dropDown
+
+    local players = {}
+    for _, playerData in pairs(ns.standings) do
+        tinsert(players, playerData.name)
+    end
+
+    table.sort(players)
+    tinsert(players, 1, 'All')
+
+    local items = dropDown.itemsFrame.items
+
+    for i, player in ipairs(players) do
+        if i > #items then
+            self:addDropDownItem(i)
+        end
+
+        local item = items[i]
+        item.text:SetText(player)
+        item.active = true
+
+        item:SetScript('OnMouseUp', function()
+            HistoryWindow.selectedPlayer = player
+            dropDown.itemsFrame:Hide()
+            dropDown.Text:SetText(HistoryWindow.selectedPlayer)
+            HistoryWindow:filterData()
+            HistoryWindow:setTableData()
+        end)
+    end
+
+    for i = #players + 1, #items do
+        local item = items[i]
+        item.active = false
+    end
+
+    -- set rowCount to self.dropDownRows if there are more items than rows
+    local rowCount = #players > self.dropDownRows and self.dropDownRows or #players
+    local height = rowCount * (self.dropDownItemHeight + self.dropDownItemPadding * 2) + 7
+
+    local columnCount = math.ceil(#players / self.dropDownRows)
+    local width = columnCount * (self.dropDownItemWidth + self.dropDownItemPadding * 2) + 5
+
+    dropDown.itemsFrame:SetSize(width, height)
+end
+
+function HistoryWindow:setTableData()
     local parent = self.mainFrame.tableFrame
     local data = self.data
 
@@ -324,46 +371,6 @@ function HistoryWindow:setData()
             column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
         end
     end
-
-    -- set dropdown data
-    local dropDown = self.mainFrame.dropDown
-
-    local players = {}
-    for _, playerData in pairs(ns.standings) do
-        tinsert(players, playerData.name)
-    end
-
-    table.sort(players)
-    tinsert(players, 1, 'All')
-
-    local items = dropDown.itemsFrame.items
-
-    for i, player in ipairs(players) do
-        if i > #items then
-            self:addDropDownItem(i)
-        end
-
-        local item = items[i]
-        item.text:SetText(player)
-        item.active = true
-
-        item:SetScript('OnMouseUp', function()
-            ns.addon:Print('clicked', player)
-        end)
-    end
-
-    for i = #players + 1, #items do
-        local item = items[i]
-        item.active = false
-    end
-
-    local rowCount = #players > self.dropDownRows and self.dropDownRows or #players  -- set rowCount to self.dropDownRows if there are more items than rows
-    local height = rowCount * self.dropDownItemHeight
-
-    local columnCount = math.floor(#players / self.dropDownRows) + 1
-    local width = columnCount * self.dropDownItemWidth
-
-    dropDown.itemsFrame:SetSize(width, height)
 end
 
 function HistoryWindow:addDropDownItem(index)
@@ -372,16 +379,16 @@ function HistoryWindow:addDropDownItem(index)
     local row = (index - 1) % self.dropDownRows
     local column = math.floor((index - 1) / self.dropDownRows)
 
-    local xOffset = column * self.dropDownItemWidth
-    local yOffset = row * self.dropDownItemHeight
+    local xOffset = column * (self.dropDownItemWidth + self.dropDownItemPadding * 2) + 5
+    local yOffset = row * (self.dropDownItemHeight + self.dropDownItemPadding * 2) + 6.5
 
-    local item = CreateFrame('Frame', nil, dropDown)
+    local item = CreateFrame('Frame', nil, dropDown.itemsFrame)
     item:SetPoint('TOPLEFT', dropDown.itemsFrame, 'TOPLEFT', xOffset, -yOffset)
     item:SetSize(self.dropDownItemWidth, self.dropDownItemHeight)
     item:Hide()
 
     item.text = item:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    item.text:SetAllPoints()
+    item.text:SetPoint('LEFT', item, 'LEFT', 2, 0)
     item.text:SetJustifyH('LEFT')
 
     -- Highlight
@@ -432,9 +439,11 @@ function HistoryWindow:addRow(index)
     local highlightFrame = parent.contents.rowHighlight
 
     row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-        highlightFrame:Show()
+        if not HistoryWindow.mouseInDropdown then
+            highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+            highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+            highlightFrame:Show()
+        end
     end)
 
     row:SetScript('OnLeave', function()
@@ -458,7 +467,8 @@ function HistoryWindow:filterData()
         local metadata = row[#row]
         local baseReason = metadata.baseReason
 
-        if not filters[baseReason] then
+        if (self.selectedPlayer ~= 'All' and row[2] ~= self.selectedPlayer)
+                or not filters[baseReason] then
             keep = false
         end
 
