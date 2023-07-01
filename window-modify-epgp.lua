@@ -6,11 +6,15 @@ ns.ModifyEpgpWindow = ModifyEpgpWindow
 
 
 function ModifyEpgpWindow:createWindow()
+    if self.mainFrame ~= nil then
+        return
+    end
+
     local mainFrameName = addonName .. '_ModifyEPGPWindow'
 
-    local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
+    local mainFrame = CreateFrame('Frame', mainFrameName, ns.MainWindow.mainFrame, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(250, 200)
-	mainFrame:SetPoint('CENTER') -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
+	mainFrame:SetPoint('CENTER')
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
@@ -42,7 +46,6 @@ function ModifyEpgpWindow:createWindow()
 	mainFrame.amountEditBox:SetPoint('RIGHT', mainFrame, 'RIGHT', -40, 0)
     mainFrame.amountEditBox:SetHeight(20)
     mainFrame.amountEditBox:SetAutoFocus(false)
-    mainFrame.amountEditBox:SetFocus()
 
     mainFrame.amountLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.amountLabel:SetPoint('BOTTOM', mainFrame.amountEditBox, 'TOP', 0, 7)
@@ -81,23 +84,17 @@ function ModifyEpgpWindow:createWindow()
         ModifyEpgpWindow:fillIn()
     end)
 
-    mainFrame.cancelButton:SetScript('OnClick', function() mainFrame:Hide() end)
-
-    mainFrame.confirmButton:SetScript('OnClick', function()
-        local value = mainFrame.amountEditBox:GetNumber()
-
-        if value == nil or value == 0 or value < 1000000 or value > 1000000 then
-            return
-        end
-
-        local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, mainFrame.reasonEditBox:GetText())
-
-        ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
-
-        mainFrame:Hide()
-    end)
+    mainFrame.cancelButton:SetScript('OnClick', self.hide)
+    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
 
     tinsert(UISpecialFrames, mainFrameName)
+
+    mainFrame:HookScript('OnHide', function()
+        C_Timer.After(0.1, function()
+            tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+        end)
+    end)
 
     return mainFrame
 end
@@ -106,13 +103,44 @@ function ModifyEpgpWindow:show(charName, charGuid)
     self.charName = charName
     self.charGuid = charGuid
 
-    local window = self.mainFrame or self:createWindow()
+    self:createWindow()
     self:fillIn()
-    self.mainFrame.amountEditBox:SetText('')
-    window:Show()
+    self.mainFrame:Show()
+
+    self.mainFrame.amountEditBox:SetFocus()
+end
+
+function ModifyEpgpWindow:hide()
+    self = ModifyEpgpWindow
+
+    if self.mainFrame ~= nil then
+        self.mainFrame:Hide()
+    end
+
+    -- tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+end
+
+function ModifyEpgpWindow:isShown()
+    return self.mainFrame ~= nil and self.mainFrame:IsShown()
 end
 
 function ModifyEpgpWindow:fillIn()
     self.mainFrame.topLabel:SetText('Modify EP/GP for ' .. self.charName)
     self.mainFrame.amountLabel:SetText(self.mode .. ' Amount')
+end
+
+function ModifyEpgpWindow:confirm()
+    self = ModifyEpgpWindow
+
+    local value = self.mainFrame.amountEditBox:GetNumber()
+
+    if value == nil or value == 0 or value < -1000000 or value > 1000000 then
+        return
+    end
+
+    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, self.mainFrame.reasonEditBox:GetText())
+
+    ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
+
+    self:hide()
 end

@@ -6,6 +6,10 @@ ns.DecayEpgpWindow = DecayEpgpWindow
 
 
 function DecayEpgpWindow:createWindow()
+    if self.mainFrame ~= nil then
+        return
+    end
+
     local mainFrameName = addonName .. '_DecayEpgpWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
@@ -36,7 +40,6 @@ function DecayEpgpWindow:createWindow()
     mainFrame.amountEditBox:SetHeight(20)
     mainFrame.amountEditBox:SetWidth(40)
     mainFrame.amountEditBox:SetAutoFocus(false)
-    mainFrame.amountEditBox:SetFocus()
 
     mainFrame.reasonEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
 	mainFrame.reasonEditBox:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 45)
@@ -58,36 +61,60 @@ function DecayEpgpWindow:createWindow()
     mainFrame.confirmButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
     mainFrame.confirmButton:SetWidth(70)
 
-    mainFrame.cancelButton:SetScript('OnClick', function() mainFrame:Hide() end)
-
-    mainFrame.confirmButton:SetScript('OnClick', function()
-        local value = mainFrame.amountEditBox:GetNumber()
-
-        if value == nil or value == 0 or value > 100 or value < 1000 then
-            return
-        end
-
-        local reason = string.format('%s: %s', ns.values.epgpReasons.DECAY, mainFrame.reasonEditBox:GetText())
-
-        local changes = {}
-
-        for _, charData in ipairs(ns.MainWindow.data.rows) do
-            local charGuid = charData[#charData].guid
-            table.insert(changes, {charGuid, 'EP', -value, reason})
-            table.insert(changes, {charGuid, 'GP', -value, reason})
-        end
-
-        ns.addon:modifyEpgp(changes, true)
-
-        mainFrame:Hide()
-    end)
+    mainFrame.cancelButton:SetScript('OnClick', self.hide)
+    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
 
     tinsert(UISpecialFrames, mainFrameName)
+
+    mainFrame:HookScript('OnHide', function()
+        C_Timer.After(0.1, function()
+            tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+        end)
+    end)
 
     return mainFrame
 end
 
 function DecayEpgpWindow:show()
-    local window = self.mainFrame or self:createWindow()
-    window:Show()
+    self:createWindow()
+    self.mainFrame:Show()
+
+    self.mainFrame.amountEditBox:SetFocus()
+end
+
+function DecayEpgpWindow:hide()
+    self = DecayEpgpWindow
+
+    if self.mainFrame ~= nil then
+        self.mainFrame:Hide()
+    end
+end
+
+function DecayEpgpWindow:isShown()
+    return self.mainFrame ~= nil and self.mainFrame:IsShown()
+end
+
+function DecayEpgpWindow:confirm()
+    self = DecayEpgpWindow
+
+    local value = self.mainFrame.amountEditBox:GetNumber()
+
+    if value == nil or value == 0 or value > 100 or value < -1000 then
+        return
+    end
+
+    local reason = string.format('%s: %s', ns.values.epgpReasons.DECAY, self.mainFrame.reasonEditBox:GetText())
+
+    local changes = {}
+
+    for _, charData in ipairs(ns.MainWindow.data.rows) do
+        local charGuid = charData[#charData].guid
+        table.insert(changes, {charGuid, 'EP', -value, reason})
+        table.insert(changes, {charGuid, 'GP', -value, reason})
+    end
+
+    ns.addon:modifyEpgp(changes, true)
+
+    self:hide()
 end

@@ -6,6 +6,10 @@ ns.AddEpWindow = AddEpWindow
 
 
 function AddEpWindow:createWindow()
+    if self.mainFrame ~= nil then
+        return
+    end
+
     local mainFrameName = addonName .. '_AddEPWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
@@ -35,7 +39,6 @@ function AddEpWindow:createWindow()
     mainFrame.amountEditBox:SetHeight(20)
     mainFrame.amountEditBox:SetWidth(100)
     mainFrame.amountEditBox:SetAutoFocus(false)
-    mainFrame.amountEditBox:SetFocus()
 
     mainFrame.reasonEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
 	mainFrame.reasonEditBox:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 45)
@@ -57,34 +60,58 @@ function AddEpWindow:createWindow()
     mainFrame.confirmButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
     mainFrame.confirmButton:SetWidth(70)
 
-    mainFrame.cancelButton:SetScript('OnClick', function() mainFrame:Hide() end)
-
-    mainFrame.confirmButton:SetScript('OnClick', function()
-        local value = mainFrame.amountEditBox:GetNumber()
-
-        if value == nil or value == 0 or value < 1000000 or value > 1000000 then
-            return
-        end
-
-        local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, mainFrame.reasonEditBox:GetText())
-
-        local changes = {}
-
-        for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
-            table.insert(changes, {charData[#charData].guid, 'EP', value, reason})
-        end
-
-        ns.addon:modifyEpgp(changes)
-
-        mainFrame:Hide()
-    end)
+    mainFrame.cancelButton:SetScript('OnClick', self.hide)
+    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
 
     tinsert(UISpecialFrames, mainFrameName)
+
+    mainFrame:HookScript('OnHide', function()
+        C_Timer.After(0.1, function()
+            tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+        end)
+    end)
 
     return mainFrame
 end
 
 function AddEpWindow:show()
-    local window = self.mainFrame or self:createWindow()
-    window:Show()
+    self:createWindow()
+    self.mainFrame:Show()
+
+    self.mainFrame.amountEditBox:SetFocus()
+end
+
+function AddEpWindow:hide()
+    self = AddEpWindow
+
+    if self.mainFrame ~= nil then
+        self.mainFrame:Hide()
+    end
+end
+
+function AddEpWindow:isShown()
+    return self.mainFrame ~= nil and self.mainFrame:IsShown()
+end
+
+function AddEpWindow:confirm()
+    self = AddEpWindow
+
+    local value = self.mainFrame.amountEditBox:GetNumber()
+
+    if value == nil or value == 0 or value < -1000000 or value > 1000000 then
+        return
+    end
+
+    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, self.mainFrame.reasonEditBox:GetText())
+
+    local changes = {}
+
+    for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
+        table.insert(changes, {charData[#charData].guid, 'EP', value, reason})
+    end
+
+    ns.addon:modifyEpgp(changes)
+
+    self:hide()
 end

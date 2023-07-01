@@ -8,6 +8,10 @@ ns.MainWindow = MainWindow
 
 
 function MainWindow:createWindow()
+    if self.mainFrame ~= nil then
+        return
+    end
+
     local mainFrame = CreateFrame('Frame', addonName .. '_MainWindow', UIParent, 'BasicFrameTemplateWithInset');
 	mainFrame:SetSize(600, 450);
 	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
@@ -75,6 +79,14 @@ function MainWindow:createWindow()
     self:refresh(true)
 
 	return mainFrame;
+end
+
+function MainWindow:show()
+    if self.mainFrame == nil then
+        return
+    end
+
+    self.mainFrame:Show()
 end
 
 function MainWindow:refresh(initial)
@@ -333,27 +345,44 @@ function MainWindow:handleHeaderClick(headerIndex)
     self:setData()
 end
 
-function MainWindow:handleRowClick(row)
-    -- TODO: if not officer, return
-
-    ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
-end
-
 function MainWindow:handleHistoryClick()
     ns.HistoryWindow:createWindow()
     ns.HistoryWindow:show()
+
+    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
+end
+
+function MainWindow:handleRowClick(row)
+    -- TODO: if not officer, return
+
+    ns.AddEpWindow:hide()
+    ns.DecayEpgpWindow:hide()
+
+    ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
+
+    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
 end
 
 function MainWindow:handleAddEpClick()
     -- TODO: if not officer, return
 
+    ns.ModifyEpgpWindow:hide()
+    ns.DecayEpgpWindow:hide()
+
     ns.AddEpWindow:show()
+
+    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
 end
 
 function MainWindow:handleDecayEpgpClick()
     -- TODO: if not officer, return
 
+    ns.AddEpWindow:hide()
+    ns.ModifyEpgpWindow:hide()
+
     ns.DecayEpgpWindow:show()
+
+    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
 end
 
 function MainWindow:filterData()

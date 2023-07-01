@@ -45,13 +45,19 @@ function Lib:deepcopy(orig, copies)
 end
 
 
-function Lib:remove(array, value)
+function Lib:remove(array, value, all)
     if array == nil then
         return
     end
 
-    local i = self:find(array, value)
-    table.remove(array, i)
+    while true do
+        local i = self:find(array, value)
+        table.remove(array, i)
+
+        if i == -1 or not all then
+            break
+        end
+    end
 end
 
 

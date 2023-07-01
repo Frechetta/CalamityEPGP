@@ -84,8 +84,8 @@ function addon:handleGuildRosterUpdate()
 end
 
 function addon:showMainWindow()
-    ns.mainWindow = ns.mainWindow or ns.MainWindow:createWindow()
-    ns.mainWindow:Show()
+    ns.MainWindow:createWindow()
+    ns.MainWindow:show()
 end
 
 function addon:openOptions()

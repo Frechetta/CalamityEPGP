@@ -128,6 +128,12 @@ function HistoryWindow:createWindow()
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 
+    mainFrame:HookScript('OnHide', function()
+        C_Timer.After(0.1, function()
+            tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+        end)
+    end)
+
     self:createTable()
     self:createDropdownItemsFrame()
 
@@ -259,7 +265,7 @@ function HistoryWindow:show()
 end
 
 function HistoryWindow:refresh()
-    if not self.mainFrame:IsShown() then
+    if self.mainFrame == nil or not self.mainFrame:IsShown() then
         return
     end
 
