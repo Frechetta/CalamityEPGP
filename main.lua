@@ -288,6 +288,7 @@ function addon:modifyEpgp(changes, percent)
     end
 
     ns.MainWindow:refresh()
+    ns.HistoryWindow:refresh()
 end
 
 

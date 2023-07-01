@@ -28,6 +28,7 @@ local HistoryWindow = {
     dropDownItemPadding = 2.5,
     mouseInDropdown = false,
     selectedPlayer = 'All',
+    mainsOnly = false,
 }
 
 ns.HistoryWindow = HistoryWindow
@@ -66,9 +67,25 @@ function HistoryWindow:createWindow()
     mainFrame.dropDown.Text:SetText(self.selectedPlayer)
     mainFrame.dropDown.Button:SetScript('onClick', self.handleDropdownClick)
 
+    mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.mainsOnlyLabel:SetText('Mains only:')
+    mainFrame.mainsOnlyLabel:SetPoint('LEFT', mainFrame.dropDown, 'RIGHT', 80, 0)
+
+    mainFrame.mainsOnlyCheck = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.mainsOnlyCheck:SetPoint('LEFT', mainFrame.mainsOnlyLabel, 'RIGHT', 2, 0)
+    mainFrame.mainsOnlyCheck:SetScript('OnClick', function()
+        HistoryWindow.mainsOnly = mainFrame.mainsOnlyCheck:GetChecked()
+        if HistoryWindow.mainFrame.dropDown.itemsFrame:IsShown() then
+            HistoryWindow:handleDropdownClick()
+        end
+        HistoryWindow:filterData()
+        HistoryWindow:setDropDownData()
+        HistoryWindow:setTableData()
+    end)
+
     mainFrame.reasonsLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.reasonsLabel:SetText('Reason:')
-    mainFrame.reasonsLabel:SetPoint('TOPLEFT', mainFrame.dropDown, 'BOTTOMLEFT', 0, -20)
+    mainFrame.reasonsLabel:SetPoint('TOPLEFT', mainFrame.playerLabel, 'BOTTOMLEFT', 0, -20)
 
     mainFrame.reasonChecks = {}
     for _, reason in pairs(self.epgpReasonsPretty) do
@@ -237,10 +254,18 @@ function HistoryWindow:createTable()
 end
 
 function HistoryWindow:show()
+    self:refresh()
+    self.mainFrame:Show()
+end
+
+function HistoryWindow:refresh()
+    if not self.mainFrame:IsShown() then
+        return
+    end
+
     self:getData()
     self:setDropDownData()
     self:setTableData()
-    self.mainFrame:Show()
 end
 
 function HistoryWindow:setDropDownData()
@@ -248,7 +273,11 @@ function HistoryWindow:setDropDownData()
 
     local players = {}
     for _, playerData in pairs(ns.standings) do
-        tinsert(players, playerData.name)
+        local playerName = playerData.name
+        -- filter if mainsOnly == true
+        if not self.mainsOnly or ns.db.altData.altMainMapping[playerName] == playerName then
+            tinsert(players, playerName)
+        end
     end
 
     table.sort(players)
@@ -464,10 +493,13 @@ function HistoryWindow:filterData()
     for _, row in ipairs(self.data.rows) do
         local keep = true
 
+        local player = row[2]
+
         local metadata = row[#row]
         local baseReason = metadata.baseReason
 
-        if (self.selectedPlayer ~= 'All' and row[2] ~= self.selectedPlayer)
+        if (self.selectedPlayer ~= 'All' and player ~= self.selectedPlayer)
+                or (self.mainsOnly and ns.db.altData.altMainMapping[player] ~= player)
                 or not filters[baseReason] then
             keep = false
         end
@@ -519,7 +551,7 @@ function HistoryWindow:getData()
             end
 
             if baseReason == ns.values.epgpReasons.ALT_SYNC then
-                enteredReason = playerGuidToName[enteredReason]
+                enteredReason = 'with ' .. playerGuidToName[enteredReason]
             end
 
             local prettyReason = self.epgpReasonsPretty[baseReason]
