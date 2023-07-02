@@ -318,7 +318,7 @@ function LootDistWindow:stopRoll()
             local roll = rollData[type]
             local pr = rollData['pr']
 
-            self:print(string.format('- %s: %s, PR: %.2f, Roll: %d', roller, type, pr, roll))
+            self:print(string.format('- %s: %s, PR: %.3f, Roll: %d', roller, type, pr, roll))
         end
     end
 end
@@ -352,7 +352,7 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 
     local rollerGuid = ns.Lib:getPlayerGuid(roller)
     local charData = ns.db.standings[rollerGuid]
-    local priority = tonumber(string.format("%.2f", charData.ep / charData.gp))
+    local priority = tonumber(string.format("%.3f", charData.ep / charData.gp))
 
     local newRoll = false
 

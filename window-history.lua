@@ -595,7 +595,7 @@ function HistoryWindow:getData()
 
             local prAfter = epAfter / gpAfter
             local prBefore = epBefore / gpBefore
-            local prDelta = string.format('%.2f -> %.2f', prBefore, prAfter)
+            local prDelta = string.format('%.3f -> %.3f', prBefore, prAfter)
 
             local row = {
                 time,

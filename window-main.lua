@@ -460,7 +460,7 @@ function MainWindow:getData()
             charData.rank and charData.rank or 'N/A',
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
-            tonumber(string.format("%.2f", charData.ep / charData.gp)),
+            tonumber(string.format("%.3f", charData.ep / charData.gp)),
             {guid = charData.guid}
         }
 
