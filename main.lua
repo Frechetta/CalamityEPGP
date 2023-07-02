@@ -197,6 +197,8 @@ function addon:loadGuildData()
         -- Load config module
         ns.Config:init()
 
+        self:fixGp()
+
         self:initMinimapButton()
 
         self.initialized = true
@@ -246,8 +248,17 @@ function addon:createStandingsEntry(guid, fullName, name, level, class, inGuild,
         ['inGuild'] = inGuild,
         ['rank'] = rank,
         ['ep'] = 0,
-        ['gp'] = 1,
+        ['gp'] = ns.cfg.gpBase,
     }
+end
+
+
+function addon:fixGp()
+    for _, charData in pairs(ns.standings) do
+        if charData.gp < ns.cfg.gpBase then
+            charData.gp = ns.cfg.gpBase
+        end
+    end
 end
 
 
@@ -313,8 +324,8 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
         newValue = oldValue + value
     end
 
-    if mode == 'gp' and newValue < 1 then
-        newValue = 1
+    if mode == 'gp' and newValue < ns.cfg.gpBase then
+        newValue = ns.cfg.gpBase
     end
 
     local diff = newValue - oldValue
@@ -335,7 +346,7 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
         local baseReason = ns.Lib:split(reason, ':')[1]
 
-        self:Print(string.format('%s %s %d %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
+        self:Print(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
     end
 end
 

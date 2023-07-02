@@ -9,7 +9,7 @@ local Config = {
         syncAltGp = true,
         rollDuration = 25,
         closeOnAward = true,
-        gpInitial = ns.values.gpDefaults.initial,
+        gpBase = ns.values.gpDefaults.base,
         gpSlotMods = ns.values.gpDefaults.slotModifiers,
         encounterEp = {},
         minimap = {
@@ -46,26 +46,26 @@ function Config:init()
                 lmMode = {
                     type = 'toggle',
                     name = 'Loot master mode',
-                    order = 1,
-                    set = 'setLmMode',
-                    get = 'getLmMode',
                     width = 'full',
+                    order = 1,
+                    get = 'getLmMode',
+                    set = 'setLmMode',
                 },
                 showMinimapButton = {
                     type = 'toggle',
                     name = 'Show minimap button',
-                    order = 2,
                     width = 'full',
-                    set = 'setShowMinimapButton',
+                    order = 2,
                     get = 'getShowMinimapButton',
+                    set = 'setShowMinimapButton',
                 },
                 decay = {
                     type = 'input',
                     name = 'Default decay %',
-                    pattern = '%d+',
                     width = 'half',
-                    set = 'setDefaultDecay',
+                    pattern = '%d+',
                     get = 'getDefaultDecay',
+                    set = 'setDefaultDecay',
                 },
             }
         },
@@ -77,18 +77,33 @@ function Config:init()
                 duration = {
                     type = 'input',
                     name = 'Roll Duration',
-                    set = 'setRollDuration',
+                    width = 'half',
                     get = 'getRollDuration',
-                    width = 'half'
+                    set = 'setRollDuration',
                 },
                 closeOnAward = {
                     type = 'toggle',
                     name = 'Close distribution window on award',
-                    set = 'setCloseOnAward',
-                    get = 'getCloseOnAward',
-                    order = 1,
                     width = 'full',
+                    order = 1,
+                    get = 'getCloseOnAward',
+                    set = 'setCloseOnAward',
                 },
+            }
+        },
+        gpManagement = {
+            name = 'GP Management',
+            handler = self,
+            type = 'group',
+            args = {
+                gpBase = {
+                    type = 'input',
+                    name = 'Base GP',
+                    width = 'half',
+                    pattern = '%d+',
+                    get = 'getBaseGp',
+                    set = 'setBaseGp',
+                }
             }
         },
     }
@@ -104,6 +119,7 @@ function Config:init()
     self:addOptionsMenu(addonName, menus.root)
     self:initAltManagementMenu()
     self:addOptionsMenu(addonName .. '_LootDistribution', menus.lootDistribution, addonName)
+    self:addOptionsMenu(addonName .. '_GpManagement', menus.gpManagement, addonName)
 end
 
 
@@ -390,4 +406,13 @@ function Config:setShowMinimapButton(info, input)
     else
         ns.addon.ldbi:Show(addonName)
     end
+end
+
+function Config:getBaseGp(info)
+    return tostring(ns.cfg.gpBase)
+end
+
+function Config:setBaseGp(info, input)
+    ns.cfg.gpBase = tonumber(input)
+    ns.addon:fixGp()
 end
