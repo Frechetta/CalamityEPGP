@@ -540,12 +540,13 @@ function LootDistWindow:checkAward()
         return
     end
 
-    ns.ConfirmWindow:show(string.format('Award %s to %s?', self.itemLink, awardee),
-                          function() self:award(awardee) end)
+    local rollType = self.data.rolls[awardee].type
+
+    ns.ConfirmAwardWindow:show(self.itemLink, awardee, rollType)
 end
 
 
-function LootDistWindow:award(awardee)
+function LootDistWindow:award(awardee, rollType, perc, gp)
     self = LootDistWindow
 
     ns.addon:Print(self.itemLink, 'awarded to', awardee)
@@ -586,11 +587,10 @@ function LootDistWindow:award(awardee)
         self:markAsToTrade(self.itemLink, awardee)
 	end
 
-    -- get and award gp
-    local gp = ns.Lib:getGp(self.itemLink)
-    local reason = string.format('%s: %s', ns.values.epgpReasons.AWARD, self.itemLink)
+    -- award gp
+    local reason = string.format('%s: %s - %s - %d', ns.values.epgpReasons.AWARD, self.itemLink, rollType, gp)
     ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
-	self:print('Item ' .. self.itemLink .. ' awarded to ' .. awardee .. ' for ' .. gp .. ' GP')
+	self:print(string.format('Item %s awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
 
     if self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()
