@@ -50,13 +50,11 @@ function MainWindow:createWindow()
     mainFrame.historyButton:SetPoint('RIGHT', mainFrame.optionsButton, 'LEFT', -5, 0)
     mainFrame.historyButton:SetWidth(97)
 
-    -- TODO: disable for non officers
     mainFrame.addEpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.addEpButton:SetText('Add EP')
     mainFrame.addEpButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 10, 8)
     mainFrame.addEpButton:SetWidth(90)
 
-    -- TODO: disable for non officers
     mainFrame.decayEpgpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.decayEpgpButton:SetText('Decay EPGP')
     mainFrame.decayEpgpButton:SetPoint('LEFT', mainFrame.addEpButton, 'RIGHT', 2, 0)
@@ -84,6 +82,20 @@ end
 function MainWindow:show()
     if self.mainFrame == nil then
         return
+    end
+
+    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+        self.mainFrame.addEpButton:Disable()
+        self.mainFrame.addEpButton:Hide()
+
+        self.mainFrame.decayEpgpButton:Disable()
+        self.mainFrame.decayEpgpButton:Hide()
+    else
+        self.mainFrame.addEpButton:Enable()
+        self.mainFrame.addEpButton:Show()
+
+        self.mainFrame.decayEpgpButton:Enable()
+        self.mainFrame.decayEpgpButton:Show()
     end
 
     self.mainFrame:Show()
@@ -353,7 +365,9 @@ function MainWindow:handleHistoryClick()
 end
 
 function MainWindow:handleRowClick(row)
-    -- TODO: if not officer, return
+    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+        return
+    end
 
     ns.AddEpWindow:hide()
     ns.DecayEpgpWindow:hide()
@@ -364,7 +378,9 @@ function MainWindow:handleRowClick(row)
 end
 
 function MainWindow:handleAddEpClick()
-    -- TODO: if not officer, return
+    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+        return
+    end
 
     ns.ModifyEpgpWindow:hide()
     ns.DecayEpgpWindow:hide()
@@ -375,7 +391,9 @@ function MainWindow:handleAddEpClick()
 end
 
 function MainWindow:handleDecayEpgpClick()
-    -- TODO: if not officer, return
+    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+        return
+    end
 
     ns.AddEpWindow:hide()
     ns.ModifyEpgpWindow:hide()

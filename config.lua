@@ -42,7 +42,6 @@ function Config:init()
             handler = self,
             type = 'group',
             args = {
-                -- TODO: disable if not officer
                 lmMode = {
                     type = 'toggle',
                     name = 'Loot master mode',
@@ -50,6 +49,7 @@ function Config:init()
                     order = 1,
                     get = 'getLmMode',
                     set = 'setLmMode',
+                    disabled = 'getLmModeDisabled'
                 },
                 showMinimapButton = {
                     type = 'toggle',
@@ -363,11 +363,26 @@ end
 -- OPTION GETTERS/SETTERS
 -------------------------
 function Config:getLmMode(info)
+    if not ns.addon.isOfficer then
+        return false
+    end
+
     return ns.cfg.lmMode
 end
 
 function Config:setLmMode(info, input)
+    if not ns.addon.isOfficer then
+        ns.cfg.lmMode = false
+        return
+    end
+
     ns.cfg.lmMode = input
+
+    ns.MainWindow:show()
+end
+
+function Config:getLmModeDisabled()
+    return not ns.addon.isOfficer
 end
 
 function Config:getDefaultDecay(info)

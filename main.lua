@@ -33,23 +33,30 @@ local dbDefaults = {
     }
 }
 
+addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
+
 addon.initialized = false
 addon.minimapButtonInitialized = false
+addon.isOfficer = nil
+addon.useForRaidPrompted = false
 addon.useForRaid = false
 addon.raidRoster = {}
 addon.whisperCommands = {
     INFO = '!ceinfo',
 }
 
-addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
-
 
 function addon:OnInitialize()
     self.initialized = false
+    self.useForRaidPrompted = false
     self.useForRaid = false
 
-    -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
-    GuildRoster()
+    if IsInGuild() then
+        -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
+        GuildRoster()
+    else
+        self:init()
+    end
 end
 
 
@@ -82,7 +89,7 @@ function addon:handleSlashCommand(input)
 end
 
 function addon:handleGuildRosterUpdate()
-    self:loadGuildData()
+    self:init()
     ns.MainWindow:refresh()
 end
 
@@ -124,7 +131,7 @@ function addon:showLootDistWindow(itemLink)
 end
 
 
-function addon:loadGuildData()
+function addon:init()
     if self == nil then
         return
     end
@@ -135,7 +142,7 @@ function addon:loadGuildData()
 
         -- haven't actually received guild data yet. wait 1 second and run this function again
         if guildName == nil then
-            C_Timer.After(1, addon.loadGuildData)
+            C_Timer.After(1, addon.init)
             return
         end
 
@@ -155,6 +162,8 @@ function addon:loadGuildData()
         self.ldb = LibStub("LibDataBroker-1.1", true)
         self.ldbi = LibStub("LibDBIcon-1.0", true)
     end
+
+    self.isOfficer = C_GuildInfo.CanEditOfficerNote()
 
     -- Load guild data
     local guildMembers = {}
@@ -258,7 +267,7 @@ end
 
 function addon:fixGp()
     for _, charData in pairs(ns.standings) do
-        if charData.gp < ns.cfg.gpBase then
+        if charData.gp == nil or charData.gp < ns.cfg.gpBase then
             charData.gp = ns.cfg.gpBase
         end
     end
@@ -266,7 +275,10 @@ end
 
 
 function addon:modifyEpgp(changes, percent)
-    -- TODO: if not officer, return
+    if not self.isOfficer then
+        self:Print('Non-officers cannot edit EPGP!')
+        return
+    end
 
     for _, change in ipairs(changes) do
         local charGuid = change[1]
@@ -311,7 +323,10 @@ end
 
 
 function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
-    -- TODO: if not officer, return
+    if not self.isOfficer then
+        self:Print('Non-officers cannot edit EPGP!')
+        return
+    end
 
     local charData = ns.db.standings[charGuid]
     mode = string.lower(mode)
@@ -389,11 +404,24 @@ function addon:initMinimapButton()
 end
 
 
+function addon:showUseForRaidWindow()
+    ns.ConfirmWindow:show('Use CalamityEPGP for this raid?',
+                          function()   -- callback for "Yes"
+                              addon.useForRaid = true
+                              addon.useForRaidPrompted = true
+                          end,
+                          function()  -- callback for "No"
+                              addon.useForRaid = false
+                              addon.useForRaidPrompted = true
+                          end)
+end
+
+
 -----------------
 -- EVENT HANDLERS
 -----------------
 function addon:handleChatMsg(self, message)
-    if not ns.cfg.lmMode then
+    if not ns.cfg or not ns.cfg.lmMode then
         return
     end
 
@@ -488,7 +516,7 @@ function addon:handleChatMsgWhisper(self, message, playerFullName)
         end
 
         local reply = string.format('Standings for %s - EP: %.2f / GP: %.2f / PR: %.3f - Rank: Overall: #%d / Guild: #%d', name, playerEp, playerGp, playerPr, overallRank, guildRank)
-        if IsInRaid() and self.raidRoster[name] ~= nil then
+        if self.raidRoster[name] ~= nil then
             reply = string.format('%s / Raid: #%d', reply, raidRank)
         end
 
@@ -540,11 +568,28 @@ function addon:handleEnteredRaid()
 
     self:loadRaidRoster()
 
-    if ns.cfg.lmMode and not self.useForRaid then
-        ns.ConfirmWindow:show('Use CalamityEPGP for this raid?',
-                              function() addon.useForRaid = true; self:Print('use for raid') end,   -- callback for "Yes"
-                              function() addon.useForRaid = false; self:Print('do not use for raid') end)  -- callback for "No"
+    if ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() and not self.useForRaidPrompted then
+        self:showUseForRaidWindow()
     end
+end
+
+
+function addon:handlePartyLootMethodChanged()
+    self = addon
+
+    if ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() then
+        if not self.useForRaid then
+            self:showUseForRaidWindow()
+        end
+    else
+        self.useForRaid = false
+        self.useForRaidPrompted = false
+    end
+
+    -- if GetLootMethod() ~= "master" or not IsInRaid() or CEPGP_isML() ~= 0 then
+    --     CEPGP_Info.Active[1] = false;
+    --     CEPGP_Info.Active[2] = false;	--	Whenever the loot method, loot master or group type is changed, this will enable the check again
+    -- end
 end
 
 
@@ -698,6 +743,7 @@ addon:RegisterEvent('LOOT_READY', 'handleLootReady')
 addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
 addon:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
 addon:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
+addon:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
 
 hooksecurefunc("HandleModifiedItemClick", function(itemLink)
     addon:handleItemClick(itemLink, GetMouseButtonClicked())

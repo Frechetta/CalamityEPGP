@@ -6,6 +6,10 @@ ns.ConfirmWindow = ConfirmWindow
 
 
 function ConfirmWindow:createWindow()
+    if self.mainFrame ~= nil then
+        return
+    end
+
     local mainFrameName = addonName .. '_ConfirmWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
@@ -39,9 +43,9 @@ function ConfirmWindow:createWindow()
 end
 
 function ConfirmWindow:show(message, callbackYes, callbackNo)
-    local window = self.mainFrame or self:createWindow()
+    self:createWindow()
 
-    window.messageLabel:SetText(message)
+    self.mainFrame.messageLabel:SetText(message)
 
     if callbackYes == nil then
         callbackYes = function() end
@@ -51,8 +55,8 @@ function ConfirmWindow:show(message, callbackYes, callbackNo)
         callbackNo = function() end
     end
 
-    window.yesButton:SetScript('OnClick', function() window:Hide(); callbackYes() end)
-    window.noButton:SetScript('OnClick', function() window:Hide(); callbackNo() end)
+    self.mainFrame.yesButton:SetScript('OnClick', function() callbackYes(); ConfirmWindow.mainFrame:Hide() end)
+    self.mainFrame.noButton:SetScript('OnClick', function() callbackNo(); ConfirmWindow.mainFrame:Hide() end)
 
-    window:Show()
+    self.mainFrame:Show()
 end
