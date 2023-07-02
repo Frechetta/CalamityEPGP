@@ -10,13 +10,7 @@ function ConfirmWindow:createWindow()
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(250, 100)
-	mainFrame:SetPoint('CENTER') -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
-
-    -- mainFrame:SetMovable(true)
-    -- mainFrame:EnableMouse(true)
-    -- mainFrame:RegisterForDrag('LeftButton')
-    -- mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
-    -- mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
+	mainFrame:SetPoint('CENTER')
 
     mainFrame:SetFrameStrata('DIALOG')
 

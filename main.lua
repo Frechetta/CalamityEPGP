@@ -37,6 +37,9 @@ addon.initialized = false
 addon.minimapButtonInitialized = false
 addon.useForRaid = false
 addon.raidRoster = {}
+addon.whisperCommands = {
+    INFO = '!ceinfo',
+}
 
 addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
 
@@ -416,6 +419,86 @@ function addon:handleChatMsg(self, message)
 end
 
 
+function addon:handleChatMsgWhisper(self, message, playerFullName)
+    self = addon
+
+    local parts = ns.Lib:split(message, ' ')
+    local command = parts[1]
+
+    if command == self.whisperCommands.INFO then
+        local name
+        if parts[2] ~= nil then
+            name = parts[2]
+        else
+            name = self:getCharName(playerFullName)
+        end
+
+        local guid = ns.Lib:getPlayerGuid(name)
+
+        if guid == nil or ns.standings[guid] == nil then
+            local name = 'You'
+            local word = 'aren\'t'
+            if parts[2] ~= nil then
+                name = parts[2]
+                word = 'isn\'t'
+            end
+
+            SendChatMessage(string.format('%s %s in the standings!', name, word), 'WHISPER', nil, playerFullName)
+            return
+        end
+
+        local playerStandings = ns.standings[guid]
+        local playerEp = playerStandings.ep
+        local playerGp = playerStandings.gp
+        local playerPr = playerEp / playerGp
+
+        local sortedStandings = {}
+        for _, charData in pairs(ns.standings) do
+            tinsert(sortedStandings, charData)
+        end
+
+        table.sort(sortedStandings, function(left, right)
+            local prLeft = left.ep / left.gp
+            local prRight = right.ep / right.gp
+
+            return prLeft > prRight
+        end)
+
+        local overallRank
+        local guildRank
+        local raidRank
+
+        local j = 1  -- guild index
+        local k = 1  -- raid index
+        for i, charData in ipairs(sortedStandings) do
+            if charData.name == name then
+                overallRank = i
+                guildRank = j
+                raidRank = k
+                break
+            end
+
+            if charData.inGuild then
+                j  = j + 1
+            end
+
+            if self.raidRoster[charData.name] ~= nil then
+                k = k + 1
+            end
+        end
+
+        local reply = string.format('Standings for %s - EP: %.2f / GP: %.2f / PR: %.3f - Rank: Overall: #%d / Guild: #%d', name, playerEp, playerGp, playerPr, overallRank, guildRank)
+        if IsInRaid() and self.raidRoster[name] ~= nil then
+            reply = string.format('%s / Raid: #%d', reply, raidRank)
+        end
+
+        SendChatMessage(reply, 'WHISPER', nil, playerFullName)
+    else
+        return
+    end
+end
+
+
 function addon:handleTradeRequest(player)
     if not ns.cfg.lmMode then
         return
@@ -518,20 +601,24 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
     local ep = ns.cfg.encounterEp[encounterId]
 
     if ep == nil then
-        addon:Print('Encounter "' .. encounterName .. '" (' .. encounterId .. ') not in encounters table!')
+        addon:Print(string.format('Encounter "%s" (%s) not in encounters table!', encounterName, encounterId))
         return
     end
 
-    local reason = 'boss kill: "' .. encounterName .. '" (' .. encounterId .. ')'
+    local proceedFunc = function()
+        local reason = string.format('%s: "%s" (%s)', ns.values.epgpReasons.BOSS_KILL, encounterName, encounterId)
 
-    local changes = {}
+        local changes = {}
 
-    for player in pairs(addon.raidRoster) do
-        local guid = ns.Lib:getPlayerGuid(player)
-        table.insert(changes, {guid, 'EP', ep, reason})
+        for player in pairs(addon.raidRoster) do
+            local guid = ns.Lib:getPlayerGuid(player)
+            table.insert(changes, {guid, 'EP', ep, reason})
+        end
+
+        addon:modifyEpgp(changes)
     end
 
-    addon:modifyEpgp(changes)
+    ns.ConfirmWindow:show(string.format('Award %s EP to raid for killing %s?', ep, encounterName), proceedFunc)
 end
 
 
@@ -599,6 +686,8 @@ end
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
+addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
+addon:RegisterEvent('CHAT_MSG_WHISPER', 'handleChatMsgWhisper')
 addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
 addon:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
 addon:RegisterEvent('TRADE_CLOSED', 'handleTradeClosed')
@@ -607,7 +696,6 @@ addon:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
 addon:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
 addon:RegisterEvent('LOOT_READY', 'handleLootReady')
 addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
-addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
 addon:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
 addon:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
 

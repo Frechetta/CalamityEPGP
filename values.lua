@@ -8,6 +8,7 @@ ns.values.epgpReasons = {
     DECAY = 'decay',
     AWARD = 'award',
     ALT_SYNC = 'alt_sync',
+    BOSS_KILL = 'boss_kill',
 }
 
 ns.values.gpDefaults = {

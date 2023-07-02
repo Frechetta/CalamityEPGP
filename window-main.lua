@@ -206,17 +206,13 @@ function MainWindow:setData()
         local row = parent.rows[i]
         row:Show()
 
+        row.charGuid = ns.Lib:getPlayerGuid(rowData[1])
+
         local class = string.upper(rowData[2]):gsub(' ', '')
         local classColorData = RAID_CLASS_COLORS[class]
 
         for j, columnText in ipairs(rowData) do
             local headerColumn = parent.header.columns[j]
-
-            if headerColumn == nil then
-                row.charGuid = columnText['guid']
-                break
-            end
-
             local column = row.columns[j]
 
             column:SetText(columnText)
@@ -461,7 +457,6 @@ function MainWindow:getData()
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
             tonumber(string.format("%.3f", charData.ep / charData.gp)),
-            {guid = charData.guid}
         }
 
         tinsert(data.rows, row)

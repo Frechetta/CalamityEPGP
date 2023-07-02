@@ -21,6 +21,7 @@ local HistoryWindow = {
         [ns.values.epgpReasons.DECAY] = 'Decay',
         [ns.values.epgpReasons.AWARD] = 'Award',
         [ns.values.epgpReasons.ALT_SYNC] = 'Alt Sync',
+        [ns.values.epgpReasons.BOSS_KILL] = 'Boss Kill',
     },
     dropDownRows = 8,
     dropDownItemWidth = 70,
@@ -129,9 +130,11 @@ function HistoryWindow:createWindow()
     tinsert(UISpecialFrames, mainFrame:GetName())
 
     mainFrame:HookScript('OnHide', function()
-        C_Timer.After(0.1, function()
-            tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
-        end)
+        if ns.MainWindow.mainFrame ~= nil then
+            C_Timer.After(0.1, function()
+                tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+            end)
+        end
     end)
 
     self:createTable()
