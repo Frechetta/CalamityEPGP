@@ -241,12 +241,12 @@ function LootDistWindow:show(itemLink)
     local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
-    self.mainFrame.itemIcon:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end);
-    self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end);
+    self.mainFrame.itemIcon:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.itemLabel:SetText(itemLink)
-    self.mainFrame.itemLabel:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end);
-    self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end);
+    self.mainFrame.itemLabel:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
@@ -287,6 +287,8 @@ function LootDistWindow:startRoll()
     self.mainFrame.countdownLabel:SetText(duration .. ' seconds left')
     self.mainFrame.countdownLabel:SetTextColor(0, 1, 0)
 
+    ns.RollWindow:show(self.itemLink, duration)
+
     countDownFrame:Show()
 
     self.selectedRoller = nil
@@ -298,6 +300,8 @@ end
 
 function LootDistWindow:stopRoll()
     self = LootDistWindow
+
+    ns.RollWindow:hide()
 
     self:print('Stop your rolls!', true)
 
@@ -319,7 +323,7 @@ function LootDistWindow:stopRoll()
             local roll = rollData[type]
             local pr = rollData['pr']
 
-            self:print(string.format('- %s: %s, PR: %.3f, Roll: %d', roller, type, pr, roll))
+            self:print(string.format('- %s [%s]  PR: %.3f,  Roll: %d', roller, type, pr, roll))
         end
     end
 end

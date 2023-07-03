@@ -269,3 +269,34 @@ function Lib:validateEpgpValue(value)
 
     return true
 end
+
+function Lib:canPlayerUseItem(itemLink)
+    -- GameTooltip:ClearLines()
+    GameTooltip:SetOwner(WorldFrame, 'ANCHOR_NONE')
+    GameTooltip:SetHyperlink(itemLink)
+
+    local isTooltipTextRed = function(text)
+        if (text and text:GetText()) then
+            local r, g, b = text:GetTextColor()
+            return math.floor(r * 256) >= 255 and math.floor(g * 256) == 32 and math.floor(b * 256) == 32
+        end
+
+        return false
+    end
+
+    local canUse = true
+
+    for i = 1, GameTooltip:NumLines() do
+        local left = _G['GameTooltipTextLeft' .. i]
+        local right = _G['GameTooltipTextRight' .. i]
+
+        if isTooltipTextRed(left) or isTooltipTextRed(right) then
+            canUse = false
+            break
+        end
+    end
+
+    GameTooltip:Hide()
+
+    return canUse
+end

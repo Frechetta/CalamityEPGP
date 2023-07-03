@@ -159,8 +159,10 @@ function addon:init()
 
         ns.guild = guildFullName
 
-        self.ldb = LibStub("LibDataBroker-1.1", true)
-        self.ldbi = LibStub("LibDBIcon-1.0", true)
+        self.ldb = LibStub('LibDataBroker-1.1', true)
+        self.ldbi = LibStub('LibDBIcon-1.0', true)
+
+        self.candy = LibStub('LibCandyBar-3.0')
     end
 
     self.isOfficer = C_GuildInfo.CanEditOfficerNote()
@@ -373,7 +375,7 @@ function addon:initMinimapButton()
     local minimapButton = self.ldb:NewDataObject(addonName, {
         type = 'launcher',
         text = addonName,
-        icon = 'Interface\\AddOns\\' ..  addonName .. '\\Icons\\icon',
+        icon = 'Interface\\AddOns\\' ..  addonName .. '\\Assets\\icon',
         OnClick = function(self, button)
             if button == 'LeftButton' then
                 addon:showMainWindow()
