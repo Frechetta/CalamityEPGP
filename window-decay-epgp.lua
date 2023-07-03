@@ -117,9 +117,9 @@ function DecayEpgpWindow:confirm()
     local changes = {}
 
     for _, charData in ipairs(ns.MainWindow.data.rows) do
-        local charGuid = charData[#charData].guid
-        table.insert(changes, {charGuid, 'EP', -value, reason})
-        table.insert(changes, {charGuid, 'GP', -value, reason})
+        local guid = ns.Lib:getPlayerGuid(charData[1])
+        table.insert(changes, {guid, 'EP', -value, reason})
+        table.insert(changes, {guid, 'GP', -value, reason})
     end
 
     ns.addon:modifyEpgp(changes, true)

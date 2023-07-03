@@ -116,7 +116,8 @@ function AddEpWindow:confirm()
     local changes = {}
 
     for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
-        table.insert(changes, {charData[#charData].guid, 'EP', value, reason})
+        local guid = ns.Lib:getPlayerGuid(charData[1])
+        table.insert(changes, {guid, 'EP', value, reason})
     end
 
     ns.addon:modifyEpgp(changes)
