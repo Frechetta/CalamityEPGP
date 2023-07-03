@@ -13,7 +13,7 @@ function DeSelectWindow:createWindow()
     end
 
     local mainFrame = CreateFrame('Frame', addonName .. '_DeSelectWindow', UIParent, 'BasicFrameTemplateWithInset')
-	mainFrame:SetSize(250, 200)
+	mainFrame:SetSize(200, 200)
 	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
 
     mainFrame:SetFrameStrata('DIALOG')
@@ -23,10 +23,6 @@ function DeSelectWindow:createWindow()
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
 	mainFrame.title:SetText('Select Disenchanter')
-
-    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
-    mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.timerLabel, 'BOTTOMLEFT', 0, -20)
-    mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'TOPRIGHT', 0, 10)
 
     mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.cancelButton:SetText('Cancel')
@@ -39,6 +35,11 @@ function DeSelectWindow:createWindow()
     mainFrame.confirmButton:SetWidth(70)
     mainFrame.confirmButton:Disable()
 
+    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame, 'TOPLEFT', 6, 0)
+    mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -7, 0)
+    mainFrame.tableFrame:SetPoint('BOTTOM', mainFrame.confirmButton, 'TOP', 0, 5)
+
     mainFrame.cancelButton:SetScript('OnClick', function() mainFrame:Hide() end)
 
     mainFrame.confirmButton:SetScript('OnClick', function()
@@ -49,7 +50,7 @@ function DeSelectWindow:createWindow()
 
     self:createTable()
 
-	return mainFrame;
+	return mainFrame
 end
 
 
@@ -107,6 +108,8 @@ end
 
 
 function DeSelectWindow:show()
+    self:createWindow()
+
     local parent = self.mainFrame.tableFrame
 
     local players = {}
@@ -147,7 +150,6 @@ end
 
 function DeSelectWindow:addRow(index)
     local parent = self.mainFrame.tableFrame
-    local data = self.data
 
     local rowHeight = 15
 
@@ -195,4 +197,6 @@ function DeSelectWindow:handleRowClick(row)
     selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
     selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
     selectedHighlightFrame:Show()
+
+    self.mainFrame.confirmButton:Enable()
 end

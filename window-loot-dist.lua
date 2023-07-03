@@ -261,9 +261,6 @@ function LootDistWindow:show(itemLink)
     self.itemLink = itemLink
 
     self.mainFrame:Show()
-
-    -- TODO: remove?
-    ns.Lib:getGp(itemLink)
 end
 
 
@@ -289,7 +286,9 @@ function LootDistWindow:startRoll()
     self.mainFrame.countdownLabel:SetText(duration .. ' seconds left')
     self.mainFrame.countdownLabel:SetTextColor(0, 1, 0)
 
-    ns.RollWindow:show(self.itemLink, duration)
+    if not IsInGroup() and not IsInRaid() then
+        ns.RollWindow:show(self.itemLink, duration)
+    end
 
     seconds = duration - 1
     onesec = 1
@@ -305,7 +304,9 @@ end
 function LootDistWindow:stopRoll()
     self = LootDistWindow
 
-    ns.RollWindow:hide()
+    if not IsInGroup() and not IsInRaid() then
+        ns.RollWindow:hide()
+    end
 
     self:print('Stop your rolls!', true)
 
@@ -780,7 +781,6 @@ function LootDistWindow:disenchant()
     self = LootDistWindow
 
     if self.disenchanter == nil then
-        ns.DeSelectWindow:createWindow()
         ns.DeSelectWindow:show()
         return
     end

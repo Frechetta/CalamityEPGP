@@ -423,14 +423,20 @@ end
 -- EVENT HANDLERS
 -----------------
 function addon:handleChatMsg(self, message)
+    for duration, itemLink in string.gmatch(message, 'CalamityEPGP: You have (%d-) seconds to roll on (.+)') do
+        duration = tonumber(duration)
+        ns.RollWindow:show(itemLink, duration)
+        return
+    end
+
     if not ns.cfg or not ns.cfg.lmMode then
         return
     end
 
     for roller, roll, low, high in string.gmatch(message, ns.LootDistWindow.rollPattern) do
-        roll = tonumber(roll) or 0;
-        low = tonumber(low) or 0;
-        high = tonumber(high) or 0;
+        roll = tonumber(roll) or 0
+        low = tonumber(low) or 0
+        high = tonumber(high) or 0
 
         local rollType
         if low == 1 then
@@ -733,6 +739,11 @@ end
 addon:RegisterChatCommand('ce', 'handleSlashCommand')
 addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
+addon:RegisterEvent('CHAT_MSG_PARTY', 'handleChatMsg')
+addon:RegisterEvent('CHAT_MSG_PARTY_LEADER', 'handleChatMsg')
+addon:RegisterEvent('CHAT_MSG_RAID', 'handleChatMsg')
+addon:RegisterEvent('CHAT_MSG_RAID_LEADER', 'handleChatMsg')
+addon:RegisterEvent('CHAT_MSG_RAID_WARNING', 'handleChatMsg')
 addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
 addon:RegisterEvent('CHAT_MSG_WHISPER', 'handleChatMsgWhisper')
 addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
