@@ -1,7 +1,8 @@
 local addonName, ns = ...  -- Namespace
 
 local MainWindow = {
-    data = {}
+    data = {},
+    myCharHighlights = {},
 }
 
 ns.MainWindow = MainWindow
@@ -24,20 +25,27 @@ function MainWindow:createWindow()
 
     self.mainFrame = mainFrame
 
-	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight');
-	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0);
-	mainFrame.title:SetText('CalamityEPGP');
+	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
+	mainFrame.title:SetText('CalamityEPGP')
 
     mainFrame.raidOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.raidOnlyLabel:SetText('Raid Only')
     mainFrame.raidOnlyLabel:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -20)
 
     mainFrame.raidOnlyButton = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
-    mainFrame.raidOnlyButton:SetPoint('LEFT', mainFrame.raidOnlyLabel, 'RIGHT', 5, 0)
+    mainFrame.raidOnlyButton:SetPoint('LEFT', mainFrame.raidOnlyLabel, 'RIGHT', 3, 0)
 
     if IsInRaid() then
         mainFrame.raidOnlyButton:SetChecked(true)
     end
+
+    mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.mainsOnlyLabel:SetText('Mains Only')
+    mainFrame.mainsOnlyLabel:SetPoint('LEFT', mainFrame.raidOnlyButton, 'RIGHT', 15, 0)
+
+    mainFrame.mainsOnlyButton = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.mainsOnlyButton:SetPoint('LEFT', mainFrame.mainsOnlyLabel, 'RIGHT', 3, 0)
 
     mainFrame.optionsButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.optionsButton:SetText('Options')
@@ -71,6 +79,7 @@ function MainWindow:createWindow()
     mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
     mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
     mainFrame.raidOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
+    mainFrame.mainsOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 
@@ -210,6 +219,11 @@ function MainWindow:setData()
     local parent = self.mainFrame.tableFrame
     local data = self.data
 
+    local main = ns.db.altData.altMainMapping[UnitName('player')]
+    local myChars = ns.db.altData.mainAltMapping[main]
+
+    local j = 0
+
     for i, rowData in ipairs(data.rowsFiltered) do
         if i > #parent.rows then
             self:addRow(i)
@@ -235,12 +249,32 @@ function MainWindow:setData()
                 headerColumn.maxWidth = text_width
             end
         end
+
+        if ns.Lib:contains(myChars, row.columns[1]:GetText()) then
+            j = j + 1
+
+            if j > #self.myCharHighlights then
+                self:addMyCharHighlight()
+            end
+
+            local highlightFrame = self.myCharHighlights[j]
+            highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+            highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+            highlightFrame:Show()
+        end
     end
 
     if #parent.rows > #data.rowsFiltered then
         for i = #data.rowsFiltered + 1, #parent.rows do
             local row = parent.rows[i]
             row:Hide()
+        end
+    end
+
+    if #self.myCharHighlights > j then
+        for i = j + 1, #self.myCharHighlights do
+            local highlightFrame = self.myCharHighlights[i]
+            highlightFrame:Hide()
         end
     end
 
@@ -343,6 +377,19 @@ function MainWindow:addRow(index)
     table.insert(parent.rows, row)
 end
 
+function MainWindow:addMyCharHighlight()
+    local parent = self.mainFrame.tableFrame
+
+    local highlight = CreateFrame('Frame', nil, parent.contents)
+    local highlightTexture = highlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(.9, .9, .9, 0.08)
+    highlightTexture:SetBlendMode('ADD')
+    highlight:Hide()
+
+    tinsert(self.myCharHighlights, highlight)
+end
+
 function MainWindow:handleHeaderClick(headerIndex)
     local order = 'ascending'
     if self.data.sorted.columnIndex == headerIndex and self.data.sorted.order == order then
@@ -408,7 +455,8 @@ function MainWindow:filterData()
 
     for _, row in ipairs(self.data.rows) do
         local keep = true
-        if self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil then
+        if (self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil)
+                or (self.mainFrame.mainsOnlyButton:GetChecked() and not ns.Lib:dictContains(ns.db.altData.mainAltMapping, row[1])) then
             keep = false
         end
 

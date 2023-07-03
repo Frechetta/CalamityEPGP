@@ -32,6 +32,16 @@ function Lib:contains(array, value)
     return self:find(array, value) ~= -1
 end
 
+function Lib:dictContains(array, value)
+    for k in pairs(array) do
+        if k == value then
+            return true
+        end
+    end
+
+    return false
+end
+
 
 function Lib:deepcopy(orig, copies)
     copies = copies or {}
