@@ -59,6 +59,7 @@ function LootDistWindow:createWindow()
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
     mainFrame:SetFrameStrata('HIGH')
+    mainFrame:SetFrameLevel(5000)
 
     self.mainFrame = mainFrame
 
