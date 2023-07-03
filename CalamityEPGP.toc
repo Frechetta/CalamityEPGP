@@ -12,6 +12,7 @@ embeds.xml
 values.lua
 lib.lua
 window-confirm.lua
+window-confirm-award.lua
 config.lua
 window-de-select.lua
 window-modify-epgp.lua
