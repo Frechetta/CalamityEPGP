@@ -270,16 +270,18 @@ end
 function LootDistWindow:startRoll()
     self = LootDistWindow
 
+    duration = self.mainFrame.timerEditBox:GetNumber()
+
+    if duration < 5 or duration > 600 then
+        return
+    end
+
     self.mainFrame.startButton:Disable()
     self.mainFrame.stopButton:Enable()
     self.mainFrame.awardButton:Disable()
     self.mainFrame.clearButton:Disable()
     self.mainFrame.deButton:Disable()
     self.rolling = true
-
-    duration = self.mainFrame.timerEditBox:GetNumber()
-    seconds = duration - 1
-    onesec = 1
 
     self:print('You have ' .. duration .. ' seconds to roll on ' .. self.itemLink, true)
     self:print('"/roll" for MS and "/roll 99" for OS')
@@ -289,6 +291,8 @@ function LootDistWindow:startRoll()
 
     ns.RollWindow:show(self.itemLink, duration)
 
+    seconds = duration - 1
+    onesec = 1
     countDownFrame:Show()
 
     self.selectedRoller = nil

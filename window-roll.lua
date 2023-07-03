@@ -68,6 +68,8 @@ function RollWindow:show(itemLink, duration)
     local label
     if usable then
         label = itemLink
+        RollWindow.mainFrame.msButton:Enable()
+        RollWindow.mainFrame.osButton:Enable()
     else
         label = 'You can\'t use this item!'
         RollWindow.mainFrame.msButton:Disable()
