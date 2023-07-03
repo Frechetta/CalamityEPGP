@@ -588,8 +588,10 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
         self:markAsToTrade(self.itemLink, awardee)
 	end
 
-    -- award gp
-    local reason = string.format('%s: %s - %s - %d', ns.values.epgpReasons.AWARD, self.itemLink, rollType, gp)
+    local itemName = GetItemInfo(self.itemLink)
+
+    -- add gp
+    local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
     ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
 	self:print(string.format('Item %s awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
 

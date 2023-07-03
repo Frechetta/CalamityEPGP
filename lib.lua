@@ -99,7 +99,7 @@ function Lib:split(str, sep)
 
     local elements = {}
 
-    for s in string.gmatch(str, "([^"..sep.."]+)") do
+    for s in string.gmatch(str, "([^" .. sep .. "]+)") do
         tinsert(elements, s)
     end
 

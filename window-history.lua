@@ -552,21 +552,24 @@ function HistoryWindow:getData()
             local reason = event[6]
 
             local baseReason = ''
-            local enteredReason = ''
+            local details = ''
             if reason ~= nil then
                 local reasonSplit = ns.Lib:split(reason, ':')
                 baseReason = reasonSplit[1]
-                enteredReason = strtrim(reasonSplit[2])
+                details = strtrim(reasonSplit[2])
             end
 
             if baseReason == ns.values.epgpReasons.ALT_SYNC then
-                enteredReason = 'with ' .. playerGuidToName[enteredReason]
+                details = 'with ' .. playerGuidToName[details]
+            elseif baseReason == ns.values.epgpReasons.AWARD then
+                local detailsSplit = ns.Lib:split(details, '-')
+                details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
             end
 
             local prettyReason = self.epgpReasonsPretty[baseReason]
             reason = prettyReason
-            if #enteredReason > 0 then
-                reason = string.format('%s (%s)', reason, enteredReason)
+            if #details > 0 then
+                reason = string.format('%s (%s)', reason, details)
             end
 
             local diffStr = diff > 0 and string.format('+%d', diff) or tostring(diff)
@@ -584,16 +587,16 @@ function HistoryWindow:getData()
             if mode == 'EP' then
                 epBefore = epBefore - diff
 
-                epDelta = string.format('%d -> %d', epBefore, epAfter)
-                gpDelta = gpAfter
+                epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
+                gpDelta = string.format('%.2f', gpAfter)
             end
 
             local gpBefore = gpAfter
             if mode == 'GP' then
                 gpBefore = gpBefore - diff
 
-                epDelta = epAfter
-                gpDelta = string.format('%d -> %d', gpBefore, gpAfter)
+                epDelta = string.format('%.2f', epAfter)
+                gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
             end
 
             local prAfter = epAfter / gpAfter
