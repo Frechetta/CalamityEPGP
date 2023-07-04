@@ -1,118 +1,144 @@
-local addonName, ns = ...  -- Namespace
+local _, ns = ...  -- Namespace
 
-Set = ns.Set
-Dict = ns.Dict
+local List = ns.List
+local Set = ns.Set
+local Dict = ns.Dict
 
-Comm = {
+local Comm = {
     prefixes = {
-        UPDATE_REQUEST = 'update_request',
-        UPDATE_RESPONSE = 'update_response',
-        EVENTS_REQUEST = 'events_request',
-        EVENTS_RESPONSE = 'events_response',
+        SYNC = 'sync',
     },
     eventsByHash = Dict:new(),
+    guildiesMessaged = Set:new(),
 }
 
 ns.Comm = Comm
 
 
 function Comm:init()
-    for _, prefix in pairs(self.prefixes) do
-        ns.addon:RegisterComm(prefix, self.handleCommReceived)
-    end
-end
-
-
-function Comm:getPrefix(prefix)
-    return string.format('%s_%s', addonName, prefix)
+    ns.addon:RegisterComm(self.prefixes.SYNC, self.handleSync)
 end
 
 
 function Comm:send(prefix, message, distribution, target)
-    prefix = self:getPrefix(prefix)
     message = self:packMessage(message)
     ns.addon:SendCommMessage(prefix, message, distribution, target)
 end
 
 
-function Comm:requestUpdate()
-    self:getEventHashes()
-    local toSend = self.eventsByHash:keys()
-    self:send(self.prefixes.UPDATE_REQUEST, toSend, 'GUILD')
+function Comm:syncInit()
+    ns.addon:Print('initializing sync; sending my latest event time to all guildies')
+    self:getEventsByHash()
+
+    local latestEventTime = self:getLatestEventTime()
+    self:send(self.prefixes.SYNC, latestEventTime, 'GUILD')
 end
 
 
-function Comm:getEventHashes()
-    self.eventsByHash = Dict:new()
+function Comm:getEventsByHash()
+    self.eventsByHash:clear()
 
-    for _, eventData in ipairs(ns.db.history) do
-        local event = eventData[1]
-        local hash = eventData[2]
-        self.eventsByHash:set(hash, event)
+    for i, eventAndHash in ipairs(ns.db.history) do
+        local serializedEvent = eventAndHash[1]
+        local _, event = ns.addon:Deserialize(serializedEvent)
+        local hash = eventAndHash[2]
+
+        self.eventsByHash:set(hash, {event, i})
     end
 end
 
+function Comm:getLatestEventTime()
+    local latestEventAndHash = ns.db.history[#ns.db.history]
 
-function Comm:handleCommReceived(self, prefix, message, distribution, sender)
+    if latestEventAndHash == nil then
+        return -1
+    end
+
+    local serializedEvent = latestEventAndHash[1]
+    local _, latestEvent = ns.addon:Deserialize(serializedEvent)
+
+    return latestEvent[1]
+end
+
+
+function Comm:handleSync(message, distribution, sender)
+    --[[
+        message is either a timestamp or a table of events like
+        {
+            events = <events>,  -- (originally a list)
+            standings = <standings>,
+        }
+    ]]
+
+    if sender == UnitName('player') then
+        return
+    end
+
     self = Comm
 
-    ns.addon:Print(prefix, sender)
+    ns.addon:Print('got message sync from', sender)
 
-    message = self:unpackMessage(message)
+    message = Dict:new(self:unpackMessage(message))
 
-    if prefix == self.prefixes.UPDATE_REQUEST then
-        -- message is a Set of event hashes
+    if type(message) == 'number' then
+        ns.addon:Print('-- they sent me a timestamp')
 
-        if self.eventsByHash:len() == 0 then
-            self:getEventHashes()
+        local theirLatestEventTime = message
+        local myLatestEventTime = self:getLatestEventTime()
+
+        local toSend = nil
+
+        if theirLatestEventTime < myLatestEventTime then
+            -- they are behind me
+            ns.addon:Print('---- they are behind me; sending new events and standings')
+
+            local newEvents = List:new()
+            for i = #ns.db.history, 1, -1 do
+                local eventAndHash = ns.db.history[i]
+                local serializedEvent = eventAndHash[1]
+                local _, event = ns.addon:Deserialize(serializedEvent)
+                local hash = eventAndHash[2]
+
+                if event[1] <= theirLatestEventTime then
+                    break
+                end
+
+                newEvents:append({event, hash})
+            end
+
+            toSend = {
+                events = newEvents:toTable(),
+                standings = ns.db.standings,
+            }
+        elseif theirLatestEventTime > myLatestEventTime then
+            -- they are ahead of me
+            ns.addon:Print('---- they are ahead of me; sending my latest event time')
+            toSend = myLatestEventTime
         end
 
-        local myEventHashes = self.eventsByHash:keys()
-        local theirEventHashes = message
-
-        local myUniqueEventHashes = myEventHashes:difference(theirEventHashes)
-        local myUniqueEvents = Dict:new()
-        for hash in myUniqueEventHashes:iter() do
-            local event = self.eventsByHash:get(hash)
-            myUniqueEvents:set(hash, event)
+        if toSend ~= nil then
+            self:send(self.prefixes.SYNC_REPLY, toSend, 'WHISPER', sender)
         end
-        -- TODO: also include current standings
-        self:send(self.prefixes.UPDATE_RESPONSE, myUniqueEvents, 'WHISPER', sender)
+    elseif type(message) == 'table' then
+        -- they are ahead of me
+        ns.addon:Print('-- they send me a table of new events and standings')
 
-        local theirUniqueEventHashes = theirEventHashes:difference(myEventHashes)
-        self:send(self.prefixes.EVENTS_REQUEST, theirUniqueEventHashes, 'WHISPER', sender)
+        local events = List:new(message.events)
+        local standings = message.standings
 
-    elseif prefix == self.prefixes.UPDATE_RESPONSE then
-        -- message is a Dict of hashes to events
+        for eventData in events:iter() do
+            local event = eventData[1]
+            local hash = eventData[2]
 
-        for hash, event in message:iter() do
-            if self.eventsByHash:get(hash) == nil then
-                self.eventsByHash:set(hash, event)
-                tinsert(ns.db.history, {event, hash})
+            if not self.eventsByHash:contains(hash) then
+                local serializedEvent = self:Serialize(event)
+                tinsert(ns.db.history, {serializedEvent, hash})
+                local i = #ns.db.history
+                self.eventsByHash:set(hash, {event, i})
             end
         end
 
-    elseif prefix == self.prefixes.EVENTS_REQUEST then
-        -- message is a Set of event hashes
-
-        local events = Dict:new()
-
-        for hash in message:iter() do
-            local event = self.eventsByHash:get(hash)
-            events:set(hash, event)
-        end
-
-        self:send(self.prefixes.EVENTS_RESPONSE, events, 'WHISPER', sender)
-
-    elseif prefix == self.prefixes.EVENTS_RESPONSE then
-        -- message is a Dict of hashes to events
-
-        for hash, event in message:iter() do
-            if self.eventsByHash:get(hash) == nil then
-                self.eventsByHash:set(hash, event)
-                tinsert(ns.db.history, {event, hash})
-            end
-        end
+        ns.db.standings = standings
     end
 end
 

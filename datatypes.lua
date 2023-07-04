@@ -1,10 +1,15 @@
 local _, ns = ...  -- Namespace
 
-
----------------
-List = {}
+local List = {}
 ns.List = List
 
+local Dict = {}
+ns.Dict = Dict
+
+local Set = {}
+ns.Set = Set
+
+---------------
 function List:new(items)
     local o = {}
     setmetatable(o, self)
@@ -56,11 +61,12 @@ function List:sort(func)
     table.sort(self._list, func)
 end
 
+function List:toTable()
+    return ns.Lib:deepcopy(self._list)
+end
+
 
 ---------------
-Dict = {}
-ns.Dict = Dict
-
 function Dict:new(table)
     local o = {}
     setmetatable(o, self)
@@ -114,6 +120,13 @@ function Dict:len()
     return self._keys:len()
 end
 
+function Dict:clear()
+    self._dict = {}
+    self._keys = {}
+    self._values = {}
+    self._keyToValueIndex = {}
+end
+
 function Dict:keys()
     return self._keys
 end
@@ -128,9 +141,6 @@ end
 
 
 ---------------
-Set = {}
-ns.Set = Set
-
 function Set:new(items)
     local o = {}
     setmetatable(o, self)
@@ -187,6 +197,15 @@ end
 
 function Set:len()
     return #self._values
+end
+
+function Set:clear()
+    self._values = {}
+    self._set = {}
+end
+
+function Set:toTable()
+    return ns.Lib:deepcopy(self._values)
 end
 
 function Set:difference(...)

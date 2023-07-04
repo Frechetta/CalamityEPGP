@@ -169,7 +169,7 @@ function addon:init()
         self.libcEncodeTable = self.libc:GetAddonEncodeTable()
 
         ns.Comm:init()
-        ns.Comm:requestUpdate()
+        ns.Comm:syncInit()
     end
 
     self.isOfficer = C_GuildInfo.CanEditOfficerNote()
