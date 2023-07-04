@@ -13,7 +13,7 @@ function ConfirmWindow:createWindow()
     local mainFrameName = addonName .. '_ConfirmWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
-	mainFrame:SetSize(250, 100)
+	mainFrame:SetSize(250, 120)
 	mainFrame:SetPoint('CENTER')
 
     mainFrame:SetFrameStrata('DIALOG')
@@ -26,6 +26,8 @@ function ConfirmWindow:createWindow()
 
     mainFrame.messageLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.messageLabel:SetPoint('TOP', mainFrame, 'TOP', 0, -mainFrame.TitleBg:GetHeight() - 20)
+    mainFrame.messageLabel:SetWidth(mainFrame:GetWidth() - 20)
+    mainFrame.messageLabel:SetWordWrap(true)
 
     mainFrame.yesButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.yesButton:SetText('Yes')

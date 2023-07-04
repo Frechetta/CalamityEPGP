@@ -532,8 +532,4 @@ function MainWindow:getData()
 
     self:filterData()
     self:sortData(7, 'descending')
-
-    -- for _, row in ipairs(data.rowsFiltered) do
-    --     ns.addon:Print(unpack(row))
-    -- end
 end

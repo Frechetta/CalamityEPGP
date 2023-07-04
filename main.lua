@@ -183,7 +183,7 @@ function addon:init()
 
         ns.Lib.playerNameToGuid[name] = guid
 
-        local charData = ns.standings[guid]
+        local charData = ns.db.standings[guid]
         if charData ~= nil then
             charData.name = name
             charData.fullName = fullName
@@ -192,13 +192,13 @@ function addon:init()
             charData.inGuild = true
             charData.rank = rank
         else
-            ns.standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, true, rank)
+            ns.db.standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, true, rank)
         end
 
         table.insert(guildMembers, guid)
     end
 
-    for guid, charData in pairs(ns.standings) do
+    for guid, charData in pairs(ns.db.standings) do
         if charData.inGuild and not ns.Lib:contains(guildMembers, guid) then
             charData.inGuild = false
             charData.rank = nil
@@ -210,11 +210,11 @@ function addon:init()
         self:handleEnteredRaid()
     end
 
+    self:fixGp()
+
     if not self.initialized then
         -- Load config module
         ns.Config:init()
-
-        self:fixGp()
 
         self:initMinimapButton()
 
@@ -279,7 +279,7 @@ end
 
 
 function addon:fixGp()
-    for _, charData in pairs(ns.standings) do
+    for _, charData in pairs(ns.db.standings) do
         if charData.gp == nil or charData.gp < ns.cfg.gpBase then
             charData.gp = ns.cfg.gpBase
         end
@@ -363,7 +363,10 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
     charData[mode] = newValue
 
-    local event = self:Serialize({time(), UnitGUID('player'), charGuid, mode, diff, reason})
+    local createTime = time()
+    local eventTime = createTime
+
+    local event = self:Serialize({createTime, eventTime, UnitGUID('player'), charGuid, mode, diff, reason})
     local hash = ns.Lib:hash(event)
 
     tinsert(ns.db.history, {event, hash})
@@ -433,6 +436,19 @@ function addon:showUseForRaidWindow()
 end
 
 
+function addon:clearData()
+    ns.db.standings = {}
+    ns.db.history = {}
+
+    ns.MainWindow:refresh()
+    ns.HistoryWindow:refresh()
+
+    if IsInGuild() then
+        addon:handleGuildRosterUpdate()
+    end
+end
+
+
 -----------------
 -- EVENT HANDLERS
 -----------------
@@ -485,7 +501,7 @@ function addon:handleChatMsgWhisper(self, message, playerFullName)
 
         local guid = ns.Lib:getPlayerGuid(name)
 
-        if guid == nil or ns.standings[guid] == nil then
+        if guid == nil or ns.db.standings[guid] == nil then
             local name = 'You'
             local word = 'aren\'t'
             if parts[2] ~= nil then
@@ -497,13 +513,13 @@ function addon:handleChatMsgWhisper(self, message, playerFullName)
             return
         end
 
-        local playerStandings = ns.standings[guid]
+        local playerStandings = ns.db.standings[guid]
         local playerEp = playerStandings.ep
         local playerGp = playerStandings.gp
         local playerPr = playerEp / playerGp
 
         local sortedStandings = {}
-        for _, charData in pairs(ns.standings) do
+        for _, charData in pairs(ns.db.standings) do
             tinsert(sortedStandings, charData)
         end
 

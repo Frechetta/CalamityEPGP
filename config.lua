@@ -64,8 +64,16 @@ function Config:init()
                     name = 'Default decay %',
                     width = 'half',
                     pattern = '%d+',
+                    order = 3,
                     get = 'getDefaultDecay',
                     set = 'setDefaultDecay',
+                },
+                linebreak1 = {type = 'description', name = '', order = 4},
+                clearData = {
+                    type = 'execute',
+                    name = 'Clear all data',
+                    order = 5,
+                    func = 'clearData',
                 },
             }
         },
@@ -356,6 +364,11 @@ function Config:setAltMainMapping()
             ns.db.altData.altMainMapping[alt] = main
         end
     end
+end
+
+
+function Config:clearData()
+    ns.ConfirmWindow:show('Are you sure you want to clear all data?\nWARNING: this is irreversible!', ns.addon.clearData)
 end
 
 

@@ -553,20 +553,20 @@ function HistoryWindow:getData()
     end
 
     events:sort(function(left, right)
-        return left[1] > right[1]
+        return left[2] > right[2]
     end)
 
     for event in events:iter() do
-        local diff = event[5]
+        local diff = event[6]
 
         if diff ~= 0 then
-            local playerGuid = event[3]
+            local playerGuid = event[4]
 
-            local time = date('%Y-%m-%d %H:%M:%S', event[1])
-            local issuedBy = playerGuidToName[event[2]]
+            local time = date('%Y-%m-%d %H:%M:%S', event[2])
+            local issuedBy = playerGuidToName[event[3]]
             local player = playerGuidToName[playerGuid]
-            local mode = string.upper(event[4])
-            local reason = event[6]
+            local mode = string.upper(event[5])
+            local reason = event[7]
 
             local baseReason = ''
             local details = ''
