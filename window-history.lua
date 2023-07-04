@@ -538,8 +538,25 @@ function HistoryWindow:getData()
         playerValsTracker[guid]['GP'] = standings.gp
     end
 
+    local events = List:new()
+
     for i = #ns.db.history, 1, -1 do
-        local event = ns.db.history[i]
+        local eventAndHash = ns.db.history[i]
+        local serializedEvent = eventAndHash[1]
+        local _, event = ns.addon:Deserialize(serializedEvent)
+
+        local hash = eventAndHash[2]
+
+        if hash == ns.Lib:hash(serializedEvent) then
+            events:append(event)
+        end
+    end
+
+    events:sort(function(left, right)
+        return left[1] > right[1]
+    end)
+
+    for event in events:iter() do
         local diff = event[5]
 
         if diff ~= 0 then

@@ -1,4 +1,4 @@
-local addonName, ns = ...  -- Namespace
+local _, ns = ...  -- Namespace
 
 Lib = {
     playerNameToGuid = {},
@@ -31,6 +31,7 @@ end
 function Lib:contains(array, value)
     return self:find(array, value) ~= -1
 end
+
 
 function Lib:dictContains(array, value)
     for k in pairs(array) do
@@ -220,6 +221,7 @@ function Lib:itemExists(itemId)
 	end
 end
 
+
 function Lib:getItemString(itemLink)
 	if not itemLink then
 		return nil;
@@ -231,6 +233,7 @@ function Lib:getItemString(itemLink)
 	return itemString;
 end
 
+
 function Lib:getItemID(itemString)
 	if not itemString or not string.find(itemString, "item:") then
 		return nil;
@@ -239,6 +242,7 @@ function Lib:getItemID(itemString)
 	local itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
 	return string.sub(itemString, 1, string.find(itemString, ":") - 1);
 end
+
 
 function Lib:len(table)
     local count = 0
@@ -249,6 +253,7 @@ function Lib:len(table)
 
     return count
 end
+
 
 function Lib:validateEpgpValue(value)
     if value == nil then
@@ -269,6 +274,7 @@ function Lib:validateEpgpValue(value)
 
     return true
 end
+
 
 function Lib:canPlayerUseItem(itemLink)
     -- GameTooltip:ClearLines()
@@ -299,4 +305,11 @@ function Lib:canPlayerUseItem(itemLink)
     GameTooltip:Hide()
 
     return canUse
+end
+
+
+function Lib:hash(data)
+    local hasher = ns.addon.libc:fcs32init()
+    hasher = ns.addon.libc:fcs32update(hasher, data)
+    return ns.addon.libc:fcs32final(hasher)
 end

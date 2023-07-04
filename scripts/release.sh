@@ -6,7 +6,7 @@ root_dir="$script_dir/.."
 
 base_url="https://wow.curseforge.com"
 
-toc_file=$(find "$root_dir" -name "*.toc")
+toc_file=$(find "$root_dir" -maxdepth 1 -name "*.toc")
 
 # get addon name from toc file basename
 addon_name=${toc_file##*/}
@@ -28,8 +28,10 @@ if [ -e "$zip_file" ]; then
     rm "$zip_file"
 fi
 
+cd "$root_dir/.."
+zip -r "$zip_file" "$addon_name" -x "$addon_name/*.zip" -x "$addon_name/scripts/*" -x "$addon_name/.git*"
+
 cd "$root_dir"
-zip "$zip_file" ./* -x "*.zip" -x "scripts/"
 
 changelog=""
 in_version=false

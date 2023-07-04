@@ -1,16 +1,21 @@
-## Title: Calamity EPGP
+## Title: CalamityEPGP
 ## Notes: EPGP addon for WOTLK
-## Author: Kardiir
-## Version: 0.1.0
+## Author: Kardiir-Atiesh
+## Version: 0.2.0
 ## Interface: 30402
 ## SavedVariables: CalamityEPGP
+## DefaultState: enabled
+## OptionalDeps: Guild_Roster_Manager
+## X-Curse-Project-ID: 883687
 
 # interface is retrieved by running this in-game: `/run print((select(4, GetBuildInfo())));`
 
 embeds.xml
 
+datatypes.lua
 values.lua
 lib.lua
+comm.lua
 window-confirm.lua
 window-confirm-award.lua
 window-roll.lua

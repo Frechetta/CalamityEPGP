@@ -14,7 +14,7 @@ end
 
 local addonName, ns = ...  -- Namespace
 
-local addon = LibStub('AceAddon-3.0'):NewAddon(addonName, 'AceConsole-3.0', 'AceEvent-3.0')
+local addon = LibStub('AceAddon-3.0'):NewAddon(addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceComm-3.0', 'AceSerializer-3.0')
 ns.addon = addon
 
 local dbDefaults = {
@@ -34,6 +34,7 @@ local dbDefaults = {
 }
 
 addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
+addon.author = C_AddOns.GetAddOnMetadata(addonName, 'Author')
 
 addon.initialized = false
 addon.minimapButtonInitialized = false
@@ -163,6 +164,12 @@ function addon:init()
         self.ldbi = LibStub('LibDBIcon-1.0', true)
 
         self.candy = LibStub('LibCandyBar-3.0')
+
+        self.libc = LibStub('LibCompress')
+        self.libcEncodeTable = self.libc:GetAddonEncodeTable()
+
+        ns.Comm:init()
+        ns.Comm:requestUpdate()
     end
 
     self.isOfficer = C_GuildInfo.CanEditOfficerNote()
@@ -203,10 +210,6 @@ function addon:init()
         self:handleEnteredRaid()
     end
 
-    -- if not self.minimapButtonInitialized then
-    --     self:initMinimapButton()
-    -- end
-
     if not self.initialized then
         -- Load config module
         ns.Config:init()
@@ -216,31 +219,39 @@ function addon:init()
         self:initMinimapButton()
 
         self.initialized = true
-        addon:Print(string.format('v%s loaded', addon.version))
+        addon:Print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
     end
 end
 
 
 function addon:loadRaidRoster()
-    local standings = ns.db.standings
     self.raidRoster = {}
+
+    if not IsInRaid() then
+        return
+    end
+
+    local standings = ns.db.standings
 
     for i = 1, GetNumGroupMembers() do
         local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
-        local fullName = GetUnitName(name, true)
-        local guid = ns.Lib:getPlayerGuid(name)
-
-        local charData = standings[guid]
-        if charData == nil then
-            standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
-        elseif not charData.inGuild then
-            charData.fullName = fullName
-            charData.name = name
-            charData.level = level
-            charData.class = class
-        end
 
         self.raidRoster[name] = i
+
+        if self.useForRaid then
+            local fullName = GetUnitName(name, true)
+            local guid = ns.Lib:getPlayerGuid(name)
+
+            local charData = standings[guid]
+            if charData == nil then
+                standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
+            elseif not charData.inGuild then
+                charData.fullName = fullName
+                charData.name = name
+                charData.level = level
+                charData.class = class
+            end
+        end
     end
 end
 
@@ -352,8 +363,10 @@ function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
     charData[mode] = newValue
 
-    local event = {time(), UnitGUID('player'), charGuid, mode, diff, reason}
-    table.insert(ns.db.history, event)
+    local event = self:Serialize({time(), UnitGUID('player'), charGuid, mode, diff, reason})
+    local hash = ns.Lib:hash(event)
+
+    tinsert(ns.db.history, {event, hash})
 
     if diff ~= 0 then
         local verb = 'gained'
@@ -411,6 +424,7 @@ function addon:showUseForRaidWindow()
                           function()   -- callback for "Yes"
                               addon.useForRaid = true
                               addon.useForRaidPrompted = true
+                              addon:loadRaidRoster()
                           end,
                           function()  -- callback for "No"
                               addon.useForRaid = false
