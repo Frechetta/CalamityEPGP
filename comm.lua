@@ -71,12 +71,11 @@ function Comm:handleSync(message, distribution, sender)
             standings = <standings>,
         }
     ]]
+    self = Comm
 
     if sender == UnitName('player') then
         return
     end
-
-    self = Comm
 
     ns.addon:Print('got message sync from', sender)
 
@@ -123,7 +122,7 @@ function Comm:handleSync(message, distribution, sender)
         end
     elseif type(message) == 'table' then
         -- they are ahead of me
-        ns.addon:Print('-- they send me a table of new events and standings')
+        ns.addon:Print('-- they sent me a table of new events and standings')
 
         local events = List:new(message.events)
         local standings = message.standings
@@ -133,7 +132,7 @@ function Comm:handleSync(message, distribution, sender)
             local hash = eventData[2]
 
             if not self.eventsByHash:contains(hash) then
-                local serializedEvent = self:Serialize(event)
+                local serializedEvent = ns.addon:Serialize(event)
                 tinsert(ns.db.history, {serializedEvent, hash})
                 local i = #ns.db.history
                 self.eventsByHash:set(hash, {event, i})
@@ -149,6 +148,8 @@ end
 
 
 function Comm:handleUpdate(message, distribution, sender)
+    self = Comm
+
     if sender == UnitName('player') then
         return
     end

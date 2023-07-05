@@ -1,5 +1,7 @@
 local addonName, ns = ...  -- Namespace
 
+local List = ns.List
+
 local HistoryWindow = {
     data = {
         header = {

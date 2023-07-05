@@ -125,6 +125,10 @@ function Dict:len()
     return self._keys:len()
 end
 
+function Dict:contains(key)
+    return self._keys:contains(key)
+end
+
 function Dict:clear()
     self._dict = {}
     self._keys:clear()
