@@ -32,8 +32,10 @@ function Comm:syncInit()
     ns.addon:Print('initializing sync; sending my latest event time to all guildies')
     self:getEventsByHash()
 
-    local latestEventTime = self:getLatestEventTime()
-    self:send(self.prefixes.SYNC, latestEventTime, 'GUILD')
+    local toSend = {
+        latestEventTime = self:getLatestEventTime(),
+    }
+    self:send(self.prefixes.SYNC, toSend, 'GUILD')
 end
 
 
@@ -81,13 +83,16 @@ function Comm:handleSync(message, distribution, sender)
 
     message = self:unpackMessage(message)
 
-    if type(message) == 'number' then
+    local theirLatestEventTime = message.latestEventTime
+    local update = message.update
+    local lmSettings = message.lmSettings
+
+    local toSend = Dict:new()
+
+    if theirLatestEventTime ~= nil then
         ns.addon:Print('-- they sent me a timestamp')
 
-        local theirLatestEventTime = message
         local myLatestEventTime = self:getLatestEventTime()
-
-        local toSend = nil
 
         if theirLatestEventTime < myLatestEventTime then
             -- they are behind me
@@ -107,25 +112,22 @@ function Comm:handleSync(message, distribution, sender)
                 newEvents:append({event, hash})
             end
 
-            toSend = {
+            toSend:set('update', {
                 events = newEvents:toTable(),
-                standings = ns.db.standings,
-            }
+                standings = ns.db.standings
+            })
         elseif theirLatestEventTime > myLatestEventTime then
             -- they are ahead of me
             ns.addon:Print('---- they are ahead of me; sending my latest event time')
-            toSend = myLatestEventTime
+            toSend:set('latestEventTime', myLatestEventTime)
         end
 
-        if toSend ~= nil then
-            self:send(self.prefixes.SYNC, toSend, 'WHISPER', sender)
-        end
-    elseif type(message) == 'table' then
+    if update ~= nil then
         -- they are ahead of me
-        ns.addon:Print('-- they sent me a table of new events and standings')
+        ns.addon:Print('-- they sent me events and standings')
 
-        local events = List:new(message.events)
-        local standings = message.standings
+        local events = List:new(update.events)
+        local standings = update.standings
 
         for eventData in events:iter() do
             local event = eventData[1]
@@ -141,8 +143,32 @@ function Comm:handleSync(message, distribution, sender)
 
         ns.db.standings = standings
 
-        ns.MainWindow:refresh()
         ns.HistoryWindow:refresh()
+        ns.MainWindow:refresh()
+    end
+
+    if lmSettings ~= nil then
+        ns.cfg.defaultDecay = lmSettings.defaultDecay
+        ns.cfg.syncAltEp = lmSettings.syncAltEp
+        ns.cfg.syncAltGp = lmSettings.syncAltGp
+        ns.cfg.gpBase = lmSettings.gpBase
+        ns.cfg.gpSlotMods = lmSettings.gpSlotMods
+        ns.cfg.encounterEp = lmSettings.encounterEp
+
+        -- TODO: refresh settings menu
+    elseif ns.cfg.lmMode then
+        toSend:set('lmSettings', {
+            defaultDecay = ns.cfg.defaultDecay,
+            syncAltEp = ns.cfg.syncAltEp,
+            syncAltGp = ns.cfg.syncAltGp,
+            gpBase = ns.cfg.gpBase,
+            gpSlotMods = ns.cfg.gpSlotMods,
+            encounterEp = ns.cfg.encounterEp,
+        })
+    end
+
+    if toSend:len() > 0 then
+        self:send(self.prefixes.SYNC, toSend:toTable(), 'WHISPER', sender)
     end
 end
 
