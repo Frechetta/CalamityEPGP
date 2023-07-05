@@ -279,6 +279,10 @@ end
 
 
 function addon:fixGp()
+    if not ns.cfg.lmMode then
+        return
+    end
+
     for _, charData in pairs(ns.db.standings) do
         if charData.gp == nil or charData.gp < ns.cfg.gpBase then
             charData.gp = ns.cfg.gpBase
@@ -288,8 +292,8 @@ end
 
 
 function addon:modifyEpgp(changes, percent)
-    if not self.isOfficer then
-        self:Print('Non-officers cannot edit EPGP!')
+    if not ns.cfg.lmMode then
+        self:Print('Cannot edit EPGP when loot master mode is off')
         return
     end
 
@@ -299,7 +303,7 @@ function addon:modifyEpgp(changes, percent)
         local value = change[3]
         local reason = change[4]
 
-        self:modifyEpgpSingle(charGuid, mode, value, reason, percent)
+        self:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
         -- sync alt epgp
         local charData = ns.db.standings[charGuid]
@@ -318,12 +322,12 @@ function addon:modifyEpgp(changes, percent)
 
                     if ns.cfg.syncAltEp then
                         local diff = charData.ep - altCharData.ep
-                        self:modifyEpgpSingle(altCharGuid, 'EP', diff, reason)
+                        self:_modifyEpgpSingle(altCharGuid, 'EP', diff, reason)
                     end
 
                     if ns.cfg.syncAltGp then
                         local diff = charData.gp - altCharData.gp
-                        self:modifyEpgpSingle(altCharGuid, 'GP', diff, reason)
+                        self:_modifyEpgpSingle(altCharGuid, 'GP', diff, reason)
                     end
                 end
             end
@@ -332,12 +336,14 @@ function addon:modifyEpgp(changes, percent)
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
+
+    ns.Comm:send(ns.Comm.prefixes.UPDATE, nil, 'GUILD')
 end
 
 
-function addon:modifyEpgpSingle(charGuid, mode, value, reason, percent)
-    if not self.isOfficer then
-        self:Print('Non-officers cannot edit EPGP!')
+function addon:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
+    if not ns.cfg.lmMode then
+        self:Print('Cannot edit EPGP when loot master mode is off')
         return
     end
 

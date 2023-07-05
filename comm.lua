@@ -7,6 +7,7 @@ local Dict = ns.Dict
 local Comm = {
     prefixes = {
         SYNC = 'sync',
+        UPDATE = 'update',
     },
     eventsByHash = Dict:new(),
     guildiesMessaged = Set:new(),
@@ -17,6 +18,7 @@ ns.Comm = Comm
 
 function Comm:init()
     ns.addon:RegisterComm(self.prefixes.SYNC, self.handleSync)
+    ns.addon:RegisterComm(self.prefixes.UPDATE, self.handleUpdate)
 end
 
 
@@ -117,7 +119,7 @@ function Comm:handleSync(message, distribution, sender)
         end
 
         if toSend ~= nil then
-            self:send(self.prefixes.SYNC_REPLY, toSend, 'WHISPER', sender)
+            self:send(self.prefixes.SYNC, toSend, 'WHISPER', sender)
         end
     elseif type(message) == 'table' then
         -- they are ahead of me
@@ -139,7 +141,20 @@ function Comm:handleSync(message, distribution, sender)
         end
 
         ns.db.standings = standings
+
+        ns.MainWindow:refresh()
+        ns.HistoryWindow:refresh()
     end
+end
+
+
+function Comm:handleUpdate(message, distribution, sender)
+    if sender == UnitName('player') then
+        return
+    end
+
+    local latestEventTime = self:getLatestEventTime()
+    self:send(self.prefixes.SYNC, latestEventTime, 'WHISPER', sender)
 end
 
 
