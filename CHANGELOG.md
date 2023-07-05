@@ -1,3 +1,7 @@
+# 0.4.1
+
+- fix bug and remove unnecessary prints
+
 # 0.4.0
 
 - sync loot master settings
