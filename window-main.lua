@@ -27,7 +27,7 @@ function MainWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('CalamityEPGP')
+	mainFrame.title:SetText('CalamityEPGP Standings')
 
     mainFrame.raidOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.raidOnlyLabel:SetText('Raid Only')

@@ -65,7 +65,7 @@ function LootDistWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('CalamityEPGP')
+	mainFrame.title:SetText('CalamityEPGP Loot Distribution')
 
     mainFrame.itemIcon = mainFrame:CreateTexture(nil, 'OVERLAY')
     mainFrame.itemIcon:SetSize(30, 30)
