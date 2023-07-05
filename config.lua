@@ -49,7 +49,7 @@ function Config:init()
                     order = 1,
                     get = 'getLmMode',
                     set = 'setLmMode',
-                    disabled = 'getLmModeDisabled'
+                    disabled = 'getLmModeDisabled',
                 },
                 showMinimapButton = {
                     type = 'toggle',
@@ -67,6 +67,7 @@ function Config:init()
                     order = 3,
                     get = 'getDefaultDecay',
                     set = 'setDefaultDecay',
+                    disabled = 'getDefaultDecayDisabled',
                 },
                 linebreak1 = {type = 'description', name = '', order = 4},
                 clearData = {
@@ -103,6 +104,7 @@ function Config:init()
             name = 'GP Management',
             handler = self,
             type = 'group',
+            disabled = 'getGpManagementDisabled',
             args = {
                 gpBase = {
                     type = 'input',
@@ -138,54 +140,68 @@ end
 
 
 function Config:initAltManagementMenu()
-    self.panel = CreateFrame('FRAME', addonName .. '_AltManagement')
-    self.panel.name = 'Alt Management'
-    self.panel.parent = addonName
-    self.panel.refresh = self.refreshAltManagementMenu
+    self.aamPanel = CreateFrame('FRAME', addonName .. '_AltManagement')
+    self.aamPanel.name = 'Alt Management'
+    self.aamPanel.parent = addonName
+    self.aamPanel.refresh = self.refreshAltManagementMenu
 
-    InterfaceOptions_AddCategory(self.panel)
+    InterfaceOptions_AddCategory(self.aamPanel)
 end
 
 
 function Config:refreshAltManagementMenu()
-    if not Config.altManagementMenuInitialized and Config.panel:GetWidth() ~= 0 then
-        Config:createAltManagementMenu()
-        Config.altManagementMenuInitialized = true
+    self = Config
+
+    if not self.altManagementMenuInitialized and self.aamPanel:GetWidth() ~= 0 then
+        self:createAltManagementMenu()
+        self.altManagementMenuInitialized = true
     end
 
-    Config:setAltManagementData()
+    self:setAltManagementData()
+
+    if self.altManagementMenuInitialized then
+        if ns.cfg.lmMode then
+            self.aamPanel.importAltMappingButton:Enable()
+            self.aamPanel.synchroniseEpCheck:Enable()
+            self.aamPanel.synchroniseGpCheck:Enable()
+        else
+            self.aamPanel.importAltMappingButton:Disable()
+            self.aamPanel.synchroniseEpCheck:Disable()
+            self.aamPanel.synchroniseGpCheck:Disable()
+        end
+    end
 end
 
 
 function Config:createAltManagementMenu()
-    local panel = self.panel
+    local panel = self.aamPanel
 
-    local importAltMappingButton = CreateFrame('Button', nil, panel, 'GameMenuButtonTemplate')
-    importAltMappingButton:SetText('Import From GRM')
-    importAltMappingButton:SetPoint('TOPLEFT', 10, -15)
+    panel.importAltMappingButton = CreateFrame('Button', nil, panel, 'GameMenuButtonTemplate')
+    panel.importAltMappingButton:SetText('Import From GRM')
+    panel.importAltMappingButton:SetPoint('TOPLEFT', 10, -15)
 
-    local synchroniseGpLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    synchroniseGpLabel:SetText('Synchronise Alt GP')
-    synchroniseGpLabel:SetTextColor(1, 1, 0)
-    synchroniseGpLabel:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', 10, 25)
+    panel.synchroniseGpLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+    panel.synchroniseGpLabel:SetText('Synchronise Alt GP')
+    panel.synchroniseGpLabel:SetTextColor(1, 1, 0)
+    panel.synchroniseGpLabel:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', 10, 25)
 
-    local synchroniseGpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
-    synchroniseGpCheck:SetPoint('LEFT', synchroniseGpLabel, 'RIGHT', 5, 0)
+    panel.synchroniseGpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
+    panel.synchroniseGpCheck:SetPoint('LEFT', panel.synchroniseGpLabel, 'RIGHT', 5, 0)
 
-    local synchroniseEpLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    synchroniseEpLabel:SetText('Synchronise Alt EP')
-    synchroniseEpLabel:SetTextColor(1, 1, 0)
-    synchroniseEpLabel:SetPoint('BOTTOM', synchroniseGpLabel, 'TOP', 0, 15)
+    panel.synchroniseEpLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+    panel.synchroniseEpLabel:SetText('Synchronise Alt EP')
+    panel.synchroniseEpLabel:SetTextColor(1, 1, 0)
+    panel.synchroniseEpLabel:SetPoint('BOTTOM', panel.synchroniseGpLabel, 'TOP', 0, 15)
 
-    local synchroniseEpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
-    synchroniseEpCheck:SetPoint('LEFT', synchroniseEpLabel, 'RIGHT', 5, 0)
+    panel.synchroniseEpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
+    panel.synchroniseEpCheck:SetPoint('LEFT', panel.synchroniseEpLabel, 'RIGHT', 5, 0)
 
     panel.tableFrame = CreateFrame('Frame', panel:GetName() .. 'TableFrame', panel)
-    panel.tableFrame:SetPoint('TOPLEFT', importAltMappingButton, 'BOTTOMLEFT', 0, -20)
+    panel.tableFrame:SetPoint('TOPLEFT', panel.importAltMappingButton, 'BOTTOMLEFT', 0, -20)
     panel.tableFrame:SetPoint('RIGHT', panel, 'RIGHT', -20, 0)
-    panel.tableFrame:SetPoint('BOTTOM', synchroniseEpLabel, 'BOTTOM', 0, 15)
+    panel.tableFrame:SetPoint('BOTTOM', panel.synchroniseEpLabel, 'BOTTOM', 0, 15)
 
-    importAltMappingButton:SetScript('OnClick', function()
+    panel.importAltMappingButton:SetScript('OnClick', function()
         if GRM_Alts == nil then
             ns.addon:Print('GRM data not accessible')
             return
@@ -215,18 +231,18 @@ function Config:createAltManagementMenu()
         self:setAltManagementData()
     end)
 
-    synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
-    synchroniseEpCheck:SetScript('OnClick', function() ns.cfg.syncAltEp = synchroniseEpCheck:GetChecked() end)
+    panel.synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
+    panel.synchroniseEpCheck:SetScript('OnClick', function() ns.cfg.syncAltEp = panel.synchroniseEpCheck:GetChecked() end)
 
-    synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
-    synchroniseGpCheck:SetScript('OnClick', function() ns.cfg.syncAltGp = synchroniseGpCheck:GetChecked() end)
+    panel.synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
+    panel.synchroniseGpCheck:SetScript('OnClick', function() ns.cfg.syncAltGp = panel.synchroniseGpCheck:GetChecked() end)
 
     self:createAltManagementTable()
 end
 
 
 function Config:createAltManagementTable()
-    local parent = self.panel.tableFrame
+    local parent = self.aamPanel.tableFrame
 
     -- Initialize scroll frame
     parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
@@ -281,7 +297,7 @@ end
 
 
 function Config:setAltManagementData()
-    local parent = self.panel.tableFrame
+    local parent = self.aamPanel.tableFrame
 
     if parent == nil then
         return
@@ -335,7 +351,7 @@ end
 
 
 function Config:addAltManagementRow(index)
-    local parent = self.panel.tableFrame
+    local parent = self.aamPanel.tableFrame
 
     local rowHeight = 15
     local yOffset = (rowHeight + 3) * (index - 1)
@@ -391,11 +407,7 @@ function Config:setLmMode(info, input)
 
     ns.cfg.lmMode = input
 
-    ns.MainWindow:show()
-end
-
-function Config:getLmModeDisabled()
-    return not ns.addon.isOfficer
+    ns.MainWindow:refresh()
 end
 
 function Config:getDefaultDecay(info)
@@ -443,4 +455,17 @@ end
 function Config:setBaseGp(info, input)
     ns.cfg.gpBase = tonumber(input)
     ns.addon:fixGp()
+end
+
+
+function Config:getLmModeDisabled()
+    return not ns.addon.isOfficer
+end
+
+function Config:getDefaultDecayDisabled()
+    return not ns.cfg.lmMode
+end
+
+function Config:getGpManagementDisabled()
+    return not ns.cfg.lmMode
 end
