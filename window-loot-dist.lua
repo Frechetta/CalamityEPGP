@@ -234,6 +234,7 @@ end
 
 
 function LootDistWindow:show(itemLink)
+    -- TODO: way to get back to the window if currently rolling
     if self.rolling then
         return
     end
@@ -273,6 +274,8 @@ function LootDistWindow:startRoll()
         return
     end
 
+    self.mainFrame.CloseButton:Disable()
+    self.mainFrame.closeButton:Disable()
     self.mainFrame.startButton:Disable()
     self.mainFrame.stopButton:Enable()
     self.mainFrame.awardButton:Disable()
@@ -314,6 +317,8 @@ function LootDistWindow:stopRoll()
     LootDistWindow.mainFrame.countdownLabel:SetText('0 seconds left')
 
     self.rolling = false
+    self.mainFrame.CloseButton:Enable()
+    self.mainFrame.closeButton:Enable()
     self.mainFrame.startButton:Enable()
     self.mainFrame.stopButton:Disable()
     self.mainFrame.awardButton:Enable()
