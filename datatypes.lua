@@ -38,6 +38,11 @@ function List:iter()
     end
 end
 
+function List:clear()
+    self._list = {}
+    self._len = 0
+end
+
 function List:append(item)
     table.insert(self._list, item)
     self._len = self._len + 1
@@ -122,8 +127,8 @@ end
 
 function Dict:clear()
     self._dict = {}
-    self._keys = {}
-    self._values = {}
+    self._keys:clear()
+    self._values:clear()
     self._keyToValueIndex = {}
 end
 

@@ -1,3 +1,7 @@
+# 0.3.1
+
+- bug fixes
+
 # 0.3.0
 
 - sync with guildies when updates happen

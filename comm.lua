@@ -80,7 +80,7 @@ function Comm:handleSync(message, distribution, sender)
 
     ns.addon:Print('got message sync from', sender)
 
-    message = Dict:new(self:unpackMessage(message))
+    message = self:unpackMessage(message)
 
     if type(message) == 'number' then
         ns.addon:Print('-- they sent me a timestamp')
