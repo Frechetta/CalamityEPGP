@@ -1,3 +1,7 @@
+# 0.3.0
+
+- sync with guildies when updates happen
+
 # 0.2.0
 
 - roll window
