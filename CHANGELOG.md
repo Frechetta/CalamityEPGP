@@ -1,3 +1,7 @@
+# 0.5.0
+
+- disable some options from non LM mode users
+
 # 0.4.2
 
 - fix bug and notify game options when change is synced
