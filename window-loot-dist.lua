@@ -521,7 +521,7 @@ function LootDistWindow:getLoot()
 	for i = 1, GetNumLootItems() do
         if LootSlotHasItem(i) then
             local itemLink = GetLootSlotLink(i)
-            ns.addon:Print(i, itemLink)
+            -- ns.addon:Print(i, itemLink)
 
             if itemLink ~= nil then
                 self.currentLoot[itemLink] = i
@@ -681,17 +681,17 @@ function LootDistWindow:handleTradeShow()
 
 	local itemsToTrade = ns.db.loot.toTrade[player]
 	if itemsToTrade == nil then
-        ns.addon:Print('nothing to trade with player', player)
+        -- ns.addon:Print('nothing to trade with player', player)
 		return
 	end
 
-    ns.addon:Print(player)
+    -- ns.addon:Print(player)
 
-    ns.addon:Print('-- items to trade')
+    -- ns.addon:Print('-- items to trade')
 
-    for _, item in ipairs(itemsToTrade) do
-        ns.addon:Print('----', item)
-    end
+    -- for _, item in ipairs(itemsToTrade) do
+    --     ns.addon:Print('----', item)
+    -- end
 
     local i = 1
 
@@ -701,7 +701,7 @@ function LootDistWindow:handleTradeShow()
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
             if ns.Lib:contains(itemsToTrade, containerItemLink) then
-                ns.addon:Print('-- trade', container, slot, containerItemLink)
+                -- ns.addon:Print('-- trade', container, slot, containerItemLink)
 
                 C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
                 i = i + 1
@@ -741,11 +741,11 @@ end
 function LootDistWindow:handleTradeComplete()
     local player = self.trading.player
     local items = self.trading.items
-    ns.addon:Print('handle trade complete with', player)
+    -- ns.addon:Print('handle trade complete with', player)
 
     local itemsToTrade = ns.db.loot.toTrade[player]
 
-    ns.addon:Print('--', player, itemsToTrade)
+    -- ns.addon:Print('--', player, itemsToTrade)
     if itemsToTrade == nil then
         return
     end

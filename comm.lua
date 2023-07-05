@@ -121,6 +121,7 @@ function Comm:handleSync(message, distribution, sender)
             ns.addon:Print('---- they are ahead of me; sending my latest event time')
             toSend:set('latestEventTime', myLatestEventTime)
         end
+    end
 
     if update ~= nil then
         -- they are ahead of me

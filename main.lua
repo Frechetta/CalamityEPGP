@@ -169,7 +169,6 @@ function addon:init()
         self.libcEncodeTable = self.libc:GetAddonEncodeTable()
 
         ns.Comm:init()
-        ns.Comm:syncInit()
     end
 
     self.isOfficer = C_GuildInfo.CanEditOfficerNote()
@@ -220,6 +219,8 @@ function addon:init()
 
         self.initialized = true
         addon:Print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
+
+        ns.Comm:syncInit()
     end
 end
 
