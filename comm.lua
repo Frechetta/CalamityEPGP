@@ -1,4 +1,4 @@
-local _, ns = ...  -- Namespace
+local addonName, ns = ...  -- Namespace
 
 local List = ns.List
 local Set = ns.Set
@@ -156,7 +156,7 @@ function Comm:handleSync(message, distribution, sender)
         ns.cfg.gpSlotMods = lmSettings.gpSlotMods
         ns.cfg.encounterEp = lmSettings.encounterEp
 
-        -- TODO: refresh settings menu
+        ns.Config.aceConfig:NotifyChange(addonName)
     elseif ns.cfg.lmMode then
         toSend:set('lmSettings', {
             defaultDecay = ns.cfg.defaultDecay,

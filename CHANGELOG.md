@@ -1,3 +1,7 @@
+# 0.4.2
+
+- fix bug and notify game options when change is synced
+
 # 0.4.1
 
 - fix bug and remove unnecessary prints

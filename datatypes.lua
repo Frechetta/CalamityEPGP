@@ -144,6 +144,10 @@ function Dict:values()
     return self._values
 end
 
+function Dict:toTable()
+    return ns.Lib:deepcopy(self.dict)
+end
+
 function Dict:isEmpty()
     return self:len() == 0
 end
