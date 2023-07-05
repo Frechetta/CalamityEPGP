@@ -24,16 +24,16 @@ function DeSelectWindow:createWindow()
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
 	mainFrame.title:SetText('Select Disenchanter')
 
-    mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.cancelButton:SetText('Cancel')
-    mainFrame.cancelButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 15, 12)
-    mainFrame.cancelButton:SetWidth(70)
-
     mainFrame.confirmButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.confirmButton:SetText('Confirm')
-    mainFrame.confirmButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
+    mainFrame.confirmButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 15, 12)
     mainFrame.confirmButton:SetWidth(70)
     mainFrame.confirmButton:Disable()
+
+    mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.cancelButton:SetText('Cancel')
+    mainFrame.cancelButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
+    mainFrame.cancelButton:SetWidth(70)
 
     mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame, 'TOPLEFT', 6, 0)

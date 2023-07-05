@@ -60,15 +60,15 @@ function ModifyEpgpWindow:createWindow()
     mainFrame.reasonLabel:SetText('Reason (optional)')
     mainFrame.reasonLabel:SetPoint('BOTTOM', mainFrame.reasonEditBox, 'TOP', 0, 7)
 
-    mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.cancelButton:SetText('Cancel')
-    mainFrame.cancelButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 15, 12)
-    mainFrame.cancelButton:SetWidth(70)
-
     mainFrame.confirmButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.confirmButton:SetText('Confirm')
-    mainFrame.confirmButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
+    mainFrame.confirmButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 15, 12)
     mainFrame.confirmButton:SetWidth(70)
+
+    mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.cancelButton:SetText('Cancel')
+    mainFrame.cancelButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
+    mainFrame.cancelButton:SetWidth(70)
 
     if self.mode == nil then
         self.mode = 'EP'
@@ -140,7 +140,8 @@ function ModifyEpgpWindow:confirm()
 
     local value = tonumber(value)
 
-    if value == 0
+    if value == nil
+            or value == 0
             or value < -1000000
             or value > 1000000 then
         return
