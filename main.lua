@@ -257,32 +257,32 @@ end
 function addon:loadRaidRoster()
     self.raidRoster = {}
 
-    if not IsInRaid() then
-        return
-    end
+    if IsInRaid() then
+        local standings = ns.db.standings
 
-    local standings = ns.db.standings
+        for i = 1, GetNumGroupMembers() do
+            local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
 
-    for i = 1, GetNumGroupMembers() do
-        local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
+            self.raidRoster[name] = i
 
-        self.raidRoster[name] = i
+            if self.useForRaid then
+                local fullName = GetUnitName(name, true)
+                local guid = ns.Lib:getPlayerGuid(name)
 
-        if self.useForRaid then
-            local fullName = GetUnitName(name, true)
-            local guid = ns.Lib:getPlayerGuid(name)
-
-            local charData = standings[guid]
-            if charData == nil then
-                standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
-            elseif not charData.inGuild then
-                charData.fullName = fullName
-                charData.name = name
-                charData.level = level
-                charData.class = class
+                local charData = standings[guid]
+                if charData == nil then
+                    standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
+                elseif not charData.inGuild then
+                    charData.fullName = fullName
+                    charData.name = name
+                    charData.level = level
+                    charData.class = class
+                end
             end
         end
     end
+
+    ns.MainWindow:refresh()
 end
 
 
@@ -820,6 +820,7 @@ addon:RegisterEvent('TRADE_CLOSED', 'handleTradeClosed')
 addon:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
 addon:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
 addon:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
+addon:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
 addon:RegisterEvent('LOOT_READY', 'handleLootReady')
 addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
 addon:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
