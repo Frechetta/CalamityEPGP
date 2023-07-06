@@ -145,6 +145,7 @@ function Config:init()
     self:initAltManagementMenu()
     self:addOptionsMenu(addonName .. '_LootDistribution', menus.lootDistribution, addonName)
     self:addOptionsMenu(addonName .. '_GpManagement', menus.gpManagement, addonName)
+    self:addOptionsMenu(addonName .. '_Advanced', menus.advanced, addonName)
 end
 
 
@@ -218,7 +219,7 @@ function Config:createAltManagementMenu()
 
     panel.importAltMappingButton:SetScript('OnClick', function()
         if GRM_Alts == nil then
-            ns.addon:Print('GRM data not accessible')
+            ns.print('GRM data not accessible')
             return
         end
 

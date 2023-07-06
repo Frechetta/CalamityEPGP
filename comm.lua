@@ -29,7 +29,7 @@ end
 
 
 function Comm:syncInit()
-    ns.addon:Print('initializing sync; sending my latest event time to all guildies')
+    ns.debug('initializing sync; sending my latest event time to all guildies')
     self:getEventsByHash()
 
     local toSend = {
@@ -79,7 +79,7 @@ function Comm:handleSync(message, distribution, sender)
         return
     end
 
-    ns.addon:Print('got message sync from', sender)
+    ns.debug('got message sync from ' .. sender)
 
     message = self:unpackMessage(message)
 
@@ -90,13 +90,13 @@ function Comm:handleSync(message, distribution, sender)
     local toSend = Dict:new()
 
     if theirLatestEventTime ~= nil then
-        ns.addon:Print('-- they sent me a timestamp')
+        ns.debug('-- they sent me a timestamp')
 
         local myLatestEventTime = self:getLatestEventTime()
 
         if theirLatestEventTime < myLatestEventTime then
             -- they are behind me
-            ns.addon:Print('---- they are behind me; sending new events and standings')
+            ns.debug('---- they are behind me; sending new events and standings')
 
             local newEvents = List:new()
             for i = #ns.db.history, 1, -1 do
@@ -118,14 +118,14 @@ function Comm:handleSync(message, distribution, sender)
             })
         elseif theirLatestEventTime > myLatestEventTime then
             -- they are ahead of me
-            ns.addon:Print('---- they are ahead of me; sending my latest event time')
+            ns.debug('---- they are ahead of me; sending my latest event time')
             toSend:set('latestEventTime', myLatestEventTime)
         end
     end
 
     if update ~= nil then
         -- they are ahead of me
-        ns.addon:Print('-- they sent me events and standings')
+        ns.debug('-- they sent me events and standings')
 
         local events = List:new(update.events)
         local standings = update.standings
@@ -200,14 +200,14 @@ function Comm:unpackMessage(package)
     local message, error = ns.addon.libc:Decompress(message)
 
     if message == nil then
-        ns.addon:Print(string.format('could not decompress message. error: %s', error))
+        ns.debug(string.format('could not decompress message. error: %s', error))
         return nil
     end
 
     local success, message = ns.addon:Deserialize(message)
 
     if not success then
-        ns.addon:Print('could not deserialize message')
+        ns.debug('could not deserialize message')
         return nil
     end
 

@@ -1,6 +1,7 @@
-# WIP
+# 0.6.0
 
 - disable loot dist window when not master looter unless debug mode is on
+- add debug mode
 
 # 0.5.0
 

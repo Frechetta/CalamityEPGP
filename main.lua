@@ -70,6 +70,19 @@ function addon:OnDisable()
     -- Called when the addon is disabled
 end
 
+
+function ns.print(msg)
+    addon:Print(msg)
+end
+
+function ns.debug(msg)
+    if not ns.cfg.debugMode then
+        return
+    end
+
+    ns.print('DEBUG: ' .. msg)
+end
+
 -------------------------
 -- HANDLERS
 -------------------------
@@ -82,10 +95,10 @@ function addon:handleSlashCommand(input)
     elseif input == 'cfg' then
         self:openOptions()
     else
-        self:Print('Usage:')
-        self:Print('show - Opens the main window')
-        self:Print('history - Opens the history window')
-        self:Print('cfg - Opens the configuration menu')
+        ns.print('Usage:')
+        ns.print('show - Opens the main window')
+        ns.print('history - Opens the history window')
+        ns.print('cfg - Opens the configuration menu')
     end
 end
 
@@ -214,7 +227,7 @@ function addon:init()
         self:initMinimapButton()
 
         self.initialized = true
-        addon:Print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
+        ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
 
         ns.Comm:syncInit()
     end
@@ -290,7 +303,7 @@ end
 
 function addon:modifyEpgp(changes, percent)
     if not ns.cfg.lmMode then
-        self:Print('Cannot edit EPGP when loot master mode is off')
+        ns.print('Cannot edit EPGP when loot master mode is off')
         return
     end
 
@@ -340,7 +353,7 @@ end
 
 function addon:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
     if not ns.cfg.lmMode then
-        self:Print('Cannot edit EPGP when loot master mode is off')
+        ns.print('Cannot edit EPGP when loot master mode is off')
         return
     end
 
@@ -385,7 +398,7 @@ function addon:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
         local baseReason = ns.Lib:split(reason, ':')[1]
 
-        self:Print(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
+        ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
     end
 end
 
@@ -687,7 +700,7 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
     local ep = ns.cfg.encounterEp[encounterId]
 
     if ep == nil then
-        addon:Print(string.format('Encounter "%s" (%s) not in encounters table!', encounterName, encounterId))
+        ns.print(string.format('Encounter "%s" (%s) not in encounters table!', encounterName, encounterId))
         return
     end
 

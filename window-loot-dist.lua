@@ -355,7 +355,7 @@ function LootDistWindow:print(msg, rw)
     elseif IsInGroup() then
         SendChatMessage('CalamityEPGP: ' .. msg, 'PARTY')
     else
-        ns.addon:Print(msg)
+        ns.print(msg)
     end
 end
 
@@ -526,7 +526,7 @@ function LootDistWindow:getLoot()
 	for i = 1, GetNumLootItems() do
         if LootSlotHasItem(i) then
             local itemLink = GetLootSlotLink(i)
-            -- ns.addon:Print(i, itemLink)
+            ns.debug(i .. ': ' .. itemLink)
 
             if itemLink ~= nil then
                 self.currentLoot[itemLink] = i
@@ -564,7 +564,7 @@ end
 function LootDistWindow:award(awardee, rollType, perc, gp)
     self = LootDistWindow
 
-    ns.addon:Print(self.itemLink, 'awarded to', awardee)
+    ns.debug(self.itemLink .. ' awarded to ' .. awardee)
 
     -- add item to awarded table
     if ns.db.loot.awarded[self.itemLink] == nil then
@@ -625,16 +625,16 @@ function LootDistWindow:handleLootReceived(itemLink, player)
 
     -- I received the item
     if player == 'You' then
-        ns.addon:Print('i received', itemLink)
+        ns.debug('i received ' .. itemLink)
         local myName = UnitName('player')
-        ns.addon:Print('-- my name:', myName)
+        ns.debug('-- my name: ' .. myName)
 
         -- iterate over awarded items for ones that haven't been collected
         for awardedPlayer, awardedItem in pairs(awardedData) do
             if not awardedItem.given and not awardedItem.collected then
                 awardedItem.collected = true
 
-                ns.addon:Print(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, awardedItem))
+                ns.debug(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, awardedItem))
 
                 -- TODO: fix
                 -- if this item was awarded to me, mark it as successful
@@ -656,7 +656,7 @@ end
 
 
 function LootDistWindow:markAsToTrade(itemLink, player)
-    ns.addon:Print('marked as to trade', itemLink, player)
+    ns.debug('marked as to trade: ' .. itemLink .. ' - ' .. player)
 
     local toTrade = ns.db.loot.toTrade
 
@@ -673,7 +673,7 @@ function LootDistWindow:handleTradeRequest(player)
 		return
 	end
 
-    ns.addon:Print('trade request with to trade player')
+    ns.debug('trade request with to trade player')
 
 	InitiateTrade(player)
 end
@@ -686,17 +686,17 @@ function LootDistWindow:handleTradeShow()
 
 	local itemsToTrade = ns.db.loot.toTrade[player]
 	if itemsToTrade == nil then
-        -- ns.addon:Print('nothing to trade with player', player)
+        ns.debug('nothing to trade with player ' .. player)
 		return
 	end
 
-    -- ns.addon:Print(player)
+    ns.debug(player)
 
-    -- ns.addon:Print('-- items to trade')
+    ns.debug('-- items to trade')
 
-    -- for _, item in ipairs(itemsToTrade) do
-    --     ns.addon:Print('----', item)
-    -- end
+    for _, item in ipairs(itemsToTrade) do
+        ns.debug('---- ' .. item)
+    end
 
     local i = 1
 
@@ -706,7 +706,7 @@ function LootDistWindow:handleTradeShow()
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
             if ns.Lib:contains(itemsToTrade, containerItemLink) then
-                -- ns.addon:Print('-- trade', container, slot, containerItemLink)
+                ns.debug('-- trade ' .. container .. ' ' .. slot .. ' ' .. containerItemLink)
 
                 C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
                 i = i + 1
@@ -746,11 +746,11 @@ end
 function LootDistWindow:handleTradeComplete()
     local player = self.trading.player
     local items = self.trading.items
-    -- ns.addon:Print('handle trade complete with', player)
+    ns.debug('handle trade complete with ' .. player)
 
     local itemsToTrade = ns.db.loot.toTrade[player]
 
-    -- ns.addon:Print('--', player, itemsToTrade)
+    ns.debug('-- ' .. player .. ' ' .. itemsToTrade)
     if itemsToTrade == nil then
         return
     end
@@ -762,7 +762,7 @@ end
 
 
 function LootDistWindow:successfulAward(itemLink, player)
-    ns.addon:Print(itemLink, 'successfully given to', player)
+    ns.debug(itemLink .. ' successfully given to ' .. player)
 
     ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
 
@@ -770,9 +770,9 @@ function LootDistWindow:successfulAward(itemLink, player)
 
     if awardedItems ~= nil then
         for _, awardedItem in ipairs(awardedItems) do
-            ns.addon:Print(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
+            ns.debug(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
             if not awardedItem.given then
-                ns.addon:Print('---- set given')
+                ns.debug('---- set given')
                 awardedItem.given = true
                 awardedItem.givenTime = time()
                 return
