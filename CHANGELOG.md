@@ -1,3 +1,7 @@
+# 0.7.0
+
+- various improvements
+
 # 0.6.2
 
 - fix roll window not closing
