@@ -1,3 +1,7 @@
+# 0.6.2
+
+- fix roll window not closing
+
 # 0.6.1
 
 - fix loot distribution

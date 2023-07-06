@@ -311,9 +311,7 @@ end
 function LootDistWindow:stopRoll()
     self = LootDistWindow
 
-    if not IsInGroup() and not IsInRaid() then
-        ns.RollWindow:hide()
-    end
+    ns.RollWindow:hide()
 
     self:print('Stop your rolls!', true)
 
