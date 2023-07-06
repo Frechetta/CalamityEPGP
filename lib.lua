@@ -201,7 +201,7 @@ function Lib:getGp(itemLink)
         slotMod = 0.75
     end
 
-    if ilvl == nil then
+    if ilvl == nil or rarity == nil then
         return 0
     end
 

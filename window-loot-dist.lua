@@ -1,5 +1,9 @@
 local addonName, ns = ...  -- Namespace
 
+local List = ns.List
+local Dict = ns.Dict
+local Set = ns.Set
+
 local LootDistWindow = {
     data = {
         header = {
@@ -526,9 +530,9 @@ function LootDistWindow:getLoot()
 	for i = 1, GetNumLootItems() do
         if LootSlotHasItem(i) then
             local itemLink = GetLootSlotLink(i)
-            ns.debug(i .. ': ' .. itemLink)
 
             if itemLink ~= nil then
+                ns.debug(i .. ': ' .. itemLink)
                 self.currentLoot[itemLink] = i
             end
         end
@@ -587,12 +591,19 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
 
 	if itemIndex ~= nil then
         -- item is from loot window
-		local playerIndex = ns.addon.raidRoster[awardee]
+        local playerIndex
+        for i = 1, GetNumGroupMembers() do
+            local candidate = GetMasterLootCandidate(itemIndex, i)
+            if candidate == awardee then
+                playerIndex = i
+                break
+            end
+        end
 
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			self:print(awardee .. ' is not in the raid')
+			self:print(awardee .. ' is not eligible for loot')
 		end
     elseif awardee == UnitName('player') then
         -- item is in inventory and was awarded to me
@@ -750,10 +761,11 @@ function LootDistWindow:handleTradeComplete()
 
     local itemsToTrade = ns.db.loot.toTrade[player]
 
-    ns.debug('-- ' .. player .. ' ' .. itemsToTrade)
     if itemsToTrade == nil then
         return
     end
+
+    ns.debug('-- ' .. player .. ' ' .. itemsToTrade)
 
     for _, itemLink in ipairs(items) do
         self:successfulAward(itemLink, player)
@@ -796,12 +808,19 @@ function LootDistWindow:disenchant()
 
 	if itemIndex ~= nil then
         -- item is from loot window
-		local playerIndex = ns.addon.raidRoster[self.disenchanter]
+        local playerIndex
+        for i = 1, GetNumGroupMembers() do
+            local candidate = GetMasterLootCandidate(itemIndex, i)
+            if candidate == self.disenchanter then
+                playerIndex = i
+                break
+            end
+        end
 
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			self:print(self.disenchanter .. ' is not in the raid')
+			self:print(self.disenchanter .. ' is not eligible for loot')
             return
 		end
 	end

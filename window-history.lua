@@ -43,7 +43,7 @@ function HistoryWindow:createWindow()
     end
 
     local mainFrame = CreateFrame('Frame', addonName .. '_HistoryWindow', UIParent, 'BasicFrameTemplateWithInset');
-	mainFrame:SetSize(800, 500);
+	mainFrame:SetSize(900, 500);
 	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
 
     mainFrame:SetMovable(true)
