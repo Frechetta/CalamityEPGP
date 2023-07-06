@@ -47,7 +47,7 @@ function AddEpWindow:createWindow()
     mainFrame.reasonEditBox:SetAutoFocus(false)
 
     mainFrame.reasonLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.reasonLabel:SetText('Reason (optional)')
+    mainFrame.reasonLabel:SetText('Reason')
     mainFrame.reasonLabel:SetPoint('BOTTOM', mainFrame.reasonEditBox, 'TOP', 0, 7)
 
     mainFrame.confirmButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
@@ -111,7 +111,13 @@ function AddEpWindow:confirm()
         return
     end
 
-    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, self.mainFrame.reasonEditBox:GetText())
+    local enteredReason = self.mainFrame.reasonEditBox:GetText()
+
+    if #enteredReason == 0 then
+        return
+    end
+
+    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
     local changes = {}
 
@@ -121,6 +127,10 @@ function AddEpWindow:confirm()
     end
 
     ns.addon:modifyEpgp(changes)
+
+    if ns.addon.useForRaid and ns.MainWindow.mainFrame.raidOnlyButton:GetChecked() then
+        ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
+    end
 
     self:hide()
 end

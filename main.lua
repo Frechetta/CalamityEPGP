@@ -83,6 +83,17 @@ function ns.debug(msg)
     ns.print('DEBUG: ' .. msg)
 end
 
+function ns.printPublic(msg, rw)
+    if IsInRaid() then
+        local channel = rw and 'RAID_WARNING' or 'RAID'
+        SendChatMessage('CalamityEPGP: ' .. msg, channel)
+    elseif IsInGroup() then
+        SendChatMessage('CalamityEPGP: ' .. msg, 'PARTY')
+    else
+        ns.print(msg)
+    end
+end
+
 -------------------------
 -- HANDLERS
 -------------------------
@@ -715,6 +726,8 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
         end
 
         addon:modifyEpgp(changes)
+
+        ns.printPublic(string.format('Awarded %d EP to raid for killing %s', ep, encounterName))
     end
 
     ns.ConfirmWindow:show(string.format('Award %s EP to raid for killing %s?', ep, encounterName), proceedFunc)

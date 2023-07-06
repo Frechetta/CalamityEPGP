@@ -38,7 +38,7 @@ countDownFrame:SetScript("OnUpdate", function(self, elapsed)
     elseif onesec <= 0 then
         LootDistWindow.mainFrame.countdownLabel:SetText(seconds .. ' seconds left')
         if seconds <= 5 then
-            LootDistWindow:print(seconds .. ' seconds to roll')
+            ns.printPublic(seconds .. ' seconds to roll')
             LootDistWindow.mainFrame.countdownLabel:SetTextColor(1, 0.5, 0)
         end
         seconds = seconds - 1
@@ -287,8 +287,8 @@ function LootDistWindow:startRoll()
     self.mainFrame.deButton:Disable()
     self.rolling = true
 
-    self:print('You have ' .. duration .. ' seconds to roll on ' .. self.itemLink, true)
-    self:print('"/roll" for MS and "/roll 99" for OS')
+    ns.printPublic('You have ' .. duration .. ' seconds to roll on ' .. self.itemLink, true)
+    ns.printPublic('"/roll" for MS and "/roll 99" for OS')
 
     self.mainFrame.countdownLabel:SetText(duration .. ' seconds left')
     self.mainFrame.countdownLabel:SetTextColor(0, 1, 0)
@@ -313,7 +313,7 @@ function LootDistWindow:stopRoll()
 
     ns.RollWindow:hide()
 
-    self:print('Stop your rolls!', true)
+    ns.printPublic('Stop your rolls!', true)
 
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
     LootDistWindow.mainFrame.countdownLabel:SetText('0 seconds left')
@@ -329,13 +329,13 @@ function LootDistWindow:stopRoll()
 
     -- announce all rolls in order
     if ns.Lib:len(self.data.rolls) > 0 then
-        self:print('Rolls:')
+        ns.printPublic('Rolls:')
         for roller, rollData in pairs(self.data.rolls) do
             local type = rollData.type
             local roll = rollData[type]
             local pr = rollData['pr']
 
-            self:print(string.format('- %s [%s]  PR: %.3f,  Roll: %d', roller, type, pr, roll))
+            ns.printPublic(string.format('- %s [%s]  PR: %.3f,  Roll: %d', roller, type, pr, roll))
         end
     end
 end
@@ -347,18 +347,6 @@ function LootDistWindow:clearRolls()
     self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
-end
-
-
-function LootDistWindow:print(msg, rw)
-    if IsInRaid() then
-        local channel = rw and 'RAID_WARNING' or 'RAID'
-        SendChatMessage('CalamityEPGP: ' .. msg, channel)
-    elseif IsInGroup() then
-        SendChatMessage('CalamityEPGP: ' .. msg, 'PARTY')
-    else
-        ns.print(msg)
-    end
 end
 
 
@@ -390,7 +378,7 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
     rollerData['pr'] = priority
 
     -- TODO: don't print if roll is already there unless response is changed
-    self:print(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
+    ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
 
     self:setData()
 end
@@ -547,7 +535,7 @@ function LootDistWindow:checkAward()
     self = LootDistWindow
 
     if not IsMasterLooter() then
-		self:print('You are not the master looter!')
+		ns.print('You are not the master looter!')
 		-- return
 	end
 
@@ -601,7 +589,7 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			self:print(awardee .. ' is not eligible for loot')
+			ns.print(awardee .. ' is not eligible for loot')
 		end
     elseif awardee == UnitName('player') then
         -- item is in inventory and was awarded to me
@@ -616,7 +604,7 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
     -- add gp
     local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
     ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
-	self:print(string.format('Item %s awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
+	ns.printPublic(string.format('Item %s awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
 
     if self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()
@@ -800,7 +788,7 @@ function LootDistWindow:disenchant()
         return
     end
 
-	self:print(string.format('Item %s will be disenchanted by %s', self.itemLink, self.disenchanter))
+	ns.printPublic(string.format('Item %s will be disenchanted by %s', self.itemLink, self.disenchanter))
 
     local itemIndex = self.currentLoot[self.itemLink]
 
@@ -818,7 +806,7 @@ function LootDistWindow:disenchant()
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			self:print(self.disenchanter .. ' is not eligible for loot')
+			ns.print(self.disenchanter .. ' is not eligible for loot')
             return
 		end
 	end
