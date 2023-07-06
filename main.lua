@@ -104,10 +104,6 @@ function addon:openOptions()
 end
 
 function addon:handleItemClick(itemLink, mouseButton)
-    if not ns.cfg.lmMode then
-        return
-    end
-
     if not itemLink
             or type(itemLink) ~= "string"
             or (mouseButton and mouseButton ~= "LeftButton")
@@ -117,7 +113,7 @@ function addon:handleItemClick(itemLink, mouseButton)
 
     local keyPressIdentifier = ns.Lib:getClickCombination(mouseButton);
 
-    if keyPressIdentifier == 'SHIFT_CLICK' then
+    if keyPressIdentifier == 'SHIFT_CLICK' and ((ns.cfg.lmMode and IsMasterLooter()) or ns.cfg.debugMode) then
         self:showLootDistWindow(itemLink)
     end
 end

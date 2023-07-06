@@ -1,3 +1,7 @@
+# WIP
+
+- disable loot dist window when not master looter unless debug mode is on
+
 # 0.5.0
 
 - disable some options from non LM mode users

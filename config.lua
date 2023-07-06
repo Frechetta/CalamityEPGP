@@ -15,6 +15,7 @@ local Config = {
         minimap = {
             hide = false,
         },
+        debugMode = false,
     }
 }
 
@@ -85,7 +86,7 @@ function Config:init()
             args = {
                 duration = {
                     type = 'input',
-                    name = 'Roll Duration',
+                    name = 'Roll duration',
                     width = 'half',
                     get = 'getRollDuration',
                     set = 'setRollDuration',
@@ -116,6 +117,20 @@ function Config:init()
                 }
             }
         },
+        advanced = {
+            name = 'Advanced',
+            handler = self,
+            type = 'group',
+            order = -1,
+            args = {
+                debugMode = {
+                    type = 'toggle',
+                    name = 'Debug Mode',
+                    get = 'getDebugMode',
+                    set = 'setDebugMode',
+                }
+            }
+        }
     }
 
     -- add defaults to ns.cfg if it's not already poulated
@@ -455,6 +470,14 @@ end
 function Config:setBaseGp(info, input)
     ns.cfg.gpBase = tonumber(input)
     ns.addon:fixGp()
+end
+
+function Config:setDebugMode(info, input)
+    ns.cfg.debugMode = input
+end
+
+function Config:getDebugMode(info)
+    return ns.cfg.debugMode
 end
 
 
