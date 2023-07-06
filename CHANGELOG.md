@@ -1,3 +1,7 @@
+# 0.6.1
+
+- fix loot distribution
+
 # 0.6.0
 
 - disable loot dist window when not master looter unless debug mode is on
