@@ -84,17 +84,20 @@ function ns.debug(msg)
 end
 
 function ns.printPublic(msg, rw)
+    local channel
+
     if IsInRaid() then
-        local channel
         if rw and UnitIsGroupAssistant('player') then
             channel = 'RAID_WARNING'
         else
             channel = 'RAID'
         end
-
-        SendChatMessage('CalamityEPGP: ' .. msg, channel)
     elseif IsInGroup() then
-        SendChatMessage('CalamityEPGP: ' .. msg, 'PARTY')
+        channel = 'PARTY'
+    end
+
+    if channel ~= nil then
+        SendChatMessage('CalamityEPGP: ' .. msg, channel)
     else
         ns.print(msg)
     end
