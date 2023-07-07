@@ -309,13 +309,13 @@ end
 
 
 function addon:fixGp()
-    if not ns.cfg.lmMode then
-        return
-    end
-
     for _, charData in pairs(ns.db.standings) do
-        if charData.gp == nil or charData.gp < ns.cfg.gpBase then
-            charData.gp = ns.cfg.gpBase
+        local min = 1
+        if ns.cfg.lmMode then
+            min = ns.cfg.gpBase
+        end
+        if charData.gp == nil or charData.gp < min then
+            charData.gp = min
         end
     end
 end

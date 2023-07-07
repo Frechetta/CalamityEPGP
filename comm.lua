@@ -83,6 +83,10 @@ function Comm:handleSync(message, distribution, sender)
 
     message = self:unpackMessage(message)
 
+    if type(message) ~= table then
+        return
+    end
+
     local theirLatestEventTime = message.latestEventTime
     local update = message.update
     local lmSettings = message.lmSettings
