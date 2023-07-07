@@ -55,8 +55,6 @@ function RollWindow:createWindow()
 
     mainFrame.passButton:SetScript('OnClick', function() RollWindow:hide() end)
 
-    tinsert(UISpecialFrames, mainFrameName)
-
     return mainFrame
 end
 
