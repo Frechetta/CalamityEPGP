@@ -583,6 +583,9 @@ function HistoryWindow:getData()
             elseif baseReason == ns.values.epgpReasons.AWARD then
                 local detailsSplit = ns.Lib:split(details, '-')
                 details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
+            elseif baseReason == ns.values.epgpReasons.BOSS_KILL then
+                local i, j = string.find(details, '%(')
+                details = string.sub(details, 2, i - 3)
             end
 
             local prettyReason = self.epgpReasonsPretty[baseReason]
