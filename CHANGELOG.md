@@ -1,3 +1,7 @@
+# 0.7.5
+
+- respond to sync message with version
+
 # 0.7.4
 
 - fix Dict:toTable()

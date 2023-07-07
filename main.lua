@@ -36,6 +36,8 @@ local dbDefaults = {
 addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
 addon.author = C_AddOns.GetAddOnMetadata(addonName, 'Author')
 
+addon.versionNum = ns.Lib:getVersionNum(addon.version)
+
 addon.initialized = false
 addon.minimapButtonInitialized = false
 addon.isOfficer = nil

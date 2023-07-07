@@ -34,7 +34,7 @@ function Comm:syncInit()
     self:getEventsByHash()
 
     local toSend = {
-        version = ns.Lib:getVersionNum(ns.addon.version),
+        version = ns.addon.versionNum,
         latestEventTime = self:getLatestEventTime(),
     }
 
@@ -93,7 +93,14 @@ function Comm:handleSync(message, distribution, sender)
     end
 
     local theirAddonVersion = message.version
+
     self.otherClientVersions:set(sender, theirAddonVersion)
+
+    if theirAddonVersion == nil then
+        ns.debug('-- client version unknown (probably out of date)')
+        return
+    end
+
     if theirAddonVersion < ns.minSyncVersion then
         ns.debug(string.format('-- client version (%s) out of date', ns.lib:getVersionStr(theirAddonVersion)))
         return
@@ -185,6 +192,7 @@ function Comm:handleSync(message, distribution, sender)
     end
 
     if toSend:len() > 0 then
+        toSend:set('version', ns.addon.versionNum)
         self:send(self.prefixes.SYNC, toSend:toTable(), 'WHISPER', sender)
     end
 end
