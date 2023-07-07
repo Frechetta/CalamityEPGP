@@ -1,3 +1,8 @@
+# 0.7.6
+
+- fix nil reference in comm.lua
+- fix Lib:getVersionNum
+
 # 0.7.5
 
 - respond to sync message with version

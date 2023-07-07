@@ -315,7 +315,7 @@ function Lib:hash(data)
 end
 
 
-function Lib:getVersionNum()
+function Lib:getVersionNum(version)
     --[[
         0.7.0   == --- --7 000
         0.7.1   == --- --7 001
@@ -325,7 +325,6 @@ function Lib:getVersionNum()
         1.5.0   == --1 005 000
         1.15.12 == --1 015 012
     --]]
-    local version = ns.addon.version
     local parts = self:split(version, '.')
 
     local major = tostring(parts[1])

@@ -102,7 +102,7 @@ function Comm:handleSync(message, distribution, sender)
     end
 
     if theirAddonVersion < ns.minSyncVersion then
-        ns.debug(string.format('-- client version (%s) out of date', ns.lib:getVersionStr(theirAddonVersion)))
+        ns.debug(string.format('-- client version (%s) out of date', ns.Lib:getVersionStr(theirAddonVersion)))
         return
     end
 
