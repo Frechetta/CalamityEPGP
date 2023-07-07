@@ -84,7 +84,7 @@ function ns.debug(msg)
         return
     end
 
-    ns.print('DEBUG: ' .. msg)
+    ns.print('DEBUG: ' .. tostring(msg))
 end
 
 function ns.printPublic(msg, rw)
@@ -99,6 +99,8 @@ function ns.printPublic(msg, rw)
     elseif IsInGroup() then
         channel = 'PARTY'
     end
+
+    msg = tostring(msg)
 
     if channel ~= nil then
         SendChatMessage('CalamityEPGP: ' .. msg, channel)
@@ -213,8 +215,6 @@ function addon:init()
         local fullName, rank, _, level, class, _, _, _, _, _, _, _, _, _, _, _, guid = GetGuildRosterInfo(i)
         local name = self:getCharName(fullName)
 
-        ns.Lib.playerNameToGuid[name] = guid
-
         local charData = ns.db.standings[guid]
         if charData ~= nil then
             charData.name = name
@@ -240,6 +240,11 @@ function addon:init()
     -- load raid data
     if IsInRaid() then
         self:handleEnteredRaid()
+    end
+
+    for guid, playerData in pairs(ns.db.standings) do
+        local name = playerData.name
+        ns.Lib.playerNameToGuid[name] = guid
     end
 
     self:fixGp()
