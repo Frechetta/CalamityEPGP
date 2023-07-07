@@ -1,3 +1,7 @@
+# 0.7.2
+
+- further fix incorrect sync data
+
 # 0.7.1
 
 - handle incorrect sync data

@@ -313,3 +313,39 @@ function Lib:hash(data)
     hasher = ns.addon.libc:fcs32update(hasher, data)
     return ns.addon.libc:fcs32final(hasher)
 end
+
+
+function Lib:getVersionNum()
+    --[[
+        0.7.0   == --- --7 000
+        0.7.1   == --- --7 001
+        0.7.56  == --- --7 056
+        0.8.2   == --- --8 002
+        0.12.5  == --- -12 005
+        1.5.0   == --1 005 000
+        1.15.12 == --1 015 012
+    --]]
+    local version = ns.addon.version
+    local parts = self:split(version, '.')
+
+    local major = tostring(parts[1])
+    local minor = tostring(parts[2])
+    local patch = tostring(parts[3])
+
+    for i = 1, 3 do
+        if #major < i then
+            major = '0' .. major
+        end
+
+        if #minor < i then
+            minor = '0' .. minor
+        end
+
+        if #patch < i then
+            patch = '0' .. patch
+        end
+    end
+
+    local versionNum = tonumber(major .. minor .. patch)
+    return versionNum
+end

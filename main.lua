@@ -46,6 +46,8 @@ addon.whisperCommands = {
     INFO = '!ceinfo',
 }
 
+ns.minSyncVersion = ns.Lib:getVersionNum('0.7.2')
+
 
 function addon:OnInitialize()
     self.initialized = false

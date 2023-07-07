@@ -11,6 +11,7 @@ local Comm = {
     },
     eventsByHash = Dict:new(),
     guildiesMessaged = Set:new(),
+    otherClientVersions = Dict:new(),
 }
 
 ns.Comm = Comm
@@ -33,6 +34,7 @@ function Comm:syncInit()
     self:getEventsByHash()
 
     local toSend = {
+        version = ns.Lib:getVersionNum(self.addon.version),
         latestEventTime = self:getLatestEventTime(),
     }
     self:send(self.prefixes.SYNC, toSend, 'GUILD')
@@ -83,7 +85,13 @@ function Comm:handleSync(message, distribution, sender)
 
     message = self:unpackMessage(message)
 
-    if type(message) ~= table then
+    if type(message) ~= 'table' then
+        return
+    end
+
+    local theirAddonVersion = message.version
+    self.otherClientVersions:set(sender, theirAddonVersion)
+    if theirAddonVersion < ns.minSyncVersion then
         return
     end
 
