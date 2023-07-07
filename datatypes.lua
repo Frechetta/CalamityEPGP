@@ -27,13 +27,24 @@ function List:new(items)
     return o
 end
 
-function List:iter()
-    local i = 1
-    return function()
-        if i <= self._len then
-            local item = self:get(i)
-            i = i + 1
-            return item
+function List:iter(reverse)
+    if not reverse then
+        local i = 1
+        return function()
+            if i <= self._len then
+                local item = self:get(i)
+                i = i + 1
+                return item
+            end
+        end
+    else
+        local i = self._len
+        return function()
+            if i >= 1 then
+                local item = self:get(i)
+                i = i - 1
+                return item
+            end
         end
     end
 end

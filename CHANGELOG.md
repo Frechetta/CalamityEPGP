@@ -1,3 +1,7 @@
+# 0.7.9
+
+- fix history sync
+
 # 0.7.8
 
 - fix history window loading non-guildie data

@@ -9,7 +9,7 @@ local Comm = {
         SYNC = 'CE_sync',
         UPDATE = 'CE_update',
     },
-    eventsByHash = Dict:new(),
+    eventHashes = Set:new(),
     guildiesMessaged = Set:new(),
     otherClientVersions = Dict:new(),
 }
@@ -24,6 +24,10 @@ end
 
 
 function Comm:send(prefix, message, distribution, target)
+    if target ~= nil then
+        ns.debug(string.format('sending %s msg to %s', prefix, target))
+    end
+
     message = self:packMessage(message)
     ns.addon:SendCommMessage(prefix, message, distribution, target)
 end
@@ -31,7 +35,7 @@ end
 
 function Comm:syncInit()
     ns.debug('initializing sync; sending my latest event time to all guildies')
-    self:getEventsByHash()
+    self:getEventHashes()
 
     local toSend = {
         version = ns.addon.versionNum,
@@ -42,15 +46,12 @@ function Comm:syncInit()
 end
 
 
-function Comm:getEventsByHash()
-    self.eventsByHash:clear()
+function Comm:getEventHashes()
+    self.eventHashes:clear()
 
     for i, eventAndHash in ipairs(ns.db.history) do
-        local serializedEvent = eventAndHash[1]
-        local _, event = ns.addon:Deserialize(serializedEvent)
         local hash = eventAndHash[2]
-
-        self.eventsByHash:set(hash, {event, i})
+        self.eventHashes:add(hash)
     end
 end
 
@@ -119,20 +120,19 @@ function Comm:handleSync(message, distribution, sender)
 
         if theirLatestEventTime < myLatestEventTime then
             -- they are behind me
-            ns.debug('---- they are behind me; sending new events and standings')
+            ns.debug(string.format('---- they are behind me; sending new events and standings (%d < %d)', theirLatestEventTime, myLatestEventTime))
 
             local newEvents = List:new()
             for i = #ns.db.history, 1, -1 do
                 local eventAndHash = ns.db.history[i]
                 local serializedEvent = eventAndHash[1]
                 local _, event = ns.addon:Deserialize(serializedEvent)
-                local hash = eventAndHash[2]
 
                 if event[1] <= theirLatestEventTime then
                     break
                 end
 
-                newEvents:append({event, hash})
+                newEvents:append(eventAndHash)
             end
 
             toSend:set('update', {
@@ -153,15 +153,12 @@ function Comm:handleSync(message, distribution, sender)
         local events = List:new(update.events)
         local standings = update.standings
 
-        for eventData in events:iter() do
-            local event = eventData[1]
-            local hash = eventData[2]
+        for eventAndHash in events:iter(true) do
+            local hash = eventAndHash[2]
 
-            if not self.eventsByHash:contains(hash) then
-                local serializedEvent = ns.addon:Serialize(event)
-                tinsert(ns.db.history, {serializedEvent, hash})
-                local i = #ns.db.history
-                self.eventsByHash:set(hash, {event, i})
+            if not self.eventHashes:contains(hash) then
+                tinsert(ns.db.history, eventAndHash)
+                self.eventHashes:add(hash)
             end
         end
 
