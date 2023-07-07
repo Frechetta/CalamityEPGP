@@ -179,7 +179,7 @@ function Comm:handleSync(message, distribution, sender)
         ns.cfg.gpSlotMods = lmSettings.gpSlotMods
         ns.cfg.encounterEp = lmSettings.encounterEp
 
-        ns.Config.aceConfig:NotifyChange(addonName)
+        LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
     elseif ns.cfg.lmMode then
         toSend:set('lmSettings', {
             defaultDecay = ns.cfg.defaultDecay,

@@ -19,6 +19,8 @@ local Config = {
     }
 }
 
+ns.Config = Config
+
 -- add default encounter EP to defaults
 for _, expansion in ipairs(ns.values.epDefaults) do
     for _, instance in ipairs(expansion[2]) do
@@ -29,8 +31,6 @@ for _, expansion in ipairs(ns.values.epDefaults) do
         end
     end
 end
-
-ns.Config = Config
 
 Config.aceConfig = LibStub("AceConfig-3.0")
 Config.aceConfigDialog = LibStub("AceConfigDialog-3.0")

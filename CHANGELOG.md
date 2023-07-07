@@ -1,3 +1,7 @@
+# 0.7.7
+
+- fix settings sync
+
 # 0.7.6
 
 - fix nil reference in comm.lua
