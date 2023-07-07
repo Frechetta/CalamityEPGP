@@ -24,9 +24,7 @@ end
 
 
 function Comm:send(prefix, message, distribution, target)
-    if target ~= nil then
-        ns.debug(string.format('sending %s msg to %s', prefix, target))
-    end
+    ns.debug(string.format('sending %s msg to %s via %s', prefix, tostring(target), distribution))
 
     message = self:packMessage(message)
     ns.addon:SendCommMessage(prefix, message, distribution, target)
@@ -70,13 +68,6 @@ end
 
 
 function Comm:handleSync(message, distribution, sender)
-    --[[
-        message is either a timestamp or a table of events like
-        {
-            events = <events>,  -- (originally a list)
-            standings = <standings>,
-        }
-    ]]
     self = Comm
 
     if sender == UnitName('player') then
@@ -84,7 +75,11 @@ function Comm:handleSync(message, distribution, sender)
     end
 
     ns.debug('got message sync from ' .. sender)
-    ns.debug('-- raw message: ' .. message)
+    if #message < 50 then
+        ns.debug('-- raw message: ' .. message)
+    else
+        ns.debug('-- raw message: (message too long)')
+    end
 
     message = self:unpackMessage(message)
 
@@ -190,7 +185,11 @@ function Comm:handleSync(message, distribution, sender)
 
     if toSend:len() > 0 then
         toSend:set('version', ns.addon.versionNum)
-        self:send(self.prefixes.SYNC, toSend:toTable(), 'WHISPER', sender)
+        toSend = toSend._dict
+        -- for k, v in pairs(toSend.update) do
+        --     ns.debug(string.format('-------- %s: %s', k, tostring(v)))
+        -- end
+        self:send(self.prefixes.SYNC, toSend, 'WHISPER', sender)
     end
 end
 

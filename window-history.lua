@@ -531,7 +531,7 @@ function HistoryWindow:getData()
     end
 
     local playerValsTracker = {}
-    for guid, standings in pairs(ns.standings) do
+    for guid, standings in pairs(ns.db.standings) do
         if playerValsTracker[guid] == nil then
             playerValsTracker[guid] = {}
         end

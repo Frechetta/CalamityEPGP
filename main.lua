@@ -48,7 +48,7 @@ addon.whisperCommands = {
     INFO = '!ceinfo',
 }
 
-ns.minSyncVersion = ns.Lib:getVersionNum('0.7.2')
+ns.minSyncVersion = ns.Lib:getVersionNum('0.7.9')
 
 
 function addon:OnInitialize()
@@ -129,8 +129,7 @@ function addon:handleSlashCommand(input)
 end
 
 function addon:handleGuildRosterUpdate()
-    self:init()
-    ns.MainWindow:refresh()
+    C_Timer.After(1, function() addon:init(); ns.MainWindow:refresh() end)
 end
 
 function addon:showMainWindow()

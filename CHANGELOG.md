@@ -1,6 +1,7 @@
 # 0.7.10
 
 - fix handling of nil raid member names
+- various fixes
 
 # 0.7.9
 

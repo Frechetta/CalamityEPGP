@@ -96,7 +96,7 @@ function Dict:new(table)
     for k, v in pairs(o._dict) do
         o._keys:add(k)
         o._values:append(v)
-        o._keyToValueIndex[k] = #o._values
+        o._keyToValueIndex[k] = o._values:len()
     end
 
     return o
@@ -125,10 +125,10 @@ function Dict:set(key, value)
 
     local index = self._keyToValueIndex[key]
     if index ~= nil then
-        self._values[index] = value
+        self._values:set(index, value)
     else
         self._values:append(value)
-        self._keyToValueIndex[key] = #self._values
+        self._keyToValueIndex[key] = self._values:len()
     end
 end
 
