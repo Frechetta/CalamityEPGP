@@ -524,17 +524,15 @@ end
 
 
 function addon:handleChatMsgWhisper(self, message, playerFullName)
-    self = addon
-
     local parts = ns.Lib:split(message, ' ')
     local command = parts[1]
 
-    if command == self.whisperCommands.INFO then
+    if command == addon.whisperCommands.INFO then
         local name
         if parts[2] ~= nil then
             name = parts[2]
         else
-            name = self:getCharName(playerFullName)
+            name = addon:getCharName(playerFullName)
         end
 
         local guid = ns.Lib:getPlayerGuid(name)
@@ -586,13 +584,13 @@ function addon:handleChatMsgWhisper(self, message, playerFullName)
                 j  = j + 1
             end
 
-            if self.raidRoster[charData.name] ~= nil then
+            if addon.raidRoster[charData.name] ~= nil then
                 k = k + 1
             end
         end
 
         local reply = string.format('Standings for %s - EP: %.2f / GP: %.2f / PR: %.3f - Rank: Overall: #%d / Guild: #%d', name, playerEp, playerGp, playerPr, overallRank, guildRank)
-        if self.raidRoster[name] ~= nil then
+        if addon.raidRoster[name] ~= nil then
             reply = string.format('%s / Raid: #%d', reply, raidRank)
         end
 
@@ -640,26 +638,22 @@ end
 
 
 function addon:handleEnteredRaid()
-    self = addon
-
-    self:loadRaidRoster()
+    addon:loadRaidRoster()
 
     if ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() and not self.useForRaidPrompted then
-        self:showUseForRaidWindow()
+        addon:showUseForRaidWindow()
     end
 end
 
 
 function addon:handlePartyLootMethodChanged()
-    self = addon
-
     if ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() then
-        if not self.useForRaid then
-            self:showUseForRaidWindow()
+        if not addon.useForRaid then
+            addon:showUseForRaidWindow()
         end
     else
-        self.useForRaid = false
-        self.useForRaidPrompted = false
+        addon.useForRaid = false
+        addon.useForRaidPrompted = false
     end
 
     -- if GetLootMethod() ~= "master" or not IsInRaid() or CEPGP_isML() ~= 0 then
@@ -746,9 +740,7 @@ end
 
 
 function addon:handleTooltipUpdate(frame)
-    self = addon
-
-    if frame == nil or not self.initialized then
+    if frame == nil or not addon.initialized then
         return
     end
 

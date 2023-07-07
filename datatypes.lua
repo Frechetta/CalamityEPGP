@@ -145,7 +145,7 @@ function Dict:values()
 end
 
 function Dict:toTable()
-    return ns.Lib:deepcopy(self.dict)
+    return ns.Lib:deepcopy(self._dict)
 end
 
 function Dict:isEmpty()
