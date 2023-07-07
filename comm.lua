@@ -34,7 +34,7 @@ function Comm:syncInit()
     self:getEventsByHash()
 
     local toSend = {
-        version = ns.Lib:getVersionNum(self.addon.version),
+        version = ns.Lib:getVersionNum(ns.addon.version),
         latestEventTime = self:getLatestEventTime(),
     }
     self:send(self.prefixes.SYNC, toSend, 'GUILD')
