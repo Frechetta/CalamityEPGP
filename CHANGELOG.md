@@ -1,3 +1,8 @@
+# 0.7.8
+
+- fix history window loading non-guildie data
+- clean up history window boss kill entries
+
 # 0.7.7
 
 - fix settings sync
