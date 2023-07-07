@@ -272,20 +272,22 @@ function addon:loadRaidRoster()
         for i = 1, GetNumGroupMembers() do
             local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
 
-            self.raidRoster[name] = i
+            if name ~= nil then
+                self.raidRoster[name] = i
 
-            if self.useForRaid then
-                local fullName = GetUnitName(name, true)
-                local guid = ns.Lib:getPlayerGuid(name)
+                if self.useForRaid then
+                    local fullName = GetUnitName(name, true)
+                    local guid = ns.Lib:getPlayerGuid(name)
 
-                local charData = standings[guid]
-                if charData == nil then
-                    standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
-                elseif not charData.inGuild then
-                    charData.fullName = fullName
-                    charData.name = name
-                    charData.level = level
-                    charData.class = class
+                    local charData = standings[guid]
+                    if charData == nil then
+                        standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
+                    elseif not charData.inGuild then
+                        charData.fullName = fullName
+                        charData.name = name
+                        charData.level = level
+                        charData.class = class
+                    end
                 end
             end
         end

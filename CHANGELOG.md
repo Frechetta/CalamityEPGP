@@ -1,3 +1,7 @@
+# 0.7.10
+
+- fix handling of nil raid member names
+
 # 0.7.9
 
 - fix history sync
