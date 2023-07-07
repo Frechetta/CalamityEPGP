@@ -349,3 +349,15 @@ function Lib:getVersionNum()
     local versionNum = tonumber(major .. minor .. patch)
     return versionNum
 end
+
+
+function Lib:getVersionStr(versionNum)
+    local patch = versionNum % 1000
+    versionNum = math.floor(versionNum / 1000)
+    local minor = versionNum % 1000
+    versionNum = math.floor(versionNum / 1000)
+    local major = versionNum % 1000
+
+    local version = major .. '.' .. minor .. '.' .. patch
+    return version
+end

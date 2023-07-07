@@ -6,8 +6,8 @@ local Dict = ns.Dict
 
 local Comm = {
     prefixes = {
-        SYNC = 'sync',
-        UPDATE = 'update',
+        SYNC = 'CE_sync',
+        UPDATE = 'CE_update',
     },
     eventsByHash = Dict:new(),
     guildiesMessaged = Set:new(),
@@ -37,6 +37,7 @@ function Comm:syncInit()
         version = ns.Lib:getVersionNum(ns.addon.version),
         latestEventTime = self:getLatestEventTime(),
     }
+
     self:send(self.prefixes.SYNC, toSend, 'GUILD')
 end
 
@@ -82,16 +83,19 @@ function Comm:handleSync(message, distribution, sender)
     end
 
     ns.debug('got message sync from ' .. sender)
+    ns.debug('-- raw message: ' .. message)
 
     message = self:unpackMessage(message)
 
     if type(message) ~= 'table' then
+        ns.debug('-- message is not a table. type: ' .. type(message))
         return
     end
 
     local theirAddonVersion = message.version
     self.otherClientVersions:set(sender, theirAddonVersion)
     if theirAddonVersion < ns.minSyncVersion then
+        ns.debug(string.format('-- client version (%s) out of date', ns.lib:getVersionStr(theirAddonVersion)))
         return
     end
 
