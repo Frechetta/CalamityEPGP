@@ -26,6 +26,7 @@ function Comm:init()
     ns.addon:RegisterComm(self.prefixes.HISTORY, self.handleHistory)
     ns.addon:RegisterComm(self.prefixes.LM_SETTINGS, self.handleLmSettings)
     ns.addon:RegisterComm(self.prefixes.UPDATE, self.handleUpdate)
+    ns.addon:RegisterComm('CE-sync', self.handleSyncOld)
 end
 
 
@@ -69,35 +70,27 @@ end
 
 
 function Comm:handleUpdate(_, _, sender)
-    self = Comm
-
     if sender == UnitName('player') then
         return
     end
 
-    self:sendSyncProbe('WHISPER', sender, true, true)
+    Comm:sendSyncProbe('WHISPER', sender, true, true)
 end
 
 
 function Comm:handleSyncProbe(message, _, sender)
-    self = Comm
-
     if sender == UnitName('player') then
         return
     end
 
     ns.debug('got message sync-probe from ' .. sender)
 
-    message = self:unpackMessage(message)
+    ---@type table
+    message = Comm:unpackMessage(message)
 
     local theirAddonVersion = message.version
 
-    self.otherClientVersions:set(sender, theirAddonVersion)
-
-    if theirAddonVersion == nil then
-        ns.debug('-- client version unknown (probably out of date)')
-        return
-    end
+    Comm.otherClientVersions:set(sender, theirAddonVersion)
 
     if theirAddonVersion < ns.minSyncVersion then
         ns.debug(string.format('-- client version (%s) less than minimum (%s)', ns.Lib:getVersionStr(theirAddonVersion), ns.Lib:getVersionStr(ns.minSyncVersion)))
@@ -108,18 +101,18 @@ function Comm:handleSyncProbe(message, _, sender)
     local theirLmSettingsLastChange = message.lmSettingsLastChange
 
     if theirLatestEventTime ~= nil then
-        local myLatestEventTime = self:getLatestEventTime()
+        local myLatestEventTime = Comm:getLatestEventTime()
         if theirLatestEventTime < myLatestEventTime then
             -- they are behind me
             ns.debug(string.format('---- they are behind me; sending new events and standings (%d < %d)', theirLatestEventTime, myLatestEventTime))
 
-            self:sendStandings(sender)
-            self:sendHistory(sender, theirLatestEventTime)
+            Comm:sendStandings(sender)
+            Comm:sendHistory(sender, theirLatestEventTime)
         elseif theirLatestEventTime > myLatestEventTime then
             -- they are ahead of me
             ns.debug(string.format('---- they are ahead of me; sending sync-probe (%d > %d)', theirLatestEventTime, myLatestEventTime))
             ns.debug('---- they are ahead of me; sending my latest event time')
-            self:sendSyncProbe('WHISPER', sender, true, false)
+            Comm:sendSyncProbe('WHISPER', sender, true, false)
         end
     end
 
@@ -127,25 +120,23 @@ function Comm:handleSyncProbe(message, _, sender)
         if theirLmSettingsLastChange < ns.db.lmSettingsLastChange then
             -- their LM settings are behind mine
             ns.debug(string.format('---- their LM settings are behind mine; sending updated settings (%d < %d)', theirLmSettingsLastChange, ns.db.lmSettingsLastChange))
-            self:sendLmSettings(sender)
+            Comm:sendLmSettings(sender)
         elseif theirLmSettingsLastChange > ns.db.lmSettingsLastChange then
             -- their LM settings are ahead of mine
-            self:sendSyncProbe('WHISPER', sender, false, true)
+            Comm:sendSyncProbe('WHISPER', sender, false, true)
         end
     end
 end
 
 
 function Comm:handleStandings(message, _, sender)
-    self = Comm
-
     if sender == UnitName('player') then
         return
     end
 
     ns.debug('got message standings from ' .. sender)
 
-    local standings = self:unpackMessage(message)
+    local standings = Comm:unpackMessage(message)
     ns.db.standings = standings
 
     ns.MainWindow:refresh()
@@ -153,15 +144,14 @@ end
 
 
 function Comm:handleHistory(message, _, sender)
-    self = Comm
-
     if sender == UnitName('player') then
         return
     end
 
-    ns.debug('got message history from ' .. sender)
+    ---@type table
+    local events = Comm:unpackMessage(message)
 
-    local events = self:unpackMessage(message)
+    ns.debug(string.format('got message history from %s (len: %d}', sender, #events))
 
     local fcomp = function(left, right)
         local _, eventLeft = ns.addon:Deserialize(left[1])
@@ -173,10 +163,10 @@ function Comm:handleHistory(message, _, sender)
     for _, eventAndHash in ipairs(events) do
         local hash = eventAndHash[2]
 
-        if not self.eventHashes:contains(hash) then
+        if not Comm.eventHashes:contains(hash) then
             ns.Lib:bininsert(ns.db.history, eventAndHash, fcomp)
             -- tinsert(ns.db.history, eventAndHash)
-            self.eventHashes:add(hash)
+            Comm.eventHashes:add(hash)
         end
     end
 
@@ -185,15 +175,14 @@ end
 
 
 function Comm:handleLmSettings(message, _, sender)
-    self = Comm
-
     if sender == UnitName('player') then
         return
     end
 
-    ns.debug('got message history from ' .. sender)
+    ns.debug('got message lm settings from ' .. sender)
 
-    local lmSettings = self:unpackMessage(message)
+    ---@type table
+    local lmSettings = Comm:unpackMessage(message)
 
     ns.cfg.defaultDecay = lmSettings.defaultDecay
     ns.cfg.syncAltEp = lmSettings.syncAltEp
@@ -201,6 +190,10 @@ function Comm:handleLmSettings(message, _, sender)
     ns.cfg.gpBase = lmSettings.gpBase
     ns.cfg.gpSlotMods = lmSettings.gpSlotMods
     ns.cfg.encounterEp = lmSettings.encounterEp
+
+    if lmSettings.lmSettingsLastChange ~= nil then
+        ns.db.lmSettingsLastChange = lmSettings.lmSettingsLastChange
+    end
 
     LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
 end
@@ -263,6 +256,7 @@ function Comm:sendLmSettings(target)
         gpBase = ns.cfg.gpBase,
         gpSlotMods = ns.cfg.gpSlotMods,
         encounterEp = ns.cfg.encounterEp,
+        lmSettingsLastChange = ns.db.lmSettingsLastChange,
     }
 
     self:send(self.prefixes.LM_SETTINGS, settings, 'WHISPER', target)
@@ -295,4 +289,26 @@ function Comm:unpackMessage(package)
     end
 
     return message
+end
+
+
+function Comm:handleSyncOld(message, _, sender)
+    if sender == UnitName('player') then
+        return
+    end
+
+    ns.debug('got OLD message sync from ' .. sender)
+
+    message = Comm:unpackMessage(message)
+
+    local theirAddonVersion = message.version
+
+    Comm.otherClientVersions:set(sender, theirAddonVersion)
+
+    if theirAddonVersion == nil then
+        ns.debug('-- client version unknown (probably out of date)')
+        return
+    end
+
+    ns.debug(string.format('-- client version: %s', ns.Lib:getVersionStr(theirAddonVersion)))
 end

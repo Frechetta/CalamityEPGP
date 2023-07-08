@@ -816,9 +816,10 @@ function addon:handleTooltipUpdate(frame)
             local _, classFileName = UnitClass(player)
             local classColor = RAID_CLASS_COLORS[classFileName]
 
-            local playerColored = classColor:WrapTextInColorCode(player)
-
-            frame:AddLine(string.format('  %s | Given: %s', playerColored, given))
+            if classColor ~= nil then
+                local playerColored = classColor:WrapTextInColorCode(player)
+                frame:AddLine(string.format('  %s | Given: %s', playerColored, given))
+            end
         end
     end
 end
