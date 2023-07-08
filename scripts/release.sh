@@ -12,7 +12,7 @@ toc_file=$(find "$root_dir" -maxdepth 1 -name "*.toc")
 addon_name=${toc_file##*/}
 addon_name=${addon_name%.toc}
 
-version=$(grep '## Version:' "$toc_file" | grep -oP '\d\.\d\.\d')
+version=$(grep '## Version:' "$toc_file" | grep -oP '\d+\.\d+\.\d+')
 
 if ! grep -q "$version" "$root_dir/CHANGELOG.md"; then
     echo "Add a section to the changelog for this version ($version)"
