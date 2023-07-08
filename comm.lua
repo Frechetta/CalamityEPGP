@@ -163,12 +163,19 @@ function Comm:handleHistory(message, _, sender)
 
     local events = self:unpackMessage(message)
 
-    for i = #events, 1, -1 do
-        local eventAndHash = events[i]
+    local fcomp = function(left, right)
+        local _, eventLeft = ns.addon:Deserialize(left[1])
+        local _, eventRight = ns.addon:Deserialize(right[1])
+
+        return eventLeft[1] < eventRight[1]
+    end
+
+    for _, eventAndHash in ipairs(events) do
         local hash = eventAndHash[2]
 
         if not self.eventHashes:contains(hash) then
-            tinsert(ns.db.history, eventAndHash)
+            ns.Lib:bininsert(ns.db.history, eventAndHash, fcomp)
+            -- tinsert(ns.db.history, eventAndHash)
             self.eventHashes:add(hash)
         end
     end
@@ -222,8 +229,6 @@ end
 
 
 function Comm:sendHistory(target, theirLatestEventTime)
-    -- local j = 1
-
     local newEvents = {}
     for i = #ns.db.history, 1, -1 do
         local eventAndHash = ns.db.history[i]
@@ -236,13 +241,15 @@ function Comm:sendHistory(target, theirLatestEventTime)
 
         tinsert(newEvents, eventAndHash)
 
-        -- if j % 100 == 0 then
-        --     self:send(self.prefixes.HISTORY, newEvents, 'WHISPER', target)
-        --     newEvents = {}
-        -- end
+        if #newEvents == 100 then
+            ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
+            self:send(self.prefixes.HISTORY, newEvents, 'WHISPER', target)
+            newEvents = {}
+        end
     end
 
     if #newEvents > 0 then
+        ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
         self:send(self.prefixes.HISTORY, newEvents, 'WHISPER', target)
     end
 end

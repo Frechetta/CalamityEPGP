@@ -1,3 +1,7 @@
+# 0.7.12
+
+- further improved efficiency of syncing history
+
 # 0.7.11
 
 - improve efficiency of syncing

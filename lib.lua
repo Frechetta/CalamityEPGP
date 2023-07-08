@@ -362,27 +362,27 @@ function Lib:getVersionStr(versionNum)
 end
 
 
--- local fcomp_default = function(a, b) return a < b end
--- function Lib:bininsert(t, value, fcomp)
---     -- Initialise compare function
---     fcomp = fcomp or fcomp_default
+local fcomp_default = function(a, b) return a < b end
+function Lib:bininsert(t, value, fcomp)
+    -- Initialise compare function
+    fcomp = fcomp or fcomp_default
 
---     --  Initialise numbers
---     local iStart, iEnd, iMid, iState = 1, #t, 1, 0
+    --  Initialise numbers
+    local iStart, iEnd, iMid, iState = 1, #t, 1, 0
 
---     -- Get insert position
---     while iStart <= iEnd do
---         -- calculate middle
---         iMid = math.floor((iStart + iEnd) / 2)
---         -- compare
---         if fcomp(value, t[iMid]) then
---             iEnd, iState = iMid - 1, 0
---         else
---             iStart, iState = iMid + 1, 1
---         end
---     end
+    -- Get insert position
+    while iStart <= iEnd do
+        -- calculate middle
+        iMid = math.floor((iStart + iEnd) / 2)
+        -- compare
+        if fcomp(value, t[iMid]) then
+            iEnd, iState = iMid - 1, 0
+        else
+            iStart, iState = iMid + 1, 1
+        end
+    end
 
---     table.insert(t, iMid + iState, value)
+    table.insert(t, iMid + iState, value)
 
---     return iMid + iState
---  end
+    return iMid + iState
+ end
