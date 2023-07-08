@@ -227,9 +227,9 @@ function Lib:getItemString(itemLink)
 		return nil;
 	end
 
-	local itemString = string.find(itemLink, "item[%-?%d:]+");
-	if not itemString then return nil; end
-	itemString = strsub(itemLink, itemString, string.len(itemLink) - (string.len(itemLink) - 2) - 6);
+	local i = string.find(itemLink, "item[%-?%d:]+");
+	if not i then return nil; end
+	local itemString = strsub(itemLink, i, string.len(itemLink) - (string.len(itemLink) - 2) - 6);
 	return itemString;
 end
 

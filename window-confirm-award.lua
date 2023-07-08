@@ -13,7 +13,7 @@ function ConfirmAwardWindow:createWindow()
     local mainFrameName = addonName .. '_ConfirmAwardWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
-	mainFrame:SetSize(350, 150)
+	mainFrame:SetSize(350, 165)
 	mainFrame:SetPoint('CENTER')
 
     mainFrame:SetFrameStrata('DIALOG')
@@ -26,17 +26,30 @@ function ConfirmAwardWindow:createWindow()
 
     mainFrame.messageLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.messageLabel:SetPoint('TOP', mainFrame, 'TOP', 0, -mainFrame.TitleBg:GetHeight() - 20)
+    mainFrame.messageLabel:SetTextScale(1.2)
 
     mainFrame.rollLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.rollLabel:SetPoint('TOP', mainFrame.messageLabel, 'BOTTOM', 0, -10)
-
-    mainFrame.msButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.msButton:SetPoint('TOP', mainFrame.rollLabel, 'BOTTOM', 0, -10)
-    mainFrame.msButton:SetWidth(110)
+    mainFrame.rollLabel:SetTextScale(1.2)
 
     mainFrame.osButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.osButton:SetPoint('TOP', mainFrame.msButton, 'BOTTOM', 0, -7)
-    mainFrame.osButton:SetWidth(110)
+    mainFrame.osButton:SetPoint('TOP', mainFrame.rollLabel, 'BOTTOM', 0, -15)
+    mainFrame.osButton:SetWidth(100)
+    mainFrame.osButton:SetHeight(30)
+    mainFrame.osButton:GetFontString():SetTextScale(1.2)
+
+    mainFrame.msButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.msButton:SetPoint('RIGHT', mainFrame.osButton, 'LEFT', -5, 0)
+    mainFrame.msButton:SetWidth(100)
+    mainFrame.msButton:SetHeight(30)
+    mainFrame.msButton:GetFontString():SetTextScale(1.2)
+
+    mainFrame.freeButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.freeButton:SetPoint('LEFT', mainFrame.osButton, 'RIGHT', 5, 0)
+    mainFrame.freeButton:SetWidth(100)
+    mainFrame.freeButton:SetHeight(30)
+    mainFrame.freeButton:GetFontString():SetTextScale(1.2)
+    mainFrame.freeButton:SetText('Free')
 
     mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.cancelButton:SetText('Cancel')
@@ -59,8 +72,8 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
     local msGp = ns.Lib:getGp(itemLink)
     local osGp = math.floor(msGp * .1)
 
-    self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))
-    self.mainFrame.osButton:SetText(string.format('OS (10%% GP: %d)', osGp))
+    self.mainFrame.msButton:SetText(string.format('MS (%d GP)', msGp))
+    self.mainFrame.osButton:SetText(string.format('OS (%d GP)', osGp))
 
     self.mainFrame.msButton:SetScript('OnClick', function()
         ns.LootDistWindow:award(player, 'MS', '100%', msGp)
@@ -69,6 +82,11 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
 
     self.mainFrame.osButton:SetScript('OnClick', function()
         ns.LootDistWindow:award(player, 'OS', '10%', osGp)
+        ConfirmAwardWindow.mainFrame:Hide()
+    end)
+
+    self.mainFrame.freeButton:SetScript('OnClick', function()
+        ns.LootDistWindow:award(player)
         ConfirmAwardWindow.mainFrame:Hide()
     end)
 

@@ -601,10 +601,14 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
 
     local itemName = GetItemInfo(self.itemLink)
 
-    -- add gp
-    local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
-    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
-	ns.printPublic(string.format('Item %s awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
+    if rollType ~= nil then
+        -- add gp
+        local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
+        ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
+        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
+    else
+        ns.printPublic(string.format('%s was awarded to %s', self.itemLink, awardee))
+    end
 
     if self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()

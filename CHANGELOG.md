@@ -1,3 +1,7 @@
+# 0.8.0
+
+- add free award option
+
 # 0.7.13
 
 - fix message prefixes
