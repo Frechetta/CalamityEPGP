@@ -7,8 +7,8 @@ local Dict = ns.Dict
 local Comm = {
     prefixes = {
         SYNC_PROBE = 'CE_sync-probe',
-        STANDINGS = 'CE-standings',
-        HISTORY = 'CE-history',
+        STANDINGS = 'CE_standings',
+        HISTORY = 'CE_history',
         LM_SETTINGS = 'CE_lm-settings',
         UPDATE = 'CE_update',
     },
@@ -26,7 +26,7 @@ function Comm:init()
     ns.addon:RegisterComm(self.prefixes.HISTORY, self.handleHistory)
     ns.addon:RegisterComm(self.prefixes.LM_SETTINGS, self.handleLmSettings)
     ns.addon:RegisterComm(self.prefixes.UPDATE, self.handleUpdate)
-    ns.addon:RegisterComm('CE-sync', self.handleSyncOld)
+    ns.addon:RegisterComm('CE_sync', self.handleSyncOld)
 end
 
 
@@ -85,7 +85,6 @@ function Comm:handleSyncProbe(message, _, sender)
 
     ns.debug('got message sync-probe from ' .. sender)
 
-    ---@type table
     message = Comm:unpackMessage(message)
 
     local theirAddonVersion = message.version
@@ -263,6 +262,8 @@ function Comm:sendLmSettings(target)
 end
 
 
+---@param message any
+---@return string
 function Comm:packMessage(message)
     local package = ns.addon:Serialize(message)
     package = ns.addon.libc:CompressHuffman(package)
@@ -272,6 +273,8 @@ function Comm:packMessage(message)
 end
 
 
+---@param package string
+---@return any
 function Comm:unpackMessage(package)
     local message = ns.addon.libcEncodeTable:Decode(package)
     local message, error = ns.addon.libc:Decompress(message)

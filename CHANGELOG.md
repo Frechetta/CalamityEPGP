@@ -1,3 +1,7 @@
+# 0.7.13
+
+- fix message prefixes
+
 # 0.7.12
 
 - further improved efficiency of syncing history
