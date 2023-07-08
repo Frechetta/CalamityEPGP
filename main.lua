@@ -30,6 +30,7 @@ local dbDefaults = {
             toTrade = {},
             awarded = {},
         },
+        lmSettingsLastChange = nil
     }
 }
 
@@ -193,6 +194,10 @@ function addon:init()
         ns.cfg = ns.db.cfg
 
         ns.guild = guildFullName
+
+        if ns.db.lmSettingsLastChange == nil then
+            self:modifiedLmSettings(false)
+        end
 
         self.ldb = LibStub('LibDataBroker-1.1', true)
         self.ldbi = LibStub('LibDBIcon-1.0', true)
@@ -495,6 +500,19 @@ function addon:clearData()
 end
 
 
+function addon:modifiedLmSettings(sendUpdate)
+    ns.db.lmSettingsLastChange = time()
+
+    if sendUpdate == nil then
+        sendUpdate = true
+    end
+
+    if sendUpdate then
+        ns.Comm:send(ns.Comm.prefixes.UPDATE, nil, 'GUILD')
+    end
+end
+
+
 -----------------
 -- EVENT HANDLERS
 -----------------
@@ -743,7 +761,7 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
         ns.printPublic(string.format('Awarded %d EP to raid for killing %s', ep, encounterName))
     end
 
-    ns.ConfirmWindow:show(string.format('Award %s EP to raid for killing %s?', ep, encounterName), proceedFunc)
+    C_Timer.After(2, ns.ConfirmWindow:show(string.format('Award %s EP to raid for killing %s?', ep, encounterName), proceedFunc))
 end
 
 

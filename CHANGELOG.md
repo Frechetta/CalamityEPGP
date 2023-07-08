@@ -1,3 +1,7 @@
+# 0.7.11
+
+- improve efficiency of syncing
+
 # 0.7.10
 
 - fix handling of nil raid member names

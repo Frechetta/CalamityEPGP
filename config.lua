@@ -248,10 +248,16 @@ function Config:createAltManagementMenu()
     end)
 
     panel.synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
-    panel.synchroniseEpCheck:SetScript('OnClick', function() ns.cfg.syncAltEp = panel.synchroniseEpCheck:GetChecked() end)
+    panel.synchroniseEpCheck:SetScript('OnClick', function()
+        ns.cfg.syncAltEp = panel.synchroniseEpCheck:GetChecked()
+        ns.addon:modifiedLmSettings()
+    end)
 
     panel.synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
-    panel.synchroniseGpCheck:SetScript('OnClick', function() ns.cfg.syncAltGp = panel.synchroniseGpCheck:GetChecked() end)
+    panel.synchroniseGpCheck:SetScript('OnClick', function()
+        ns.cfg.syncAltGp = panel.synchroniseGpCheck:GetChecked()
+        ns.addon:modifiedLmSettings()
+    end)
 
     self:createAltManagementTable()
 end
@@ -422,6 +428,7 @@ function Config:setLmMode(info, input)
     end
 
     ns.cfg.lmMode = input
+    ns.addon:modifiedLmSettings()
 
     ns.MainWindow:refresh()
 end
@@ -432,6 +439,7 @@ end
 
 function Config:setDefaultDecay(info, input)
     ns.cfg.defaultDecay = input
+    ns.addon:modifiedLmSettings()
 end
 
 function Config:getRollDuration(info)
@@ -470,6 +478,7 @@ end
 
 function Config:setBaseGp(info, input)
     ns.cfg.gpBase = tonumber(input)
+    ns.addon:modifiedLmSettings()
     ns.addon:fixGp()
 end
 
