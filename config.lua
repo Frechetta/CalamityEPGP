@@ -415,7 +415,7 @@ end
 -------------------------
 function Config:getLmMode(info)
     if not ns.addon.isOfficer then
-        return false
+        ns.cfg.lmMode = false
     end
 
     return ns.cfg.lmMode
