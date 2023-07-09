@@ -1,3 +1,8 @@
+# 0.8.1
+
+- fix LM settings being overwritten
+- change loot roll click combo to alt+click
+
 # 0.8.0
 
 - add free award option
