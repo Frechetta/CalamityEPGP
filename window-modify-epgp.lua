@@ -155,7 +155,7 @@ function ModifyEpgpWindow:confirm()
 
     local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, enteredReason)
 
-    ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
+    ns.addon:modifyEpgp({{self.charGuid}, self.mode, value, reason})
 
     if ns.addon.useForRaid and ns.addon.raidRoster[self.charName] ~= nil then
         ns.printPublic(string.format('Awarded %d EP to %s. Reason: %s', value, self.charName, enteredReason))

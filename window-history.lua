@@ -1,20 +1,13 @@
 local addonName, ns = ...  -- Namespace
 
 local List = ns.List
+local Set = ns.Set
 
 local HistoryWindow = {
     data = {
-        header = {
-            {'Time', 'LEFT'},
-            {'Player', 'LEFT'},
-            {'Issued By', 'LEFT'},
-            {'Reason', 'LEFT'},
-            {'Action', 'LEFT'},
-            {'EP Delta', 'RIGHT'},
-            {'GP Delta', 'RIGHT'},
-            {'PR Delta', 'RIGHT'},
-        },
+        header = {},
         rows = {},
+        rowsRendered = {},
         rowsFiltered = {},
     },
     epgpReasonsPretty = {
@@ -60,35 +53,9 @@ function HistoryWindow:createWindow()
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0);
 	mainFrame.title:SetText('CalamityEPGP History');
 
-    mainFrame.playerLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.playerLabel:SetText('Player:')
-    mainFrame.playerLabel:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -20)
-
-    mainFrame.dropDown = CreateFrame('Frame', nil, mainFrame, 'UIDropDownMenuTemplate')
-    mainFrame.dropDown:SetPoint('LEFT', mainFrame.playerLabel, 'RIGHT', -10, 0)
-    mainFrame.dropDown:SetWidth(100)
-    mainFrame.dropDown.Text:SetText(self.selectedPlayer)
-    mainFrame.dropDown.Button:SetScript('onClick', self.handleDropdownClick)
-
-    mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.mainsOnlyLabel:SetText('Mains only:')
-    mainFrame.mainsOnlyLabel:SetPoint('LEFT', mainFrame.dropDown, 'RIGHT', 80, 0)
-
-    mainFrame.mainsOnlyCheck = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
-    mainFrame.mainsOnlyCheck:SetPoint('LEFT', mainFrame.mainsOnlyLabel, 'RIGHT', 2, 0)
-    mainFrame.mainsOnlyCheck:SetScript('OnClick', function()
-        HistoryWindow.mainsOnly = mainFrame.mainsOnlyCheck:GetChecked()
-        if HistoryWindow.mainFrame.dropDown.itemsFrame:IsShown() then
-            HistoryWindow:handleDropdownClick()
-        end
-        HistoryWindow:filterData()
-        HistoryWindow:setDropDownData()
-        HistoryWindow:setTableData()
-    end)
-
     mainFrame.reasonsLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.reasonsLabel:SetText('Reason:')
-    mainFrame.reasonsLabel:SetPoint('TOPLEFT', mainFrame.playerLabel, 'BOTTOMLEFT', 0, -20)
+    mainFrame.reasonsLabel:SetPoint('TOPLEFT', mainFrame.TitleBg, 'BOTTOMLEFT', 15, -20)
 
     mainFrame.reasonChecks = {}
     for _, reason in pairs(self.epgpReasonsPretty) do
@@ -123,8 +90,62 @@ function HistoryWindow:createWindow()
         end
     end
 
+    mainFrame.detailLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.detailLabel:SetText('Detail:')
+    mainFrame.detailLabel:SetPoint('TOPLEFT', mainFrame.reasonsLabel, 'BOTTOMLEFT', 0, -20)
+
+    mainFrame.detailCheck = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.detailCheck:SetPoint('LEFT', mainFrame.detailLabel, 'RIGHT', 2, 0)
+    mainFrame.detailCheck:SetScript('OnClick', function()
+        HistoryWindow.detail = mainFrame.detailCheck:GetChecked()
+
+        if HistoryWindow.mainFrame.dropDown.itemsFrame:IsShown() then
+            HistoryWindow:handleDropdownClick()
+        end
+
+        mainFrame.playerLabel:SetShown(HistoryWindow.detail)
+        mainFrame.dropDown:SetShown(HistoryWindow.detail)
+        mainFrame.mainsOnlyLabel:SetShown(HistoryWindow.detail)
+        mainFrame.mainsOnlyCheck:SetShown(HistoryWindow.detail)
+
+        HistoryWindow:getRenderedData()
+        HistoryWindow:setTableData()
+    end)
+
+    mainFrame.playerLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.playerLabel:SetText('Player:')
+    mainFrame.playerLabel:SetPoint('LEFT', mainFrame.detailCheck, 'RIGHT', 20, 0)
+    mainFrame.playerLabel:SetShown(mainFrame.detailCheck:GetChecked())
+
+    mainFrame.dropDown = CreateFrame('Frame', nil, mainFrame, 'UIDropDownMenuTemplate')
+    mainFrame.dropDown:SetPoint('LEFT', mainFrame.playerLabel, 'RIGHT', -10, 0)
+    mainFrame.dropDown:SetWidth(100)
+    mainFrame.dropDown.Text:SetText(self.selectedPlayer)
+    mainFrame.dropDown.Button:SetScript('onClick', self.handleDropdownClick)
+    mainFrame.dropDown:SetShown(mainFrame.detailCheck:GetChecked())
+
+    mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.mainsOnlyLabel:SetText('Mains only:')
+    mainFrame.mainsOnlyLabel:SetPoint('LEFT', mainFrame.dropDown, 'RIGHT', 80, 0)
+    mainFrame.mainsOnlyLabel:SetShown(mainFrame.detailCheck:GetChecked())
+
+    mainFrame.mainsOnlyCheck = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.mainsOnlyCheck:SetPoint('LEFT', mainFrame.mainsOnlyLabel, 'RIGHT', 2, 0)
+    mainFrame.mainsOnlyCheck:SetShown(mainFrame.detailCheck:GetChecked())
+    mainFrame.mainsOnlyCheck:SetScript('OnClick', function()
+        HistoryWindow.mainsOnly = mainFrame.mainsOnlyCheck:GetChecked()
+
+        if HistoryWindow.mainFrame.dropDown.itemsFrame:IsShown() then
+            HistoryWindow:handleDropdownClick()
+        end
+
+        HistoryWindow:filterData()
+        HistoryWindow:setDropDownData()
+        HistoryWindow:setTableData()
+    end)
+
     mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
-    mainFrame.tableFrame:SetPoint('TOP', mainFrame.reasonsLabel, 'BOTTOM', 0, -20)
+    mainFrame.tableFrame:SetPoint('TOP', mainFrame.detailLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -8, 7)
@@ -145,51 +166,6 @@ function HistoryWindow:createWindow()
 	return mainFrame;
 end
 
-function HistoryWindow:createDropdownItemsFrame()
-    local dropDown = self.mainFrame.dropDown
-
-    dropDown.itemsFrame = CreateFrame('Frame', nil, dropDown, 'InsetFrameTemplate2')
-    dropDown.itemsFrame:SetPoint('TOPLEFT', dropDown, 'BOTTOMLEFT', 0, 0)
-    dropDown.itemsFrame:SetFrameLevel(self.mainFrame:GetFrameLevel() + 50)
-
-    dropDown.itemsFrame:EnableMouse()
-    dropDown.itemsFrame:SetScript('OnEnter', function() HistoryWindow.mouseInDropdown = true end)
-    dropDown.itemsFrame:SetScript('OnLeave', function() HistoryWindow.mouseInDropdown = false end)
-
-    dropDown.itemsFrame.items = {}
-
-    local itemsFrameTexture = dropDown.itemsFrame:CreateTexture(nil, 'BACKGROUND')
-    itemsFrameTexture:SetAllPoints()
-    itemsFrameTexture:SetColorTexture(0.05, 0.01, 0.01, 1)
-    -- itemsFrameTexture:SetBlendMode('ADD')
-
-    dropDown.itemsFrame.itemHighlight = CreateFrame('Frame', nil, dropDown.itemsFrame)
-    local highlightTexture = dropDown.itemsFrame.itemHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    dropDown.itemsFrame.itemHighlight:Hide()
-
-    dropDown.itemsFrame:Hide()
-end
-
-function HistoryWindow:handleDropdownClick()
-    local itemsFrame = HistoryWindow.mainFrame.dropDown.itemsFrame
-
-    if itemsFrame:IsShown() then
-        itemsFrame:Hide()
-        for _, item in ipairs(itemsFrame.items) do
-            item:Hide()
-        end
-    else
-        itemsFrame:Show()
-        for _, item in ipairs(itemsFrame.items) do
-            if item.active then
-                item:Show()
-            end
-        end
-    end
-end
 
 function HistoryWindow:createTable()
     local parent = self.mainFrame.tableFrame
@@ -234,22 +210,6 @@ function HistoryWindow:createTable()
 
     parent.header.columns = {}
 
-    for i, header in ipairs(data.header) do
-        local headerText = header[1]
-        local justify = header[2]
-
-        local column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        column:SetText(headerText)
-        column:SetJustifyH(justify)
-        column:SetTextColor(1, 1, 0)
-        column:SetFont('Fonts\\ARIAL.TTF', 10)
-
-        column.textWidth = column:GetWrappedWidth()
-        column.maxWidth = column.textWidth
-
-        table.insert(parent.header.columns, column)
-    end
-
     -- Initialize the content
     parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
     parent.contents:SetAllPoints(parent.scrollChild)
@@ -264,10 +224,60 @@ function HistoryWindow:createTable()
     parent.rows = {}
 end
 
+
+function HistoryWindow:createDropdownItemsFrame()
+    local dropDown = self.mainFrame.dropDown
+
+    dropDown.itemsFrame = CreateFrame('Frame', nil, dropDown, 'InsetFrameTemplate2')
+    dropDown.itemsFrame:SetPoint('TOPLEFT', dropDown, 'BOTTOMLEFT', 0, 0)
+    dropDown.itemsFrame:SetFrameLevel(self.mainFrame:GetFrameLevel() + 50)
+
+    dropDown.itemsFrame:EnableMouse()
+    dropDown.itemsFrame:SetScript('OnEnter', function() HistoryWindow.mouseInDropdown = true end)
+    dropDown.itemsFrame:SetScript('OnLeave', function() HistoryWindow.mouseInDropdown = false end)
+
+    dropDown.itemsFrame.items = {}
+
+    local itemsFrameTexture = dropDown.itemsFrame:CreateTexture(nil, 'BACKGROUND')
+    itemsFrameTexture:SetAllPoints()
+    itemsFrameTexture:SetColorTexture(0.05, 0.01, 0.01, 1)
+    -- itemsFrameTexture:SetBlendMode('ADD')
+
+    dropDown.itemsFrame.itemHighlight = CreateFrame('Frame', nil, dropDown.itemsFrame)
+    local highlightTexture = dropDown.itemsFrame.itemHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
+    highlightTexture:SetBlendMode('ADD')
+    dropDown.itemsFrame.itemHighlight:Hide()
+
+    dropDown.itemsFrame:Hide()
+end
+
+
+function HistoryWindow:handleDropdownClick()
+    local itemsFrame = HistoryWindow.mainFrame.dropDown.itemsFrame
+
+    if itemsFrame:IsShown() then
+        itemsFrame:Hide()
+        for _, item in ipairs(itemsFrame.items) do
+            item:Hide()
+        end
+    else
+        itemsFrame:Show()
+        for _, item in ipairs(itemsFrame.items) do
+            if item.active then
+                item:Show()
+            end
+        end
+    end
+end
+
+
 function HistoryWindow:show()
     self:refresh()
     self.mainFrame:Show()
 end
+
 
 function HistoryWindow:refresh()
     if self.mainFrame == nil or not self.mainFrame:IsShown() then
@@ -275,9 +285,11 @@ function HistoryWindow:refresh()
     end
 
     self:getData()
+    self:getRenderedData()
     self:setDropDownData()
     self:setTableData()
 end
+
 
 function HistoryWindow:setDropDownData()
     local dropDown = self.mainFrame.dropDown
@@ -329,8 +341,39 @@ function HistoryWindow:setDropDownData()
     dropDown.itemsFrame:SetSize(width, height)
 end
 
+
 function HistoryWindow:setTableData()
     local parent = self.mainFrame.tableFrame
+
+    for i, header in ipairs(self.data.header) do
+        local column = parent.header.columns[i]
+        if column == nil then
+            column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+            column:SetTextColor(1, 1, 0)
+            column:SetFont('Fonts\\ARIAL.TTF', 10)
+
+            table.insert(parent.header.columns, column)
+        end
+
+        local headerText = header[1]
+        local justify = header[2]
+
+        column:SetText(headerText)
+        column:SetJustifyH(justify)
+
+        column.textWidth = column:GetWrappedWidth()
+        column.maxWidth = column.textWidth
+
+        column:Show()
+    end
+
+    for i = #self.data.header + 1, #parent.header.columns do
+        local column = parent.header.columns[i]
+        if column ~= nil then
+            column:Hide()
+        end
+    end
+
     local data = self.data
 
     for i, rowData in ipairs(data.rowsFiltered) do
@@ -349,11 +392,29 @@ function HistoryWindow:setTableData()
             local headerColumn = parent.header.columns[j]
 
             local column = row.columns[j]
+            if column == nil then
+                column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+
+                column:SetPoint('TOP', row, 'TOP', 0, 0)
+                column:SetFont('Fonts\\ARIAL.TTF', 10)
+
+                table.insert(row.columns, column)
+            end
+
             column:SetText(columnText)
 
             local text_width = column:GetWrappedWidth()
             if (text_width > headerColumn.maxWidth) then
                 headerColumn.maxWidth = text_width
+            end
+
+            column:Show()
+        end
+
+        for j = #rowData, #row.columns do
+            local column = row.columns[j]
+            if column ~= nil then
+                column:Hide()
             end
         end
     end
@@ -368,7 +429,9 @@ function HistoryWindow:setTableData()
     -- Calculate column padding
     local columnWidthTotal = 0
     for _, column in ipairs(parent.header.columns) do
-        columnWidthTotal = columnWidthTotal + column.maxWidth
+        if column:IsShown() then
+            columnWidthTotal = columnWidthTotal + column.maxWidth
+        end
     end
 
     local leftover = parent.header:GetWidth() - columnWidthTotal
@@ -413,6 +476,7 @@ function HistoryWindow:setTableData()
     end
 end
 
+
 function HistoryWindow:addDropDownItem(index)
     local dropDown = self.mainFrame.dropDown
 
@@ -447,6 +511,7 @@ function HistoryWindow:addDropDownItem(index)
     tinsert(dropDown.itemsFrame.items, item)
 end
 
+
 function HistoryWindow:addRow(index)
     local parent = self.mainFrame.tableFrame
     local data = self.data
@@ -463,7 +528,7 @@ function HistoryWindow:addRow(index)
 
     row.columns = {}
 
-    for i = 1, #data.header do
+    for _ = 1, #data.header do
         -- We will set the size later, once we've computed the column width based on the data
         local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
 
@@ -493,6 +558,7 @@ function HistoryWindow:addRow(index)
     table.insert(parent.rows, row)
 end
 
+
 function HistoryWindow:filterData()
     self.data.rowsFiltered = {}
 
@@ -501,18 +567,39 @@ function HistoryWindow:filterData()
         filters[reasonCheck.text] = reasonCheck:GetChecked()
     end
 
-    for _, row in ipairs(self.data.rows) do
+    for _, row in ipairs(self.data.rowsRendered) do
         local keep = true
-
-        local player = row[2]
 
         local metadata = row[#row]
         local baseReason = metadata.baseReason
 
-        if (self.selectedPlayer ~= 'All' and player ~= self.selectedPlayer)
-                or (self.mainsOnly and ns.db.altData.altMainMapping[player] ~= player)
-                or not filters[baseReason] then
-            keep = false
+        if self.detail then
+            local player = row[3]
+
+            if (self.selectedPlayer ~= 'All' and player ~= self.selectedPlayer)
+                    or (self.mainsOnly and ns.db.altData.mainAltMapping[player] == nil)
+                    or not filters[baseReason] then
+                keep = false
+            end
+        else
+            local playerGuids = metadata.players
+            local players = Set:new()
+
+            local hasMain = false
+            for _, playerGuid in ipairs(playerGuids) do
+                local player = ns.db.standings[playerGuid].name
+                players:add(player)
+
+                if ns.db.altData.mainAltMapping[player] ~= nil then
+                    hasMain = true
+                end
+            end
+
+            if (self.selectedPlayer ~= 'All' and not players:contains(self.selectedPlayer))
+                    or (self.mainsOnly and not hasMain)
+                    or not filters[baseReason] then
+                keep = false
+            end
         end
 
         if keep then
@@ -521,128 +608,315 @@ function HistoryWindow:filterData()
     end
 end
 
+
 function HistoryWindow:getData()
     self.data.rows = {}
-    self.data.rowsFiltered = {}
 
     local playerGuidToName = {}
-    for player, guid in pairs(ns.Lib.playerNameToGuid) do
-        playerGuidToName[guid] = player
-    end
-
     local playerValsTracker = {}
-    for guid, standings in pairs(ns.db.standings) do
+    for guid, playerData in pairs(ns.db.standings) do
+        playerGuidToName[guid] = playerData.name
+
         if playerValsTracker[guid] == nil then
             playerValsTracker[guid] = {}
         end
 
-        playerValsTracker[guid]['EP'] = standings.ep
-        playerValsTracker[guid]['GP'] = standings.gp
+        playerValsTracker[guid]['EP'] = playerData.ep
+        playerValsTracker[guid]['GP'] = playerData.gp
     end
 
-    local events = List:new()
+    for _, eventAndHash in ipairs(ns.db.history) do
+        local event = eventAndHash[1]
 
-    for i = #ns.db.history, 1, -1 do
-        local eventAndHash = ns.db.history[i]
-        local serializedEvent = eventAndHash[1]
-        local _, event = ns.addon:Deserialize(serializedEvent)
+        local time = date('%Y-%m-%d %H:%M:%S', event[2])
+        local issuedBy = playerGuidToName[event[3]]
+        local players = event[4]
+        local mode = event[5]
+        local value = event[6]
+        local reason = event[7]
+        local percent = event[8]
 
-        local hash = eventAndHash[2]
+        local reason, prettyReason = self:getFormattedReason(reason)
 
-        if hash == ns.Lib:hash(serializedEvent) then
-            events:append(event)
+        local row = {
+            time,
+            issuedBy,
+            mode,
+            value,
+            reason,
+            percent,
+            {baseReason = prettyReason, players = players}
+        }
+
+        ns.Lib:bininsert(self.data.rows, row, function(left, right)
+            return left[1] > right[1]
+        end)
+    end
+end
+
+
+function HistoryWindow:getFormattedReason(reason)
+    if reason == nil then
+        return nil
+    end
+
+    local reasonSplit = ns.Lib:split(reason, ':')
+    local baseReason = reasonSplit[1]
+    local details = strtrim(reasonSplit[2])
+
+    if baseReason == ns.values.epgpReasons.AWARD then
+        local detailsSplit = ns.Lib:split(details, '-')
+        details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
+    elseif baseReason == ns.values.epgpReasons.BOSS_KILL then
+        local i = string.find(details, '%(')
+        details = string.sub(details, 2, i - 3)
+    end
+
+    local prettyReason = self.epgpReasonsPretty[baseReason]
+    reason = prettyReason
+    if #details > 0 then
+        reason = string.format('%s (%s)', reason, details)
+    end
+
+    return reason, prettyReason
+end
+
+
+function HistoryWindow:getRenderedData()
+    self.data.rowsRendered = {}
+
+    if self.detail then
+        self.data.header = {
+            {'Time', 'LEFT'},
+            {'Issued By', 'LEFT'},
+            {'Player', 'LEFT'},
+            {'Reason', 'LEFT'},
+            {'Action', 'LEFT'},
+            {'EP Delta', 'RIGHT'},
+            {'GP Delta', 'RIGHT'},
+            {'PR Delta', 'RIGHT'},
+        }
+
+        local playerValsTracker = {}
+        for guid, playerData in pairs(ns.db.standings) do
+            if playerValsTracker[guid] == nil then
+                playerValsTracker[guid] = {}
+            end
+
+            playerValsTracker[guid]['EP'] = playerData.ep
+            playerValsTracker[guid]['GP'] = playerData.gp
         end
-    end
 
-    events:sort(function(left, right)
-        return left[2] > right[2]
-    end)
+        for _, row in ipairs(self.data.rows) do
+            local time = row[1]
+            local issuedBy = row[2]
+            local mode = row[3]
+            local value = row[4]
+            local reason = row[5]
+            local percent = row[6]
 
-    for event in events:iter() do
-        local diff = event[6]
+            local metadata = row[7]
+            local baseReason = metadata.baseReason
+            local players = metadata.players
 
-        if diff ~= 0 then
-            local playerGuid = event[4]
+            for _, playerGuid in ipairs(players) do
+                local player = ns.db.standings[playerGuid].name
 
-            local time = date('%Y-%m-%d %H:%M:%S', event[2])
-            local issuedBy = playerGuidToName[event[3]]
-            local player = playerGuidToName[playerGuid]
-            local mode = string.upper(event[5])
-            local reason = event[7]
+                -- get action
+                local valueStr = tostring(value)
+                valueStr = percent and valueStr .. '%' or valueStr
+                valueStr = value > 0 and '+' .. valueStr or valueStr
 
-            local baseReason = ''
-            local details = ''
-            if reason ~= nil then
-                local reasonSplit = ns.Lib:split(reason, ':')
-                baseReason = reasonSplit[1]
-                details = strtrim(reasonSplit[2])
+                local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
+                local action = string.format('%s %s', actionMode, valueStr)
+
+                -- get ep, gp, pr deltas
+                local standings = playerValsTracker[playerGuid]
+
+                local epDelta
+                local gpDelta
+
+                local epAfter = standings['EP']
+                local gpAfter = standings['GP']
+
+                local epBefore = epAfter
+                local gpBefore = gpAfter
+
+                local getDelta = function(mode)
+                    if mode == 'ep' then
+                        if percent then
+                            local multiplier = (100 - value) / 100
+                            epBefore = epAfter * multiplier
+                        else
+                            epBefore = epBefore - value
+                        end
+
+                        epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
+                    end
+
+                    if mode == 'gp' then
+                        if percent then
+                            local multiplier = (100 - value) / 100
+                            gpBefore = gpAfter * multiplier
+                        else
+                            gpBefore = gpBefore - value
+                        end
+
+                        gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
+                    end
+                end
+
+                if mode == 'both' then
+                    getDelta('ep')
+                    getDelta('gp')
+                else
+                    getDelta(mode)
+                end
+
+                if epDelta == nil then
+                    epDelta = string.format('%.2f', epAfter)
+                end
+
+                if gpDelta == nil then
+                    gpDelta = string.format('%.2f', gpAfter)
+                end
+
+                local prAfter = epAfter / gpAfter
+                local prBefore = epBefore / gpBefore
+                local prDelta = string.format('%.3f -> %.3f', prBefore, prAfter)
+
+                local newRow = {
+                    time,
+                    issuedBy,
+                    player,
+                    reason,
+                    action,
+                    epDelta,
+                    gpDelta,
+                    prDelta,
+                    {baseReason = baseReason}
+                }
+
+                tinsert(self.data.rowsRendered, newRow)
+
+                standings['EP'] = epBefore
+                standings['GP'] = gpBefore
+            end
+        end
+    else
+        self.data.header = {
+            {'Time', 'LEFT'},
+            {'Issued By', 'LEFT'},
+            {'Player', 'LEFT'},
+            {'Reason', 'LEFT'},
+            {'Action', 'LEFT'},
+        }
+
+        for _, row in ipairs(self.data.rows) do
+            local time = row[1]
+            local issuedBy = row[2]
+            local mode = row[3]
+            local value = row[4]
+            local reason = row[5]
+            local percent = row[6]
+
+            local metadata = row[7]
+            local baseReason = metadata.baseReason
+            local players = metadata.players
+
+            local player
+            if #players > 1 then
+                player = 'Multiple'
+            else
+                local guid = players[1]
+                player = ns.db.standings[guid].name
             end
 
-            if baseReason == ns.values.epgpReasons.ALT_SYNC then
-                details = 'with ' .. playerGuidToName[details]
-            elseif baseReason == ns.values.epgpReasons.AWARD then
-                local detailsSplit = ns.Lib:split(details, '-')
-                details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
-            elseif baseReason == ns.values.epgpReasons.BOSS_KILL then
-                local i, j = string.find(details, '%(')
-                details = string.sub(details, 2, i - 3)
-            end
+            local valueStr = tostring(value)
+            valueStr = percent and valueStr .. '%' or valueStr
+            valueStr = value > 0 and '+' .. valueStr or valueStr
 
-            local prettyReason = self.epgpReasonsPretty[baseReason]
-            reason = prettyReason
-            if #details > 0 then
-                reason = string.format('%s (%s)', reason, details)
-            end
+            local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
+            local action = string.format('%s %s', actionMode, valueStr)
 
-            local diffStr = diff > 0 and string.format('+%d', diff) or tostring(diff)
-            local action = string.format('%s %s', mode, diffStr)
-
-            local standings = playerValsTracker[playerGuid]
-
-            local epDelta
-            local gpDelta
-
-            local epAfter = standings['EP']
-            local gpAfter = standings['GP']
-
-            local epBefore = epAfter
-            if mode == 'EP' then
-                epBefore = epBefore - diff
-
-                epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
-                gpDelta = string.format('%.2f', gpAfter)
-            end
-
-            local gpBefore = gpAfter
-            if mode == 'GP' then
-                gpBefore = gpBefore - diff
-
-                epDelta = string.format('%.2f', epAfter)
-                gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
-            end
-
-            local prAfter = epAfter / gpAfter
-            local prBefore = epBefore / gpBefore
-            local prDelta = string.format('%.3f -> %.3f', prBefore, prAfter)
-
-            local row = {
+            local newRow = {
                 time,
-                player,
                 issuedBy,
+                player,
                 reason,
                 action,
-                epDelta,
-                gpDelta,
-                prDelta,
-                {baseReason = prettyReason}
+                {baseReason = baseReason, players = players}
             }
 
-            standings['EP'] = epBefore
-            standings['GP'] = gpBefore
-
-            tinsert(self.data.rows, row)
+            tinsert(self.data.rowsRendered, newRow)
         end
     end
 
     self:filterData()
+end
+
+
+function HistoryWindow:fixHistory()
+    local fixedHistory = {}
+
+    local eventsByTime = {}
+
+    for _, eventAndHash in ipairs(ns.db.history) do
+        if type(eventAndHash[1]) == 'string' then
+            local serializedEvent = eventAndHash[1]
+            local _, event = ns.addon:Deserialize(serializedEvent)
+
+            local createTime = event[1]
+
+            if eventsByTime[createTime] == nil then
+                eventsByTime[createTime] = {}
+            end
+
+            tinsert(eventsByTime[createTime], event)
+        else
+            tinsert(fixedHistory, eventAndHash)
+        end
+    end
+
+    for createTime, events in pairs(eventsByTime) do
+        local newEvent = nil
+
+        for i, event in ipairs(events) do
+            local reason = event[7]
+
+            if string.find(reason, 'alt_sync') == nil then
+                if i == 1 then
+                    local eventTime = event[2]
+                    local issuer = event[3]
+                    local mode = event[5]
+                    local diff = event[6]
+
+                    local value
+                    local percent
+                    if string.find(reason, 'decay') then
+                        value = -10
+                        percent = true
+                        mode = 'both'
+                    else
+                        value = diff
+                        percent = false
+                    end
+
+                    newEvent = {createTime, eventTime, issuer, {}, mode, value, reason, percent}
+                end
+
+                local player = event[4]
+                tinsert(newEvent[4], player)
+            end
+        end
+
+        local hash = ns.Lib:hash(newEvent)
+        tinsert(fixedHistory, {newEvent, hash})
+    end
+
+    sort(fixedHistory, function(left, right)
+        return left[1][1] < right[1][1]
+    end)
+
+    ns.db.history = fixedHistory
 end

@@ -62,8 +62,7 @@ function Comm:getLatestEventTime()
         return -1
     end
 
-    local serializedEvent = latestEventAndHash[1]
-    local _, latestEvent = ns.addon:Deserialize(serializedEvent)
+    local latestEvent = latestEventAndHash[1]
 
     return latestEvent[1]
 end
@@ -135,8 +134,18 @@ function Comm:handleStandings(message, _, sender)
 
     ns.debug('got message standings from ' .. sender)
 
-    local standings = Comm:unpackMessage(message)
-    ns.db.standings = standings
+    message = Comm:unpackMessage(message)
+
+    local theirAddonVersion = message.version
+
+    Comm.otherClientVersions:set(sender, theirAddonVersion)
+
+    if theirAddonVersion < ns.minSyncVersion then
+        ns.debug(string.format('-- client version (%s) less than minimum (%s)', ns.Lib:getVersionStr(theirAddonVersion), ns.Lib:getVersionStr(ns.minSyncVersion)))
+        return
+    end
+
+    ns.db.standings = message.standings
 
     ns.MainWindow:refresh()
 end
@@ -147,16 +156,25 @@ function Comm:handleHistory(message, _, sender)
         return
     end
 
-    ---@type table
-    local events = Comm:unpackMessage(message)
+    ns.debug(string.format('got message history from %s', sender))
 
-    ns.debug(string.format('got message history from %s (len: %d}', sender, #events))
+    message = Comm:unpackMessage(message)
+
+    local theirAddonVersion = message.version
+
+    Comm.otherClientVersions:set(sender, theirAddonVersion)
+
+    if theirAddonVersion < ns.minSyncVersion then
+        ns.debug(string.format('-- client version (%s) less than minimum (%s)', ns.Lib:getVersionStr(theirAddonVersion), ns.Lib:getVersionStr(ns.minSyncVersion)))
+        return
+    end
+
+    local events = message.events
+
+    ns.debug(string.format('-- len: %d', #events))
 
     local fcomp = function(left, right)
-        local _, eventLeft = ns.addon:Deserialize(left[1])
-        local _, eventRight = ns.addon:Deserialize(right[1])
-
-        return eventLeft[1] < eventRight[1]
+        return left[1][1] < right[1][1]
     end
 
     for _, eventAndHash in ipairs(events) do
@@ -180,8 +198,18 @@ function Comm:handleLmSettings(message, _, sender)
 
     ns.debug('got message lm settings from ' .. sender)
 
-    ---@type table
-    local lmSettings = Comm:unpackMessage(message)
+    message = Comm:unpackMessage(message)
+
+    local theirAddonVersion = message.version
+
+    Comm.otherClientVersions:set(sender, theirAddonVersion)
+
+    if theirAddonVersion < ns.minSyncVersion then
+        ns.debug(string.format('-- client version (%s) less than minimum (%s)', ns.Lib:getVersionStr(theirAddonVersion), ns.Lib:getVersionStr(ns.minSyncVersion)))
+        return
+    end
+
+    local lmSettings = message.settings
 
     ns.cfg.defaultDecay = lmSettings.defaultDecay
     ns.cfg.syncAltEp = lmSettings.syncAltEp
@@ -216,16 +244,24 @@ end
 
 
 function Comm:sendStandings(target)
-    self:send(self.prefixes.STANDINGS, ns.db.standings, 'WHISPER', target)
+    local toSend = {
+        version = ns.addon.versionNum,
+        standings = ns.db.standings,
+    }
+
+    self:send(self.prefixes.STANDINGS, toSend, 'WHISPER', target)
 end
 
 
 function Comm:sendHistory(target, theirLatestEventTime)
+    local toSend = {
+        version = ns.addon.versionNum,
+    }
+
     local newEvents = {}
     for i = #ns.db.history, 1, -1 do
         local eventAndHash = ns.db.history[i]
-        local serializedEvent = eventAndHash[1]
-        local _, event = ns.addon:Deserialize(serializedEvent)
+        local event = eventAndHash[1]
 
         if event[1] <= theirLatestEventTime then
             break
@@ -234,31 +270,38 @@ function Comm:sendHistory(target, theirLatestEventTime)
         tinsert(newEvents, eventAndHash)
 
         if #newEvents == 100 then
+            toSend.events = newEvents
+
             ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
-            self:send(self.prefixes.HISTORY, newEvents, 'WHISPER', target)
+            self:send(self.prefixes.HISTORY, toSend, 'WHISPER', target)
             newEvents = {}
         end
     end
 
     if #newEvents > 0 then
+        toSend.events = newEvents
+
         ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
-        self:send(self.prefixes.HISTORY, newEvents, 'WHISPER', target)
+        self:send(self.prefixes.HISTORY, toSend, 'WHISPER', target)
     end
 end
 
 
 function Comm:sendLmSettings(target)
-    local settings = {
-        defaultDecay = ns.cfg.defaultDecay,
-        syncAltEp = ns.cfg.syncAltEp,
-        syncAltGp = ns.cfg.syncAltGp,
-        gpBase = ns.cfg.gpBase,
-        gpSlotMods = ns.cfg.gpSlotMods,
-        encounterEp = ns.cfg.encounterEp,
-        lmSettingsLastChange = ns.db.lmSettingsLastChange,
+    local toSend = {
+        version = ns.addon.versionNum,
+        settings = {
+            defaultDecay = ns.cfg.defaultDecay,
+            syncAltEp = ns.cfg.syncAltEp,
+            syncAltGp = ns.cfg.syncAltGp,
+            gpBase = ns.cfg.gpBase,
+            gpSlotMods = ns.cfg.gpSlotMods,
+            encounterEp = ns.cfg.encounterEp,
+            lmSettingsLastChange = ns.db.lmSettingsLastChange,
+        },
     }
 
-    self:send(self.prefixes.LM_SETTINGS, settings, 'WHISPER', target)
+    self:send(self.prefixes.LM_SETTINGS, toSend, 'WHISPER', target)
 end
 
 

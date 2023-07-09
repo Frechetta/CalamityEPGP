@@ -49,7 +49,7 @@ addon.whisperCommands = {
     INFO = '!ceinfo',
 }
 
-ns.minSyncVersion = ns.Lib:getVersionNum('0.7.9')
+ns.minSyncVersion = ns.Lib:getVersionNum('0.9.0')
 
 
 function addon:OnInitialize()
@@ -255,6 +255,8 @@ function addon:init()
 
         self:initMinimapButton()
 
+        ns.HistoryWindow:fixHistory()
+
         self.initialized = true
         ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
 
@@ -332,48 +334,64 @@ function addon:fixGp()
 end
 
 
-function addon:modifyEpgp(changes, percent)
+function addon:modifyEpgp(players, mode, value, reason, percent)
     if not ns.cfg.lmMode then
-        ns.print('Cannot edit EPGP when loot master mode is off')
+        ns.print('Cannot modify EPGP when loot master mode is off')
         return
     end
 
-    for _, change in ipairs(changes) do
-        local charGuid = change[1]
-        local mode = change[2]
-        local value = change[3]
-        local reason = change[4]
+    mode = string.lower(mode)
 
-        self:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
+    for _, playerGuid in ipairs(players) do
+        if mode == 'both' then
+            self:_modifyEpgpSingle(playerGuid, 'ep', value, reason, percent)
+            self:_modifyEpgpSingle(playerGuid, 'gp', value, reason, percent)
+        end
+    end
 
-        -- sync alt epgp
-        local charData = ns.db.standings[charGuid]
-        local name = charData.name
+    -- sync alt epgp
+    if ns.cfg.syncAltEp or ns.cfg.syncAltGp then
+        for main, alts in pairs(ns.db.altData.mainAltMapping) do
+            local mainGuid = ns.Lib:getPlayerGuid(main)
+            local mainData = ns.db.standings[mainGuid]
 
-        local main = ns.db.altData.altMainMapping[name]
-        local alts = ns.db.altData.mainAltMapping[main]
-
-        if alts ~= nil then
             for _, alt in ipairs(alts) do
-                if alt ~= name then
-                    local altCharGuid = ns.Lib:getPlayerGuid(alt)
-                    local altCharData = ns.db.standings[altCharGuid]
+                if alt ~= main then
+                    local altGuid = ns.Lib:getPlayerGuid(alt)
+                    local altData = ns.db.standings[altGuid]
 
-                    local reason = string.format('%s: %s', ns.values.epgpReasons.ALT_SYNC, charGuid)
+                    local epGpMsgPart
 
                     if ns.cfg.syncAltEp then
-                        local diff = charData.ep - altCharData.ep
-                        self:_modifyEpgpSingle(altCharGuid, 'EP', diff, reason)
+                        altData.ep = mainData.ep
+                        epGpMsgPart = 'EP'
                     end
 
                     if ns.cfg.syncAltGp then
-                        local diff = charData.gp - altCharData.gp
-                        self:_modifyEpgpSingle(altCharGuid, 'GP', diff, reason)
+                        altData.gp = mainData.gp
+
+                        if epGpMsgPart then
+                            epGpMsgPart = epGpMsgPart .. ' and GP'
+                        else
+                            epGpMsgPart = 'GP'
+                        end
+                    end
+
+                    if epGpMsgPart then
+                        ns.debug(string.format('synced %s of %s with main %s', epGpMsgPart, altData.name, mainData.name))
                     end
                 end
             end
         end
     end
+
+    local createTime = time()
+    local eventTime = createTime
+
+    local event = {createTime, eventTime, UnitGUID('player'), players, mode, value, reason, percent}
+    local hash = ns.Lib:hash(event)
+
+    tinsert(ns.db.history, {event, hash})
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
@@ -389,7 +407,6 @@ function addon:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
     end
 
     local charData = ns.db.standings[charGuid]
-    mode = string.lower(mode)
 
     local oldValue = charData[mode]
     local newValue
@@ -406,18 +423,9 @@ function addon:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
         newValue = ns.cfg.gpBase
     end
 
-    local diff = newValue - oldValue
-
     charData[mode] = newValue
 
-    local createTime = time()
-    local eventTime = createTime
-
-    local event = self:Serialize({createTime, eventTime, UnitGUID('player'), charGuid, mode, diff, reason})
-    local hash = ns.Lib:hash(event)
-
-    tinsert(ns.db.history, {event, hash})
-
+    local diff = newValue - oldValue
     if diff ~= 0 then
         local verb = 'gained'
         local amount = diff
@@ -738,14 +746,13 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
     local proceedFunc = function()
         local reason = string.format('%s: "%s" (%s)', ns.values.epgpReasons.BOSS_KILL, encounterName, encounterId)
 
-        local changes = {}
-
+        local players = {}
         for player in pairs(addon.raidRoster) do
             local guid = ns.Lib:getPlayerGuid(player)
-            table.insert(changes, {guid, 'EP', ep, reason})
+            tinsert(players, guid)
         end
 
-        addon:modifyEpgp(changes)
+        addon:modifyEpgp(players, 'EP', ep, reason)
 
         ns.printPublic(string.format('Awarded %d EP to raid for killing %s', ep, encounterName))
     end

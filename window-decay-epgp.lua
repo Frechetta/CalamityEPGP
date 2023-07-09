@@ -114,15 +114,13 @@ function DecayEpgpWindow:confirm()
 
     local reason = string.format('%s: %s', ns.values.epgpReasons.DECAY, self.mainFrame.reasonEditBox:GetText())
 
-    local changes = {}
-
+    local players = {}
     for _, charData in ipairs(ns.MainWindow.data.rows) do
         local guid = ns.Lib:getPlayerGuid(charData[1])
-        table.insert(changes, {guid, 'EP', -value, reason})
-        table.insert(changes, {guid, 'GP', -value, reason})
+        tinsert(players, guid)
     end
 
-    ns.addon:modifyEpgp(changes, true)
+    ns.addon:modifyEpgp(players, 'BOTH', -value, reason, true)
 
     self:hide()
 end

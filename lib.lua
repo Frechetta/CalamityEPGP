@@ -310,7 +310,7 @@ end
 
 function Lib:hash(data)
     local hasher = ns.addon.libc:fcs32init()
-    hasher = ns.addon.libc:fcs32update(hasher, data)
+    hasher = ns.addon.libc:fcs32update(hasher, tostring(data))
     return ns.addon.libc:fcs32final(hasher)
 end
 

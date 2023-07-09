@@ -1,3 +1,8 @@
+# 0.9.0
+
+- store history much more efficiently
+- view history in less detail (summary events) or more detail (events by player)
+
 # 0.8.1
 
 - fix LM settings being overwritten

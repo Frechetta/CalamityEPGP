@@ -16,12 +16,10 @@ function List:new(items)
     self.__index = self
 
     o._list = {}
-    o._len = 0
 
     items = items or {}
     for _, item in ipairs(items) do
-        table.insert(o._list, item)
-        o._len = o._len + 1
+        tinsert(o._list, item)
     end
 
     return o
@@ -51,12 +49,10 @@ end
 
 function List:clear()
     self._list = {}
-    self._len = 0
 end
 
 function List:append(item)
-    table.insert(self._list, item)
-    self._len = self._len + 1
+    tinsert(self._list, item)
 end
 
 function List:get(index)
@@ -70,7 +66,7 @@ function List:set(index, value)
 end
 
 function List:len()
-    return self._len
+    return #self._list
 end
 
 function List:sort(func)
@@ -79,6 +75,10 @@ end
 
 function List:toTable()
     return ns.Lib:deepcopy(self._list)
+end
+
+function List:bininsert(value, fcomp)
+    ns.Lib:binsert(self._list, value, fcomp)
 end
 
 

@@ -119,14 +119,13 @@ function AddEpWindow:confirm()
 
     local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
-    local changes = {}
-
+    local players = {}
     for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
         local guid = ns.Lib:getPlayerGuid(charData[1])
-        table.insert(changes, {guid, 'EP', value, reason})
+        tinsert(players, guid)
     end
 
-    ns.addon:modifyEpgp(changes)
+    ns.addon:modifyEpgp(players, 'EP', value, reason)
 
     if ns.addon.useForRaid and ns.MainWindow.mainFrame.raidOnlyButton:GetChecked() then
         ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
