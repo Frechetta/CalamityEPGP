@@ -868,6 +868,12 @@ function HistoryWindow:fixHistory()
 
             local createTime = event[1]
 
+            if createTime == nil then
+                fixedHistory = {}
+                eventsByTime = {}
+                break
+            end
+
             if eventsByTime[createTime] == nil then
                 eventsByTime[createTime] = {}
             end

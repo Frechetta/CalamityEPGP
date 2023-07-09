@@ -1,3 +1,7 @@
+# 0.9.1
+
+- fix old history not following expected format
+
 # 0.9.0
 
 - store history much more efficiently
