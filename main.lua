@@ -30,7 +30,7 @@ local dbDefaults = {
             toTrade = {},
             awarded = {},
         },
-        lmSettingsLastChange = nil
+        lmSettingsLastChange = -1
     }
 }
 
@@ -152,7 +152,7 @@ function addon:handleItemClick(itemLink, mouseButton)
 
     local keyPressIdentifier = ns.Lib:getClickCombination(mouseButton);
 
-    if keyPressIdentifier == 'SHIFT_CLICK' and ((ns.cfg.lmMode and IsMasterLooter()) or ns.cfg.debugMode) then
+    if keyPressIdentifier == 'ALT_CLICK' and ((ns.cfg.lmMode and IsMasterLooter()) or ns.cfg.debugMode) then
         self:showLootDistWindow(itemLink)
     end
 end
@@ -194,10 +194,6 @@ function addon:init()
         ns.cfg = ns.db.cfg
 
         ns.guild = guildFullName
-
-        if ns.db.lmSettingsLastChange == nil then
-            self:modifiedLmSettings(false)
-        end
 
         self.ldb = LibStub('LibDataBroker-1.1', true)
         self.ldbi = LibStub('LibDBIcon-1.0', true)
@@ -500,16 +496,9 @@ function addon:clearData()
 end
 
 
-function addon:modifiedLmSettings(sendUpdate)
+function addon:modifiedLmSettings()
     ns.db.lmSettingsLastChange = time()
-
-    if sendUpdate == nil then
-        sendUpdate = true
-    end
-
-    if sendUpdate then
-        ns.Comm:send(ns.Comm.prefixes.UPDATE, nil, 'GUILD')
-    end
+    ns.Comm:send(ns.Comm.prefixes.UPDATE, nil, 'GUILD')
 end
 
 
