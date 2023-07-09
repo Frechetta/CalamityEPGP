@@ -14,6 +14,8 @@ end
 
 local addonName, ns = ...  -- Namespace
 
+Set = ns.Set
+
 local addon = LibStub('AceAddon-3.0'):NewAddon(addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceComm-3.0', 'AceSerializer-3.0')
 ns.addon = addon
 
@@ -256,6 +258,7 @@ function addon:init()
         self:initMinimapButton()
 
         ns.HistoryWindow:fixHistory()
+        self:syncAltEpGp()
 
         self.initialized = true
         ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
@@ -343,47 +346,16 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     mode = string.lower(mode)
 
     for _, playerGuid in ipairs(players) do
-        if mode == 'both' then
+        if mode == 'both' or mode == 'ep' then
             self:_modifyEpgpSingle(playerGuid, 'ep', value, reason, percent)
+        end
+
+        if mode == 'both' or mode == 'gp' then
             self:_modifyEpgpSingle(playerGuid, 'gp', value, reason, percent)
         end
     end
 
-    -- sync alt epgp
-    if ns.cfg.syncAltEp or ns.cfg.syncAltGp then
-        for main, alts in pairs(ns.db.altData.mainAltMapping) do
-            local mainGuid = ns.Lib:getPlayerGuid(main)
-            local mainData = ns.db.standings[mainGuid]
-
-            for _, alt in ipairs(alts) do
-                if alt ~= main then
-                    local altGuid = ns.Lib:getPlayerGuid(alt)
-                    local altData = ns.db.standings[altGuid]
-
-                    local epGpMsgPart
-
-                    if ns.cfg.syncAltEp then
-                        altData.ep = mainData.ep
-                        epGpMsgPart = 'EP'
-                    end
-
-                    if ns.cfg.syncAltGp then
-                        altData.gp = mainData.gp
-
-                        if epGpMsgPart then
-                            epGpMsgPart = epGpMsgPart .. ' and GP'
-                        else
-                            epGpMsgPart = 'GP'
-                        end
-                    end
-
-                    if epGpMsgPart then
-                        ns.debug(string.format('synced %s of %s with main %s', epGpMsgPart, altData.name, mainData.name))
-                    end
-                end
-            end
-        end
-    end
+    self:syncAltEpGp(players)
 
     local createTime = time()
     local eventTime = createTime
@@ -438,6 +410,102 @@ function addon:_modifyEpgpSingle(charGuid, mode, value, reason, percent)
         local baseReason = ns.Lib:split(reason, ':')[1]
 
         ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
+    end
+end
+
+
+function addon:syncAltEpGp(players)
+    if not ns.cfg.syncAltEp and not ns.cfg.syncAltGp then
+        return
+    end
+
+    if players ~= nil then
+        for _, playerGuid in ipairs(players) do
+            local playerData = ns.db.standings[playerGuid]
+            local player = playerData.name
+
+            local main = ns.db.altData.altMainMapping[player]
+            local alts = ns.db.altData.mainAltMapping[main]
+
+            for _, alt in ipairs(alts) do
+                if alt ~= player then
+                    local altGuid = ns.Lib:getPlayerGuid(alt)
+                    local altData = ns.db.standings[altGuid]
+
+                    local epGpMsgPart
+
+                    if ns.cfg.syncAltEp then
+                        altData.ep = playerData.ep
+                        epGpMsgPart = 'EP'
+                    end
+
+                    if ns.cfg.syncAltGp then
+                        altData.gp = playerData.gp
+
+                        if epGpMsgPart then
+                            epGpMsgPart = epGpMsgPart .. ' and GP'
+                        else
+                            epGpMsgPart = 'GP'
+                        end
+                    end
+
+                    if epGpMsgPart then
+                        ns.debug(string.format('synced %s of %s with main %s', epGpMsgPart, alt, player))
+                    end
+                end
+            end
+        end
+    else
+        local synced = Set:new()
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local event = eventAndHash[1]
+            local players = event[4]
+
+            for _, playerGuid in ipairs(players) do
+                local playerData = ns.db.standings[playerGuid]
+                local player = playerData.name
+
+                if not synced:contains(player) then
+                    synced:add(player)
+
+                    local main = ns.db.altData.altMainMapping[player]
+                    local alts = ns.db.altData.mainAltMapping[main]
+
+                    if alts ~= nil then
+                        for _, alt in ipairs(alts) do
+                            if alt ~= player then
+                                local altGuid = ns.Lib:getPlayerGuid(alt)
+                                local altData = ns.db.standings[altGuid]
+
+                                local epGpMsgPart
+
+                                if ns.cfg.syncAltEp then
+                                    altData.ep = playerData.ep
+                                    epGpMsgPart = 'EP'
+                                end
+
+                                if ns.cfg.syncAltGp then
+                                    altData.gp = playerData.gp
+
+                                    if epGpMsgPart then
+                                        epGpMsgPart = epGpMsgPart .. ' and GP'
+                                    else
+                                        epGpMsgPart = 'GP'
+                                    end
+                                end
+
+                                if epGpMsgPart then
+                                    ns.debug(string.format('synced %s of %s with main %s', epGpMsgPart, alt, player))
+                                end
+
+                                synced:add(alt)
+                            end
+                        end
+                    end
+                end
+            end
+        end
     end
 end
 

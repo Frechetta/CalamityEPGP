@@ -1,3 +1,8 @@
+# 0.9.2
+
+- fix EP/GP modification
+- fix alt EP/GP syncing
+
 # 0.9.1
 
 - fix old history not following expected format
