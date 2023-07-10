@@ -1,5 +1,7 @@
 local addonName, ns = ...  -- Namespace
 
+List = ns.List
+
 local Config = {
     altManagementMenuInitialized = false,
     defaults = {
@@ -180,10 +182,14 @@ function Config:refreshAltManagementMenu()
             self.aamPanel.importAltMappingButton:Enable()
             self.aamPanel.synchroniseEpCheck:Enable()
             self.aamPanel.synchroniseGpCheck:Enable()
+            self.aamPanel.mainEditBox:Enable()
+            self.aamPanel.altEditBox:Enable()
         else
             self.aamPanel.importAltMappingButton:Disable()
             self.aamPanel.synchroniseEpCheck:Disable()
             self.aamPanel.synchroniseGpCheck:Disable()
+            self.aamPanel.mainEditBox:Disable()
+            self.aamPanel.altEditBox:Disable()
         end
     end
 end
@@ -193,16 +199,42 @@ function Config:createAltManagementMenu()
     local panel = self.aamPanel
 
     panel.importAltMappingButton = CreateFrame('Button', nil, panel, 'GameMenuButtonTemplate')
-    panel.importAltMappingButton:SetText('Import From GRM')
+    panel.importAltMappingButton:SetText('Import from GRM')
     panel.importAltMappingButton:SetPoint('TOPLEFT', 10, -15)
+    panel.importAltMappingButton:SetHeight(25)
+
+    panel.mainLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+    panel.mainLabel:SetText('Main:')
+	panel.mainLabel:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', 20, 23)
+
+    panel.mainEditBox = CreateFrame('EditBox', nil, panel, 'InputBoxTemplate')
+	panel.mainEditBox:SetPoint('LEFT', panel.mainLabel, 'RIGHT', 10, 0)
+    panel.mainEditBox:SetWidth(120)
+    panel.mainEditBox:SetHeight(25)
+    panel.mainEditBox:SetAutoFocus(false)
+
+    panel.altLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+    panel.altLabel:SetText('Alt:')
+	panel.altLabel:SetPoint('LEFT', panel.mainEditBox, 'RIGHT', 20, 0)
+
+    panel.altEditBox = CreateFrame('EditBox', nil, panel, 'InputBoxTemplate')
+	panel.altEditBox:SetPoint('LEFT', panel.altLabel, 'RIGHT', 10, 0)
+    panel.altEditBox:SetWidth(120)
+    panel.altEditBox:SetHeight(25)
+    panel.altEditBox:SetAutoFocus(false)
+
+    panel.addAltButton = CreateFrame('BUTTON', nil, panel, 'GameMenuButtonTemplate')
+    panel.addAltButton:SetText('Add alt')
+    panel.addAltButton:SetPoint('LEFT', panel.altEditBox, 'RIGHT', 20, 0)
+    panel.addAltButton:SetSize(75, 25)
+
+    panel.synchroniseGpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
+    panel.synchroniseGpCheck:SetPoint('BOTTOMRIGHT', panel, 'BOTTOMRIGHT', -10, 10)
 
     panel.synchroniseGpLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
     panel.synchroniseGpLabel:SetText('Synchronise Alt GP')
     panel.synchroniseGpLabel:SetTextColor(1, 1, 0)
-    panel.synchroniseGpLabel:SetPoint('BOTTOMLEFT', panel, 'BOTTOMLEFT', 10, 25)
-
-    panel.synchroniseGpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
-    panel.synchroniseGpCheck:SetPoint('LEFT', panel.synchroniseGpLabel, 'RIGHT', 5, 0)
+    panel.synchroniseGpLabel:SetPoint('RIGHT', panel.synchroniseGpCheck, 'LEFT', -5, 0)
 
     panel.synchroniseEpLabel = panel:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
     panel.synchroniseEpLabel:SetText('Synchronise Alt EP')
@@ -213,9 +245,24 @@ function Config:createAltManagementMenu()
     panel.synchroniseEpCheck:SetPoint('LEFT', panel.synchroniseEpLabel, 'RIGHT', 5, 0)
 
     panel.tableFrame = CreateFrame('Frame', panel:GetName() .. 'TableFrame', panel)
-    panel.tableFrame:SetPoint('TOPLEFT', panel.importAltMappingButton, 'BOTTOMLEFT', 0, -20)
-    panel.tableFrame:SetPoint('RIGHT', panel, 'RIGHT', -20, 0)
-    panel.tableFrame:SetPoint('BOTTOM', panel.synchroniseEpLabel, 'BOTTOM', 0, 15)
+    panel.tableFrame:SetPoint('TOPLEFT', panel.importAltMappingButton, 'BOTTOMLEFT', 5, -20)
+    panel.tableFrame:SetPoint('BOTTOMRIGHT', panel.synchroniseEpCheck, 'TOPRIGHT', 0, 15)
+
+    panel.playerSelection = CreateFrame('Frame', nil, self.aamPanel)
+    panel.playerSelection.texture = panel.playerSelection:CreateTexture(nil, 'BACKGROUND')
+    panel.playerSelection.texture:SetAllPoints()
+    panel.playerSelection.texture:SetColorTexture(0, 0, 0, 0.5)
+    panel.playerSelection:SetWidth(panel.mainEditBox:GetWidth())
+    panel.playerSelection:SetFrameStrata('HIGH')
+    panel.playerSelection:Hide()
+    panel.playerSelection.rows = List:new()
+
+    panel.playerSelection.rowHighlight = CreateFrame('Frame', nil, panel.playerSelection)
+    local highlightTexture = panel.playerSelection.rowHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
+    highlightTexture:SetBlendMode('ADD')
+    panel.playerSelection.rowHighlight:Hide()
 
     panel.importAltMappingButton:SetScript('OnClick', function()
         if GRM_Alts == nil then
@@ -245,6 +292,12 @@ function Config:createAltManagementMenu()
 
         self:setAltMainMapping()
         self:setAltManagementData()
+    end)
+
+    panel.mainEditBox:SetScript('OnTextChanged', function(_, byUser)
+        if byUser then
+            Config:handleMainEditBoxChange()
+        end
     end)
 
     panel.synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
@@ -402,6 +455,109 @@ function Config:setAltMainMapping()
             ns.db.altData.altMainMapping[alt] = main
         end
     end
+end
+
+
+function Config:handleMainEditBoxChange()
+    local panel = self.aamPanel
+
+    local text = panel.mainEditBox:GetText()
+
+    if #text > 0 then
+        local players = self:filterPlayers(text)
+
+        if players:len() > 0 then
+            self:fillPlayers(players)
+            panel.playerSelection:SetPoint('BOTTOM', panel.mainEditBox, 'TOP')
+            panel.playerSelection:Show()
+        else
+            panel.playerSelection:Hide()
+        end
+    else
+        panel.playerSelection:Hide()
+    end
+end
+
+
+function Config:filterPlayers(text)
+    local players = List:new()
+
+    for _, playerData in pairs(ns.db.standings) do
+        local player = playerData.name
+
+        if string.find(string.lower(player), string.lower(text)) then
+            local playerText = player
+
+            local classColor = RAID_CLASS_COLORS[player.classFileName]
+            if classColor ~= nil then
+                playerText = classColor:WrapTextInColorCode(playerText)
+            end
+
+            players:bininsert({player, playerText}, function(left, right) return left[1] < right[1] end)
+        end
+    end
+
+    return players
+end
+
+
+function Config:fillPlayers(players)
+    local rowHeight = 15
+
+    local playerSelection = self.aamPanel.playerSelection
+    local rows = playerSelection.rows
+
+    for i, playerData in players:enumerate(true) do
+        local player = playerData[1]
+        local playerText = playerData[2]
+
+        local row = rows:get(i)
+
+        if row == nil then
+            row = CreateFrame('Frame', nil, playerSelection)
+            row:SetSize(playerSelection:GetWidth() - 5, rowHeight)
+            row.text = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+            row.text:SetAllPoints()
+            row.text:SetJustifyH('CENTER')
+            rows:append(row)
+        end
+
+        local yOffset = (i - 1) * (rowHeight + 3) + 3
+
+        row.text:SetText(playerText)
+        row:SetPoint('BOTTOM', playerSelection, 'BOTTOM', 0, yOffset)
+        row.player = player
+        row:Show()
+
+        -- Highlight
+        row:EnableMouse()
+
+        row:SetScript('OnEnter', function()
+            playerSelection.rowHighlight:SetPoint('TOPLEFT', row, 'TOPLEFT')
+            playerSelection.rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT')
+            playerSelection.rowHighlight:Show()
+        end)
+
+        row:SetScript('OnLeave', function()
+            playerSelection.rowHighlight:Hide()
+        end)
+
+        row:SetScript('OnMouseUp', function(_, button)
+            if button == 'LeftButton' then
+                self.aamPanel.mainEditBox:SetText(player)
+                playerSelection.rowHighlight:Hide()
+                playerSelection:Hide()
+            end
+        end)
+    end
+
+    for i = players:len() + 1, rows:len() do
+        local row = rows:get(i)
+        row:Hide()
+    end
+
+    local totalHeight = players:len() * (rowHeight + 3) + 3
+    playerSelection:SetHeight(totalHeight)
 end
 
 

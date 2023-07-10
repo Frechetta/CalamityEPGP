@@ -29,19 +29,41 @@ function List:iter(reverse)
     if not reverse then
         local i = 1
         return function()
-            if i <= self._len then
+            if i <= self:len() then
                 local item = self:get(i)
                 i = i + 1
                 return item
             end
         end
     else
-        local i = self._len
+        local i = self:len()
         return function()
             if i >= 1 then
                 local item = self:get(i)
                 i = i - 1
                 return item
+            end
+        end
+    end
+end
+
+function List:enumerate(reverse)
+    if not reverse then
+        local i = 1
+        return function()
+            if i <= self:len() then
+                local item = self:get(i)
+                i = i + 1
+                return i - 1, item
+            end
+        end
+    else
+        local i = self:len()
+        return function()
+            if i >= 1 then
+                local item = self:get(i)
+                i = i - 1
+                return self:len() + 1 - i - 1, item
             end
         end
     end
@@ -56,6 +78,9 @@ function List:append(item)
 end
 
 function List:get(index)
+    if index == -1 then
+        index = self:len()
+    end
     return self._list[index]
 end
 
@@ -78,7 +103,7 @@ function List:toTable()
 end
 
 function List:bininsert(value, fcomp)
-    ns.Lib:binsert(self._list, value, fcomp)
+    ns.Lib:bininsert(self._list, value, fcomp)
 end
 
 

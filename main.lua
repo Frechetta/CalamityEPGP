@@ -214,22 +214,25 @@ function addon:init()
     local guildMembers = {}
 
     for i = 1, GetNumGuildMembers() do
-        local fullName, rank, _, level, class, _, _, _, _, _, _, _, _, _, _, _, guid = GetGuildRosterInfo(i)
-        local name = self:getCharName(fullName)
+        local fullName, rank, _, level, class, _, _, _, _, _, classFileName, _, _, _, _, _, guid = GetGuildRosterInfo(i)
+        if fullName ~= nil then
+            local name = self:getCharName(fullName)
 
-        local charData = ns.db.standings[guid]
-        if charData ~= nil then
-            charData.name = name
-            charData.fullName = fullName
-            charData.level = level
-            charData.class = class
-            charData.inGuild = true
-            charData.rank = rank
-        else
-            ns.db.standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, true, rank)
+            local charData = ns.db.standings[guid]
+            if charData ~= nil then
+                charData.name = name
+                charData.fullName = fullName
+                charData.level = level
+                charData.class = class
+                charData.classFileName = classFileName
+                charData.inGuild = true
+                charData.rank = rank
+            else
+                ns.db.standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, classFileName, true, rank)
+            end
+
+            table.insert(guildMembers, guid)
         end
-
-        table.insert(guildMembers, guid)
     end
 
     for guid, charData in pairs(ns.db.standings) do
@@ -275,7 +278,7 @@ function addon:loadRaidRoster()
         local standings = ns.db.standings
 
         for i = 1, GetNumGroupMembers() do
-            local name, _, _, level, class, _, _, _, _, _, _ = GetRaidRosterInfo(i)
+            local name, _, _, level, class, classFileName, _, _, _, _, _ = GetRaidRosterInfo(i)
 
             if name ~= nil then
                 self.raidRoster[name] = i
@@ -286,12 +289,13 @@ function addon:loadRaidRoster()
 
                     local charData = standings[guid]
                     if charData == nil then
-                        standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, false, nil)
+                        standings[guid] = self:createStandingsEntry(guid, fullName, name, level, class, classFileName, false, nil)
                     elseif not charData.inGuild then
                         charData.fullName = fullName
                         charData.name = name
                         charData.level = level
                         charData.class = class
+                        charData.classFileName = classFileName
                     end
                 end
             end
@@ -309,17 +313,18 @@ function addon:getCharName(fullName)
 end
 
 
-function addon:createStandingsEntry(guid, fullName, name, level, class, inGuild, rank)
+function addon:createStandingsEntry(guid, fullName, name, level, class, classFileName, inGuild, rank)
     return {
-        ['guid'] = guid,
-        ['fullName'] = fullName,
-        ['name'] = name,
-        ['level'] = level,
-        ['class'] = class,
-        ['inGuild'] = inGuild,
-        ['rank'] = rank,
-        ['ep'] = 0,
-        ['gp'] = ns.cfg.gpBase,
+        guid = guid,
+        fullName = fullName,
+        name = name,
+        level = level,
+        class = class,
+        classFileName = classFileName,
+        inGuild = inGuild,
+        rank = rank,
+        ep = 0,
+        gp = ns.cfg.gpBase,
     }
 end
 
