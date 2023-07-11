@@ -1,3 +1,7 @@
+# 0.9.3
+
+- fix modifying EP/GP manually
+
 # 0.9.2
 
 - fix EP/GP modification

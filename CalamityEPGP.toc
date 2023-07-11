@@ -1,7 +1,7 @@
 ## Title: CalamityEPGP
 ## Notes: EPGP addon for WOTLK
 ## Author: Kardiir-Atiesh
-## Version: 0.9.2
+## Version: 0.9.3
 ## Interface: 30402
 ## SavedVariables: CalamityEPGP
 ## DefaultState: enabled
