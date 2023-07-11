@@ -1,3 +1,7 @@
+# 0.10.1
+
+- fix loot dist bug
+
 # 0.10.0
 
 - add alt management within CalamityEPGP
