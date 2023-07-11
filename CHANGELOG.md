@@ -1,3 +1,7 @@
+# 0.10.0
+
+- add alt management within CalamityEPGP
+
 # 0.9.3
 
 - fix modifying EP/GP manually

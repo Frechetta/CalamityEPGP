@@ -455,7 +455,7 @@ function addon:syncAltEpGp(players)
                     end
 
                     if epGpMsgPart then
-                        ns.debug(string.format('synced %s of %s with main %s', epGpMsgPart, alt, player))
+                        ns.debug(string.format('synced %s of %s with alt %s', epGpMsgPart, alt, player))
                     end
                 end
             end
@@ -501,7 +501,7 @@ function addon:syncAltEpGp(players)
                                 end
 
                                 if epGpMsgPart then
-                                    ns.debug(string.format('synced %s of %s with main %s', epGpMsgPart, alt, player))
+                                    ns.debug(string.format('synced %s of %s with alt %s', epGpMsgPart, alt, player))
                                 end
 
                                 synced:add(alt)

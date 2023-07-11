@@ -386,3 +386,28 @@ function Lib:bininsert(t, value, fcomp)
 
     return iMid + iState
  end
+
+
+ function Lib:getColoredText(text, color)
+    if color == nil then
+        return text
+    end
+
+    return color:WrapTextInColorCode(text)
+ end
+
+
+ function Lib:getColoredByClass(player, text)
+    local playerGuid = self:getPlayerGuid(player)
+    local playerData = ns.db.standings[playerGuid]
+
+    local coloredText
+    if text ~= nil then
+        coloredText = text
+    else
+        coloredText = player
+    end
+
+    local classColor = RAID_CLASS_COLORS[playerData.classFileName]
+    return self:getColoredText(coloredText, classColor)
+ end

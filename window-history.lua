@@ -22,7 +22,6 @@ local HistoryWindow = {
     dropDownItemWidth = 70,
     dropDownItemHeight = 15,
     dropDownItemPadding = 2.5,
-    mouseInDropdown = false,
     selectedPlayer = 'All',
     mainsOnly = false,
 }
@@ -169,7 +168,6 @@ end
 
 function HistoryWindow:createTable()
     local parent = self.mainFrame.tableFrame
-    local data = self.data
 
     -- Initialize header
     -- we will finalize the size once the scroll frame is set up
@@ -231,10 +229,10 @@ function HistoryWindow:createDropdownItemsFrame()
     dropDown.itemsFrame = CreateFrame('Frame', nil, dropDown, 'InsetFrameTemplate2')
     dropDown.itemsFrame:SetPoint('TOPLEFT', dropDown, 'BOTTOMLEFT', 0, 0)
     dropDown.itemsFrame:SetFrameLevel(self.mainFrame:GetFrameLevel() + 50)
-
     dropDown.itemsFrame:EnableMouse()
-    dropDown.itemsFrame:SetScript('OnEnter', function() HistoryWindow.mouseInDropdown = true end)
-    dropDown.itemsFrame:SetScript('OnLeave', function() HistoryWindow.mouseInDropdown = false end)
+    dropDown.itemsFrame:SetScript('OnEnter', function()
+        self.mainFrame.tableFrame.contents.rowHighlight:Hide()
+    end)
 
     dropDown.itemsFrame.items = {}
 
@@ -544,7 +542,8 @@ function HistoryWindow:addRow(index)
     local highlightFrame = parent.contents.rowHighlight
 
     row:SetScript('OnEnter', function()
-        if not HistoryWindow.mouseInDropdown then
+        if not HistoryWindow.mainFrame.dropDown.itemsFrame:IsShown()
+                or not HistoryWindow.mainFrame.dropDown.itemsFrame:IsMouseOver() then
             highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
             highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
             highlightFrame:Show()
