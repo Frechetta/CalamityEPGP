@@ -94,7 +94,7 @@ function ns.printPublic(msg, rw)
     local channel
 
     if IsInRaid() then
-        if rw and UnitIsGroupAssistant('player') then
+        if rw and (UnitIsGroupLeader('player') or UnitIsGroupAssistant('player')) then
             channel = 'RAID_WARNING'
         else
             channel = 'RAID'
