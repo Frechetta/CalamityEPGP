@@ -518,7 +518,7 @@ function LootDistWindow:getLoot()
             local itemLink = GetLootSlotLink(i)
 
             if itemLink ~= nil then
-                ns.debug(i .. ': ' .. itemLink)
+                -- ns.debug(i .. ': ' .. itemLink)
                 self.currentLoot[itemLink] = i
             end
         end
@@ -628,21 +628,20 @@ function LootDistWindow:handleLootReceived(itemLink, player)
     if player == 'You' then
         ns.debug('i received ' .. itemLink)
         local myName = UnitName('player')
-        ns.debug('-- my name: ' .. myName)
 
         -- iterate over awarded items for ones that haven't been collected
         for awardedPlayer, awardedItem in pairs(awardedData) do
             if not awardedItem.given and not awardedItem.collected then
                 awardedItem.collected = true
 
-                ns.debug(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, awardedItem))
+                ns.debug(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, tostring(awardedItem)))
 
                 -- TODO: fix
-                -- if this item was awarded to me, mark it as successful
                 if awardedPlayer == myName then
+                    -- if this item was awarded to me, mark it as successful
                     self:successfulAward(itemLink, myName)
-                -- else, mark it as to trade
                 else
+                    -- else, mark it as to trade
                     self:markAsToTrade(itemLink, awardedPlayer)
                 end
 
@@ -674,7 +673,7 @@ function LootDistWindow:handleTradeRequest(player)
 		return
 	end
 
-    ns.debug('trade request with to trade player')
+    ns.debug('trade request with to-trade player')
 
 	InitiateTrade(player)
 end
@@ -755,7 +754,7 @@ function LootDistWindow:handleTradeComplete()
         return
     end
 
-    ns.debug('-- ' .. player .. ' ' .. itemsToTrade)
+    ns.debug('-- ' .. player .. ' ' .. tostring(itemsToTrade))
 
     for _, itemLink in ipairs(items) do
         self:successfulAward(itemLink, player)
