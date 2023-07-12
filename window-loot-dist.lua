@@ -665,7 +665,7 @@ function LootDistWindow:markAsToTrade(itemLink, player)
 		toTrade[player] = {}
 	end
 
-	tinsert(toTrade[player], itemLink)
+	tinsert(toTrade[player], {itemLink, time()})
 end
 
 
@@ -696,7 +696,7 @@ function LootDistWindow:handleTradeShow()
     ns.debug('-- items to trade')
 
     for _, item in ipairs(itemsToTrade) do
-        ns.debug('---- ' .. item)
+        ns.debug('---- ' .. item[1])
     end
 
     local i = 1
@@ -706,12 +706,29 @@ function LootDistWindow:handleTradeShow()
         local numSlots = C_Container.GetContainerNumSlots(container)
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
-            if ns.Lib:contains(itemsToTrade, containerItemLink) then
+
+            local toTradeItem = self:getToTradeItem(player, containerItemLink)
+            if toTradeItem ~= nil then
                 ns.debug('-- trade ' .. container .. ' ' .. slot .. ' ' .. containerItemLink)
 
                 C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
                 i = i + 1
             end
+        end
+    end
+end
+
+
+function LootDistWindow:getToTradeItem(player, itemLink)
+    local items = ns.db.loot.toTrade[player]
+
+    if items == nil then
+        return
+    end
+
+    for _, item in ipairs(items) do
+        if item[1] == itemLink then
+            return item
         end
     end
 end
@@ -766,7 +783,13 @@ end
 function LootDistWindow:successfulAward(itemLink, player)
     ns.debug(itemLink .. ' successfully given to ' .. player)
 
-    ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
+    local itemToTrade = self:getToTradeItem(player, itemLink)
+    if itemToTrade ~= nil then
+        local items = ns.db.loot.toTrade[player]
+        if items ~= nil then
+            ns.Lib:remove(items, itemToTrade)
+        end
+    end
 
     local awardedItems = ns.db.loot.awarded[itemLink][player]
 

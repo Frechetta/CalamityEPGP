@@ -220,6 +220,8 @@ function addon:init()
         self.libcEncodeTable = self.libc:GetAddonEncodeTable()
 
         ns.Comm:init()
+
+        self:clearAwarded()
     end
 
     self.isOfficer = C_GuildInfo.CanEditOfficerNote()
@@ -282,6 +284,57 @@ function addon:init()
 
         ns.Comm:syncInit()
     end
+end
+
+
+function addon:clearAwarded()
+    local now = time()
+
+    local newAwarded = {}
+
+    for itemLink, itemData in pairs(ns.db.loot.awarded) do
+        for awardee, awardeeData in pairs(itemData) do
+            local awardTime = awardeeData.awardTime
+
+            if awardTime ~= nil then
+                if now - awardTime < 7200 then  -- 2 hours
+                    if newAwarded[itemLink] == nil then
+                        newAwarded[itemLink] = {}
+                    end
+
+                    if newAwarded[itemLink][awardee] == nil then
+                        newAwarded[itemLink][awardee] = {}
+                    end
+
+                    newAwarded[itemLink][awardee] = awardeeData
+                end
+            end
+        end
+    end
+
+    ns.db.loot.awarded = newAwarded
+
+    local newToTrade = {}
+
+    for player, items in pairs(ns.db.loot.toTrade) do
+        for _, itemData in ipairs(items) do
+            if type(itemData) == 'table' then
+                local ts = itemData[2]
+
+                if now - ts < 7200 then
+                    if newToTrade[player] == nil then
+                        newToTrade[player] = {}
+                    end
+
+                    tinsert(newToTrade[player], itemData)
+                end
+            end
+        end
+    end
+
+    ns.db.loot.toTrade = newToTrade
+
+    C_Timer.After(60, addon.clearAwarded)
 end
 
 
