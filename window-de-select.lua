@@ -1,5 +1,7 @@
 local addonName, ns = ...  -- Namespace
 
+List = ns.List
+
 local DeSelectWindow = {
     selectedPlayer = nil,
 }
@@ -103,7 +105,7 @@ function DeSelectWindow:createTable()
     highlightTexture:SetBlendMode('ADD')
     parent.contents.rowSelectedHighlight:Hide()
 
-    parent.rows = {}
+    parent.rows = List:new()
 end
 
 
@@ -112,34 +114,33 @@ function DeSelectWindow:show()
 
     local parent = self.mainFrame.tableFrame
 
-    local players = {}
-
+    local players = List:new()
     for player in pairs(ns.addon.raidRoster) do
-        tinsert(players, player)
+        local playerColored = ns.Lib:getColoredByClass(player)
+        players:bininsert({player, playerColored}, function(left, right) return left[1] < right[1] end)
     end
 
-    table.sort(players, function(left, right)
-        return left < right
-    end)
+    for i, rowData in players:enumerate() do
+        local row = parent.rows:get(i)
 
-    for i, player in ipairs(players) do
-        if i > #parent.rows then
-            self:addRow(i)
+        if row == nil then
+            row = self:addRow(i)
+            parent.rows:append(row)
         end
 
-        local _, classFileName = UnitClass(player)
-        local classColorData = RAID_CLASS_COLORS[classFileName]
+        local player = rowData[1]
+        local playerColored = rowData[2]
 
-        local row = parent.rows[i]
-        row.text:SetText(player)
-        row.text:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
+        local row = parent.rows:get(i)
+        row.text:SetText(playerColored)
+        row.player = player
 
         row:Show()
     end
 
-    if #parent.rows > #players then
-        for i = #players + 1, #parent.rows do
-            local row = parent.rows[i]
+    if parent.rows:len() > players:len() then
+        for i = players:len() + 1, parent.rows:len() do
+            local row = parent.rows:get(i)
             row:Hide()
         end
     end
@@ -185,13 +186,12 @@ function DeSelectWindow:addRow(index)
         end
     end)
 
-    table.insert(parent.rows, row)
+    return row
 end
 
 
 function DeSelectWindow:handleRowClick(row)
-    local player = row.text:GetText()
-    self.selectedPlayer = player
+    self.selectedPlayer = row.player
 
     local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
     selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
