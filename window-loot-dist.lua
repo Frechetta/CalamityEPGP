@@ -691,12 +691,14 @@ function LootDistWindow:handleTradeShow()
 		return
 	end
 
-    ns.debug(player)
+    local items = List:new()
 
+    ns.debug(player)
     ns.debug('-- items to trade')
 
     for _, item in ipairs(itemsToTrade) do
         ns.debug('---- ' .. item[1])
+        items:append(item[1])
     end
 
     local i = 1
@@ -707,11 +709,10 @@ function LootDistWindow:handleTradeShow()
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
 
-            local toTradeItem = self:getToTradeItem(player, containerItemLink)
-            if toTradeItem ~= nil then
+            if items:contains(containerItemLink) then
                 ns.debug('-- trade ' .. container .. ' ' .. slot .. ' ' .. containerItemLink)
 
-                C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
+                C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot); items:remove(containerItemLink) end)
                 i = i + 1
             end
         end
