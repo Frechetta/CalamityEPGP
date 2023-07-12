@@ -256,15 +256,16 @@ function LootDistWindow:show(itemLink)
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
 
-    self.mainFrame.gpLabel:SetText('GP: ' .. ns.Lib:getGp(itemLink))
-
     self.selectedRoller = nil
     self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
-    self:setData()
 
     self.itemLink = itemLink
+    self.itemGp = ns.Lib:getGp(itemLink)
 
+    self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
+
+    self:setData()
     self.mainFrame:Show()
 end
 
@@ -547,33 +548,33 @@ function LootDistWindow:checkAward()
 
     local rollType = self.data.rolls[awardee].type
 
-    ns.ConfirmAwardWindow:show(self.itemLink, awardee, rollType)
+    ns.ConfirmAwardWindow:show(self.itemLink, self.itemGp, awardee, rollType)
 end
 
 
-function LootDistWindow:award(awardee, rollType, perc, gp)
+function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
     self = LootDistWindow
 
-    ns.debug(self.itemLink .. ' awarded to ' .. awardee)
+    ns.debug(itemLink .. ' awarded to ' .. awardee)
 
     -- add item to awarded table
-    if ns.db.loot.awarded[self.itemLink] == nil then
-        ns.db.loot.awarded[self.itemLink] = {}
+    if ns.db.loot.awarded[itemLink] == nil then
+        ns.db.loot.awarded[itemLink] = {}
     end
 
-    if ns.db.loot.awarded[self.itemLink][awardee] == nil then
-        ns.db.loot.awarded[self.itemLink][awardee] = {}
+    if ns.db.loot.awarded[itemLink][awardee] == nil then
+        ns.db.loot.awarded[itemLink][awardee] = {}
     end
 
-    tinsert(ns.db.loot.awarded[self.itemLink][awardee], {
-        itemLink = self.itemLink,
+    tinsert(ns.db.loot.awarded[itemLink][awardee], {
+        itemLink = itemLink,
         awardTime = time(),
         given = false,
         givenTime = nil,
         collected = false,
     })
 
-	local itemIndex = self.currentLoot[self.itemLink]
+	local itemIndex = self.currentLoot[itemLink]
 
 	if itemIndex ~= nil then
         -- item is from loot window
@@ -593,24 +594,24 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
 		end
     elseif awardee == UnitName('player') then
         -- item is in inventory and was awarded to me
-        self:successfulAward(self.itemLink, awardee)
+        self:successfulAward(itemLink, awardee)
     else
         -- item is in inventory and awarded to someone else and must be traded
-        self:markAsToTrade(self.itemLink, awardee)
+        self:markAsToTrade(itemLink, awardee)
 	end
 
-    local itemName = GetItemInfo(self.itemLink)
+    local itemName = GetItemInfo(itemLink)
 
     if rollType ~= nil then
         -- add gp
         local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
         ns.addon:modifyEpgp({ns.Lib:getPlayerGuid(awardee)}, 'GP', gp, reason)
-        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
+        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
     else
-        ns.printPublic(string.format('%s was awarded to %s', self.itemLink, awardee))
+        ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
     end
 
-    if self.mainFrame.closeOnAwardCheck:GetChecked() then
+    if self.mainFrame ~= nil and self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()
     end
 end

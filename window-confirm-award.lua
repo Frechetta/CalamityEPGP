@@ -63,30 +63,33 @@ function ConfirmAwardWindow:createWindow()
     return mainFrame
 end
 
-function ConfirmAwardWindow:show(itemLink, player, rollType)
+function ConfirmAwardWindow:show(itemLink, itemGp, player, rollType)
     self:createWindow()
 
     self.mainFrame.messageLabel:SetText(string.format('Award %s to %s?', itemLink, player))
-    self.mainFrame.rollLabel:SetText(string.format('%s rolled for %s', player, rollType))
 
-    local msGp = ns.Lib:getGp(itemLink)
+    if rollType ~= nil then
+        self.mainFrame.rollLabel:SetText(string.format('%s rolled for %s', player, rollType))
+    end
+
+    local msGp = itemGp
     local osGp = math.floor(msGp * .1)
 
     self.mainFrame.msButton:SetText(string.format('MS (%d GP)', msGp))
     self.mainFrame.osButton:SetText(string.format('OS (%d GP)', osGp))
 
     self.mainFrame.msButton:SetScript('OnClick', function()
-        ns.LootDistWindow:award(player, 'MS', '100%', msGp)
+        ns.LootDistWindow:award(itemLink, player, 'MS', '100%', msGp)
         ConfirmAwardWindow.mainFrame:Hide()
     end)
 
     self.mainFrame.osButton:SetScript('OnClick', function()
-        ns.LootDistWindow:award(player, 'OS', '10%', osGp)
+        ns.LootDistWindow:award(itemLink, player, 'OS', '10%', osGp)
         ConfirmAwardWindow.mainFrame:Hide()
     end)
 
     self.mainFrame.freeButton:SetScript('OnClick', function()
-        ns.LootDistWindow:award(player)
+        ns.LootDistWindow:award(itemLink, player)
         ConfirmAwardWindow.mainFrame:Hide()
     end)
 
