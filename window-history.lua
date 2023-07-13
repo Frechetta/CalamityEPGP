@@ -107,6 +107,9 @@ function HistoryWindow:createWindow()
         mainFrame.mainsOnlyLabel:SetShown(HistoryWindow.detail)
         mainFrame.mainsOnlyCheck:SetShown(HistoryWindow.detail)
 
+        mainFrame.dropDown.Text:SetText('All')
+        HistoryWindow.selectedPlayer = 'All'
+
         HistoryWindow:getRenderedData()
         HistoryWindow:setTableData()
     end)
