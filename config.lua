@@ -283,26 +283,25 @@ function Config:createAltManagementTable()
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
 
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetWidth(parent.scrollFrame:GetWidth())
-    parent.scrollChild:SetHeight(1)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild);
-
     local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
+    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar']
+    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton']
+    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton']
 
     -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
-    parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, -2);
+    parent.scrollUpButton:ClearAllPoints()
+    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0)
 
-    parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, 2);
+    parent.scrollDownButton:ClearAllPoints()
+    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -2)
 
-    parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, -2);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 2);
+    parent.scrollBar:ClearAllPoints()
+    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0)
+    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0)
+
+    parent.scrollChild = CreateFrame('Frame')
+    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
+    parent.scrollFrame:SetScrollChild(parent.scrollChild)
 
     -- Initialize header
     parent.header = CreateFrame('Frame', nil, parent)
@@ -406,10 +405,10 @@ function Config:addAltManagementRow(index)
     row:SetHeight(rowHeight)
 
     row.nameColumn = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    row.nameColumn:SetPoint('LEFT', row, 'LEFT')
+    row.nameColumn:SetPoint('LEFT', row, 'LEFT', 5, 0)
 
     row.mainAltColumn = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    row.mainAltColumn:SetPoint('RIGHT', row, 'RIGHT')
+    row.mainAltColumn:SetPoint('RIGHT', row, 'RIGHT', -5, 0)
     -- row.mainAltColumn:SetJustifyH('RIGHT')
 
     row:EnableMouse()

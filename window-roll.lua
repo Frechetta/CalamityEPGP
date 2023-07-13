@@ -110,6 +110,8 @@ function RollWindow:show(itemLink, duration)
 
     self.mainFrame:Show()
     self.mainFrame.timerBar:Start()
+
+    C_Timer.After(duration, function() RollWindow:hide() end)
 end
 
 function RollWindow:hide()

@@ -177,17 +177,17 @@ function LootDistWindow:createTable()
 
     -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, -2);
+    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
     parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, 2);
+    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -2);
 
     parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, -2);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 2);
+    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0);
+    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0);
 
     parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth(), parent.scrollFrame:GetHeight() * 2)
+    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
     parent.scrollFrame:SetScrollChild(parent.scrollChild);
 
     -- Header
@@ -468,7 +468,7 @@ function LootDistWindow:addRow(index)
 
         local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
         column:SetJustifyH(justify)
-        column:SetPoint('TOP', row, 'TOP', 0, 0)
+        column:SetPoint('CENTER', row, 'CENTER', 0, 0)
         column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
         column:SetWidth(headerColumn:GetWidth())
 
@@ -481,8 +481,8 @@ function LootDistWindow:addRow(index)
     local highlightFrame = parent.contents.rowHighlight
 
     row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
+        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
         highlightFrame:Show()
     end)
 
@@ -505,8 +505,8 @@ function LootDistWindow:handleRowClick(row)
     self.selectedRoller = charName
 
     local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
-    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
-    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
+    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
     selectedHighlightFrame:Show()
 end
 

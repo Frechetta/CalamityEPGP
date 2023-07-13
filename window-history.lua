@@ -169,19 +169,11 @@ end
 function HistoryWindow:createTable()
     local parent = self.mainFrame.tableFrame
 
-    -- Initialize header
-    -- we will finalize the size once the scroll frame is set up
-    parent.header = CreateFrame('Frame', nil, parent)
-    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
-    parent.header:SetHeight(10)
-
     -- Initialize scroll frame
     parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -20)
     parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
-
-    parent.scrollChild = CreateFrame('Frame')
+    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 3)
 
     local scrollFrameName = parent.scrollFrame:GetName()
     parent.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
@@ -190,20 +182,23 @@ function HistoryWindow:createTable()
 
     -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, -2);
+    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
     parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, 2);
+    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -1);
 
     parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, -2);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 2);
+    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0);
+    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0);
 
-    parent.scrollFrame:SetScrollChild(parent.scrollChild);
+    parent.scrollChild = CreateFrame('Frame')
+    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
+    parent.scrollFrame:SetScrollChild(parent.scrollChild)
 
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth(), parent.scrollFrame:GetHeight() * 2)
-
-    -- Back to the header
+    -- Initialize header
+    parent.header = CreateFrame('Frame', nil, parent)
+    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
+    parent.header:SetHeight(10)
     parent.header:SetPoint('RIGHT', parent.scrollBar, 'LEFT', -5, 0)
 
     parent.header.columns = {}
@@ -530,7 +525,7 @@ function HistoryWindow:addRow(index)
         -- We will set the size later, once we've computed the column width based on the data
         local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
 
-        column:SetPoint('TOP', row, 'TOP', 0, 0)
+        column:SetPoint('CENTER', row)
         column:SetFont('Fonts\\ARIAL.TTF', 10)
 
         table.insert(row.columns, column)

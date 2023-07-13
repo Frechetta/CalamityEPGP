@@ -660,9 +660,14 @@ end
 -- EVENT HANDLERS
 -----------------
 function addon:handleChatMsg(self, message)
-    for duration, itemLink in string.gmatch(message, 'CalamityEPGP: You have (%d-) seconds to roll on (.+)') do
+    for duration, itemLink in string.gmatch(message, addonName .. ': You have (%d-) seconds to roll on (.+)') do
         duration = tonumber(duration)
         ns.RollWindow:show(itemLink, duration)
+        return
+    end
+
+    if message == addonName .. ': Stop your rolls!' then
+        ns.RollWindow:hide()
         return
     end
 

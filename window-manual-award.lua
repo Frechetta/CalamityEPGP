@@ -92,17 +92,17 @@ function ManualAwardWindow:createTable()
 
     -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, -2);
+    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
     parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, 2);
+    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -2);
 
     parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, -2);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 2);
+    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0);
+    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0);
 
     parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth(), 1)  -- parent.scrollFrame:GetHeight() * 2)
+    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
     parent.scrollFrame:SetScrollChild(parent.scrollChild);
 
     -- Initialize the content
@@ -180,7 +180,7 @@ function ManualAwardWindow:setData()
             row:SetHeight(rowHeight)
 
             row.text = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-            row.text:SetAllPoints()
+            row.text:SetPoint('LEFT', row, 'LEFT', 5, 0)
 
             -- Highlight
             row:EnableMouse()
@@ -188,8 +188,8 @@ function ManualAwardWindow:setData()
             local highlightFrame = parent.contents.rowHighlight
 
             row:SetScript('OnEnter', function()
-                highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
-                highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
+                highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+                highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
                 highlightFrame:Show()
             end)
 
