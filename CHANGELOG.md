@@ -1,3 +1,15 @@
+# 0.11.0
+
+- change loot distribution click combo to Alt+Click
+- fix raid warning not working when group leader
+- add feature to award items from inventory without rolling
+- fix auto-filling trade window with an item that person has been given previously
+- fix adding multiple items of the same type to trade window when only one item was won
+- improve aesthetics of all scroll windows
+- fix loot timer not closing when timer ends
+- fix history window dropdown filter remaining active after turning off detail mode
+- various big fixes
+
 # 0.10.1
 
 - fix loot dist bug
