@@ -329,14 +329,39 @@ function LootDistWindow:stopRoll()
     self.mainFrame.deButton:Enable()
 
     -- announce all rolls in order
-    if ns.Lib:len(self.data.rolls) > 0 then
-        ns.printPublic('Rolls:')
-        for roller, rollData in pairs(self.data.rolls) do
-            local type = rollData.type
-            local roll = rollData[type]
-            local pr = rollData['pr']
+    local rolls = List:new()
 
-            ns.printPublic(string.format('- %s [%s]  PR: %.3f,  Roll: %d', roller, type, pr, roll))
+    for roller, rollData in pairs(self.data.rolls) do
+        local type = rollData.type
+        if type ~= nil then
+            local roll = rollData[type]
+            local pr = rollData.pr
+
+            rolls:bininsert({roller, type, pr, roll}, function(left, right)
+                local rollTypeLeft = left[2]
+                local rollTypeRight = right[2]
+                local prLeft = left[3]
+                local prRight = right[3]
+                local rollLeft = left[4]
+                local rollRight = right[4]
+
+                if rollTypeLeft ~= rollTypeRight then
+                    return rollTypeLeft < rollTypeRight
+                end
+
+                if prLeft ~= prRight then
+                    return prLeft > prRight
+                end
+
+                return rollLeft > rollRight
+            end)
+        end
+    end
+
+    if rolls:len() > 0 then
+        ns.printPublic('Rolls:')
+        for rollData in rolls:iter() do
+            ns.printPublic(string.format('- %s [%s]  PR: %.3f,  Roll: %d', rollData[1], rollData[2], rollData[3], rollData[4]))
         end
     end
 end
@@ -375,11 +400,28 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 
     roll = rollerData[rollType]
 
-    rollerData['type'] = rollType
-    rollerData['pr'] = priority
+    rollerData.type = rollType
+    rollerData.pr = priority
 
     -- TODO: don't print if roll is already there unless response is changed
     ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
+
+    self:setData()
+end
+
+
+function LootDistWindow:handlePass(player)
+    if not self.rolling then
+        return
+    end
+
+    if self.data.rolls[player] == nil then
+        return
+    end
+
+    self.data.rolls[player].type = nil
+
+    ns.printPublic(player .. ' cancels their roll')
 
     self:setData()
 end
@@ -393,30 +435,30 @@ function LootDistWindow:setData()
 
     for roller, rollData in pairs(data.rolls) do
         local type = rollData.type
-        local roll = rollData[type]
-        local pr = rollData['pr']
+        if type ~= nil then
+            local roll = rollData[type]
+            local pr = rollData.pr
 
-        tinsert(rows, {roller, type, pr, roll})
+            ns.Lib:bininsert(rows, {roller, type, pr, roll}, function(left, right)
+                local rollTypeLeft = left[2]
+                local rollTypeRight = right[2]
+                local prLeft = left[3]
+                local prRight = right[3]
+                local rollLeft = left[4]
+                local rollRight = right[4]
+
+                if rollTypeLeft ~= rollTypeRight then
+                    return rollTypeLeft < rollTypeRight
+                end
+
+                if prLeft ~= prRight then
+                    return prLeft > prRight
+                end
+
+                return rollLeft > rollRight
+            end)
+        end
     end
-
-    table.sort(rows, function(left, right)
-        local rollTypeLeft = left[2]
-        local rollTypeRight = right[2]
-        local prLeft = left[3]
-        local prRight = right[3]
-        local rollLeft = left[4]
-        local rollRight = right[4]
-
-        if rollTypeLeft ~= rollTypeRight then
-            return rollTypeLeft < rollTypeRight
-        end
-
-        if prLeft ~= prRight then
-            return prLeft > prRight
-        end
-
-        return rollLeft > rollRight
-    end)
 
     for i, rowData in ipairs(rows) do
         if i > #parent.rows then

@@ -11,6 +11,7 @@ local Comm = {
         HISTORY = 'CE_history',
         LM_SETTINGS = 'CE_lm-settings',
         UPDATE = 'CE_update',
+        ROLL_PASS = 'CE_pass',
     },
     eventHashes = Set:new(),
     guildiesMessaged = Set:new(),
@@ -26,6 +27,7 @@ function Comm:init()
     ns.addon:RegisterComm(self.prefixes.HISTORY, self.handleHistory)
     ns.addon:RegisterComm(self.prefixes.LM_SETTINGS, self.handleLmSettings)
     ns.addon:RegisterComm(self.prefixes.UPDATE, self.handleUpdate)
+    ns.addon:RegisterComm(self.prefixes.ROLL_PASS, self.handleRollPass)
     ns.addon:RegisterComm('CE_sync', self.handleSyncOld)
 end
 
@@ -223,6 +225,11 @@ function Comm:handleLmSettings(message, _, sender)
     end
 
     LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+end
+
+
+function Comm:handleRollPass(_, _, sender)
+    ns.LootDistWindow:handlePass(sender)
 end
 
 

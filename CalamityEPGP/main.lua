@@ -14,6 +14,7 @@ end
 
 local addonName, ns = ...  -- Namespace
 
+Dict = ns.Dict
 Set = ns.Set
 
 local addon = LibStub('AceAddon-3.0'):NewAddon(addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceComm-3.0', 'AceSerializer-3.0')
@@ -46,7 +47,7 @@ addon.minimapButtonInitialized = false
 addon.isOfficer = nil
 addon.useForRaidPrompted = false
 addon.useForRaid = false
-addon.raidRoster = {}
+addon.raidRoster = Dict:new()
 addon.whisperCommands = {
     INFO = '!ceinfo',
 }
@@ -339,16 +340,19 @@ end
 
 
 function addon:loadRaidRoster()
-    self.raidRoster = {}
+    self.raidRoster:clear()
 
     if IsInRaid() then
         local standings = ns.db.standings
 
         for i = 1, GetNumGroupMembers() do
-            local name, _, _, level, class, classFileName, _, _, _, _, _ = GetRaidRosterInfo(i)
+            local name, _, _, level, class, classFileName, _, online, _, _, isMl, _ = GetRaidRosterInfo(i)
 
             if name ~= nil then
-                self.raidRoster[name] = i
+                self.raidRoster:set(name, {
+                    online = online,
+                    ml = isMl,
+                })
 
                 if self.useForRaid then
                     local fullName = GetUnitName(name, true)
@@ -758,13 +762,13 @@ function addon:handleChatMsgWhisper(self, message, playerFullName)
                 j  = j + 1
             end
 
-            if addon.raidRoster[charData.name] ~= nil then
+            if addon.raidRoster:contains(charData.name) then
                 k = k + 1
             end
         end
 
         local reply = string.format('Standings for %s - EP: %.2f / GP: %.2f / PR: %.3f - Rank: Overall: #%d / Guild: #%d', name, playerEp, playerGp, playerPr, overallRank, guildRank)
-        if addon.raidRoster[name] ~= nil then
+        if addon.raidRoster:contains(name) then
             reply = string.format('%s / Raid: #%d', reply, raidRank)
         end
 

@@ -411,3 +411,14 @@ function Lib:bininsert(t, value, fcomp)
     local classColor = RAID_CLASS_COLORS[playerData.classFileName]
     return self:getColoredText(coloredText, classColor)
  end
+
+
+ function Lib:getMl()
+    for name, playerData in ns.addon.raidRoster:iter() do
+        if playerData.ml then
+            return name
+        end
+    end
+
+    return nil
+ end

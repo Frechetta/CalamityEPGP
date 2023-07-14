@@ -40,6 +40,9 @@ function RollWindow:createWindow()
     mainFrame.title:SetPoint('LEFT', mainFrame.titleBar, 'LEFT', 5, 0)
     mainFrame.title:SetText(addonName .. ' - Now Rolling:')
 
+    mainFrame.closeButton = CreateFrame('Button', nil, mainFrame, 'UIPanelCloseButton')
+    mainFrame.closeButton:SetPoint('RIGHT', mainFrame.titleBar, 'RIGHT', 5, 0)
+
     mainFrame.msButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.msButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 3, 3)
     mainFrame.msButton:SetWidth(110)
@@ -53,7 +56,28 @@ function RollWindow:createWindow()
     mainFrame.passButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -3, 3)
     mainFrame.passButton:SetWidth(50)
 
-    mainFrame.passButton:SetScript('OnClick', function() RollWindow:hide() end)
+    mainFrame.closeButton:SetScript('OnClick', function() RollWindow:hide() end)
+
+    self.mainFrame.msButton:SetScript('OnClick', function()
+        RandomRoll(1, 100)
+        RollWindow.mainFrame.msButton:Disable()
+        RollWindow.mainFrame.osButton:Enable()
+    end)
+
+    self.mainFrame.osButton:SetScript('OnClick', function()
+        RandomRoll(1, 99)
+        RollWindow.mainFrame.msButton:Enable()
+        RollWindow.mainFrame.osButton:Disable()
+    end)
+
+    mainFrame.passButton:SetScript('OnClick', function()
+        RollWindow:hide()
+
+        ns.LootDistWindow:handlePass(UnitName('player'))
+
+        local ml = ns.Lib:getMl()
+        ns.Comm:send(ns.Comm.prefixes.ROLL_PASS, nil, 'whisper', ml)
+    end)
 
     return mainFrame
 end
@@ -93,20 +117,6 @@ function RollWindow:show(itemLink, duration)
 
     self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))
     self.mainFrame.osButton:SetText(string.format('OS (10%% GP: %d)', osGp))
-
-    self.mainFrame.msButton:SetScript('OnClick', function()
-        RandomRoll(1, 100)
-        RollWindow.mainFrame.msButton:Disable()
-        RollWindow.mainFrame.osButton:Enable()
-        -- RollWindow:hide()
-    end)
-
-    self.mainFrame.osButton:SetScript('OnClick', function()
-        RandomRoll(1, 99)
-        RollWindow.mainFrame.msButton:Enable()
-        RollWindow.mainFrame.osButton:Disable()
-        -- RollWindow:hide()
-    end)
 
     self.mainFrame:Show()
     self.mainFrame.timerBar:Start()

@@ -450,7 +450,7 @@ function MainWindow:filterData()
 
     for _, row in ipairs(self.data.rows) do
         local keep = true
-        if (self.mainFrame.raidOnlyButton:GetChecked() and ns.addon.raidRoster[row[1]] == nil)
+        if (self.mainFrame.raidOnlyButton:GetChecked() and not ns.addon.raidRoster:contains(row[1]))
                 or (self.mainFrame.mainsOnlyButton:GetChecked() and not ns.Lib:dictContains(ns.db.altData.mainAltMapping, row[1])) then
             keep = false
         end

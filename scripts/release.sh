@@ -4,6 +4,8 @@ set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 root_dir="$script_dir/.."
 
+. "$root_dir/.env"
+
 base_url="https://wow.curseforge.com"
 
 toc_file=$(find "$root_dir" -maxdepth 1 -name "*.toc")
