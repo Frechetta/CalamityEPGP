@@ -468,9 +468,10 @@ function LootDistWindow:addRow(index)
 
         local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
         column:SetJustifyH(justify)
-        column:SetPoint('CENTER', row, 'CENTER', 0, 0)
-        column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
-        column:SetWidth(headerColumn:GetWidth())
+        column:SetJustifyV('MIDDLE')
+        column:SetPoint('TOP', row)
+        column:SetPoint('LEFT', headerColumn)
+        column:SetSize(headerColumn:GetWidth(), row:GetHeight())
 
         tinsert(row.columns, column)
     end
@@ -482,7 +483,7 @@ function LootDistWindow:addRow(index)
 
     row:SetScript('OnEnter', function()
         highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 5, 0)
         highlightFrame:Show()
     end)
 
@@ -506,7 +507,7 @@ function LootDistWindow:handleRowClick(row)
 
     local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
     selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 5, 0)
     selectedHighlightFrame:Show()
 end
 

@@ -821,7 +821,7 @@ end
 
 
 function addon:handlePartyLootMethodChanged()
-    if ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() then
+    if ns.cfg ~= nil and ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() then
         if not addon.useForRaid then
             addon:showUseForRaidWindow()
         end
@@ -856,7 +856,7 @@ end
 
 
 function addon:handleChatMsgLoot(_, msg)
-    if not ns.cfg.lmMode then
+    if ns.cfg == nil or not ns.cfg.lmMode then
         return
     end
 
@@ -908,7 +908,7 @@ function addon:handleEncounterEnd(self, encounterId, encounterName, _, _, succes
         ns.printPublic(string.format('Awarded %d EP to raid for killing %s', ep, encounterName))
     end
 
-    C_Timer.After(2, ns.ConfirmWindow:show(string.format('Award %s EP to raid for killing %s?', ep, encounterName), proceedFunc))
+    C_Timer.After(2, function() ns.ConfirmWindow:show(string.format('Award %s EP to raid for killing %s?', ep, encounterName), proceedFunc) end)
 end
 
 

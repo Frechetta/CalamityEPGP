@@ -41,7 +41,7 @@ while IFS="" read -r line || [ -n "$line" ]; do
         continue
     fi
 
-    if $in_version && echo "$line" | grep -qP "# \d\.\d\.\d"; then
+    if $in_version && echo "$line" | grep -qP "# \d+\.\d+\.\d+"; then
         break
     fi
 
@@ -54,9 +54,25 @@ changelog=$(echo "$changelog" | xargs)
 
 echo "$game_version"
 
+# CURSEFORGE
 metadata=$(jq -n \
                 --arg changelog "$changelog" \
                 --arg gameVersion "$game_version" \
                 '{changelog: $changelog, changelogType: "markdown", gameVersions: [$gameVersion | tonumber], releaseType: "beta"}')
 
-curl -H "X-Api-Token: $CURSE_API_TOKEN" -F "metadata=$metadata" -F "file=@$zip_file" "$base_url/api/projects/883687/upload-file"
+curl -H "X-Api-Token: $CURSE_API_TOKEN" \
+    -F "metadata=$metadata" \
+    -F "file=@$zip_file" \
+    "$base_url/api/projects/883687/upload-file"
+
+# WOWINTERFACE
+curl -H "x-api-token: $WOWINTERFACE_API_TOKEN" \
+    -F "id=26606" \
+    -F "version=$version" \
+    -F "changelog=$changelog" \
+    -F "compatible=$game_version" \
+    -F "updatefile=@$zip_file" \
+    https://api.wowinterface.com/addons/update
+
+git tag -a "$version" -m "Version $version"
+git push --tags
