@@ -75,8 +75,7 @@ function RollWindow:createWindow()
 
         ns.LootDistWindow:handlePass(UnitName('player'))
 
-        local ml = ns.Lib:getMl()
-        ns.Comm:send(ns.Comm.prefixes.ROLL_PASS, nil, 'whisper', ml)
+        ns.Comm:sendRollPass()
     end)
 
     return mainFrame
@@ -85,7 +84,7 @@ end
 function RollWindow:show(itemLink, duration)
     self:createWindow()
 
-    local usable = ns.Lib:canPlayerUseItem(itemLink)
+    local usable = ns.Lib.canPlayerUseItem(itemLink)
 
     local label
     if usable then
@@ -100,7 +99,11 @@ function RollWindow:show(itemLink, duration)
 
     local _, _, _, _, _, _, _, _, _, itemTexture, _ = GetItemInfo(itemLink)
 
-    self.mainFrame.timerBar = ns.addon.candy:New('Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar', self.mainFrame:GetWidth(), 24)
+    self.mainFrame.timerBar = ns.addon.candy:New(
+        'Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar',
+        self.mainFrame:GetWidth(),
+        24
+    )
     self.mainFrame.timerBar:SetParent(self.mainFrame)
     self.mainFrame.timerBar:SetPoint('TOPLEFT', self.mainFrame.titleBar, 'BOTTOMLEFT')
     self.mainFrame.timerBar.candyBarLabel:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE");
@@ -109,10 +112,14 @@ function RollWindow:show(itemLink, duration)
     self.mainFrame.timerBar:SetIcon(itemTexture)
     self.mainFrame.timerBar:SetLabel(label)
 
-    self.mainFrame.timerBar:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.timerBar, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.timerBar:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.timerBar, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.timerBar:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-    local msGp = ns.Lib:getGp(itemLink)
+    local msGp = ns.Lib.getGp(itemLink)
     local osGp = math.floor(msGp * .1)
 
     self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))

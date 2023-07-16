@@ -75,9 +75,9 @@ function MainWindow:createWindow()
     mainFrame.tableFrame:SetPoint('BOTTOMLEFT', mainFrame.addEpButton, 'TOPLEFT', 0, 2)
 
     mainFrame.optionsButton:SetScript('OnClick', ns.addon.openOptions)
-    mainFrame.historyButton:SetScript('OnClick', self.handleHistoryClick)
-    mainFrame.addEpButton:SetScript('OnClick', self.handleAddEpClick)
-    mainFrame.decayEpgpButton:SetScript('OnClick', self.handleDecayEpgpClick)
+    mainFrame.historyButton:SetScript('OnClick', function() self:handleHistoryClick() end)
+    mainFrame.addEpButton:SetScript('OnClick', function() self:handleAddEpClick() end)
+    mainFrame.decayEpgpButton:SetScript('OnClick', function() self:handleDecayEpgpClick() end)
     mainFrame.raidOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
     mainFrame.mainsOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
 
@@ -115,7 +115,7 @@ function MainWindow:refresh(initial)
         return
     end
 
-    local initial = initial or false
+    initial = initial or false
 
     self:getData()
 
@@ -132,7 +132,12 @@ function MainWindow:createTable()
 
 
     -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
+    parent.scrollFrame = CreateFrame(
+        'ScrollFrame',
+        parent:GetName() .. 'ScrollFrame',
+        parent,
+        'UIPanelScrollFrameTemplate'
+    )
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
@@ -143,7 +148,6 @@ function MainWindow:createTable()
     parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton']
     parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton']
 
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints()
     parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0)
 
@@ -185,7 +189,7 @@ function MainWindow:createTable()
         column:SetScript('OnEnter', function() fontString:SetTextColor(1, 1, 1) end)
         column:SetScript('OnLeave', function() fontString:SetTextColor(1, 1, 0) end)
 
-        column:SetScript('OnMouseUp', function(self, button)
+        column:SetScript('OnMouseUp', function(_, button)
             if button == 'LeftButton' then
                 MainWindow:handleHeaderClick(i)
             end
@@ -229,14 +233,14 @@ function MainWindow:setData()
         local row = parent.rows[i]
         row:Show()
 
-        row.charGuid = ns.Lib:getPlayerGuid(rowData[1])
+        row.charGuid = ns.Lib.getPlayerGuid(rowData[1])
 
         local class = string.upper(rowData[2]):gsub(' ', '')
         local classColorData = RAID_CLASS_COLORS[class]
 
-        for j, columnText in ipairs(rowData) do
-            local headerColumn = parent.header.columns[j]
-            local column = row.columns[j]
+        for k, columnText in ipairs(rowData) do
+            local headerColumn = parent.header.columns[k]
+            local column = row.columns[k]
 
             column:SetText(columnText)
             column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
@@ -247,7 +251,7 @@ function MainWindow:setData()
             end
         end
 
-        if ns.Lib:contains(myChars, row.columns[1]:GetText()) then
+        if ns.Lib.contains(myChars, rowData[1]) then
             j = j + 1
 
             if j > #self.myCharHighlights then
@@ -341,7 +345,7 @@ function MainWindow:addRow(index)
 
     row.columns = {}
 
-    for i = 1, #data.header do
+    for _ = 1, #data.header do
         -- We will set the size later, once we've computed the column width based on the data
         local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
         column:SetPoint('CENTER', row)
@@ -363,7 +367,7 @@ function MainWindow:addRow(index)
         highlightFrame:Hide()
     end)
 
-    row:SetScript('OnMouseUp', function(self, button)
+    row:SetScript('OnMouseUp', function(_, button)
         if button == 'LeftButton' then
             MainWindow:handleRowClick(row)
         end
@@ -403,7 +407,7 @@ function MainWindow:handleHistoryClick()
     ns.AddEpWindow:hide()
     ns.DecayEpgpWindow:hide()
 
-    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
+    ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end
 
 function MainWindow:handleRowClick(row)
@@ -416,7 +420,7 @@ function MainWindow:handleRowClick(row)
 
     ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
 
-    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
+    ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end
 
 function MainWindow:handleAddEpClick()
@@ -429,7 +433,7 @@ function MainWindow:handleAddEpClick()
 
     ns.AddEpWindow:show()
 
-    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
+    ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end
 
 function MainWindow:handleDecayEpgpClick()
@@ -442,7 +446,7 @@ function MainWindow:handleDecayEpgpClick()
 
     ns.DecayEpgpWindow:show()
 
-    ns.Lib:remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
+    ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end
 
 function MainWindow:filterData()
@@ -451,7 +455,8 @@ function MainWindow:filterData()
     for _, row in ipairs(self.data.rows) do
         local keep = true
         if (self.mainFrame.raidOnlyButton:GetChecked() and not ns.addon.raidRoster:contains(row[1]))
-                or (self.mainFrame.mainsOnlyButton:GetChecked() and not ns.Lib:dictContains(ns.db.altData.mainAltMapping, row[1])) then
+                or (self.mainFrame.mainsOnlyButton:GetChecked()
+                    and not ns.Lib.dictContains(ns.db.altData.mainAltMapping, row[1])) then
             keep = false
         end
 

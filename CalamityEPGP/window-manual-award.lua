@@ -1,8 +1,6 @@
 local addonName, ns = ...  -- Namespace
 
 local List = ns.List
-local Dict = ns.Dict
-local Set = ns.Set
 
 local ManualAwardWindow = {
     itemLink = nil,
@@ -68,7 +66,7 @@ function ManualAwardWindow:createWindow()
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'BOTTOMLEFT', -15, 0)
 
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
-    mainFrame.awardButton:SetScript('OnClick', self.checkAward)
+    mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
 
     self:createTable()
 
@@ -80,7 +78,12 @@ function ManualAwardWindow:createTable()
     local parent = self.mainFrame.tableFrame
 
     -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
+    parent.scrollFrame = CreateFrame(
+        'ScrollFrame',
+        parent:GetName() .. 'ScrollFrame',
+        parent,
+        'UIPanelScrollFrameTemplate'
+    )
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, 0)
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
@@ -90,7 +93,6 @@ function ManualAwardWindow:createTable()
     parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
     parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
 
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
     parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
@@ -117,7 +119,7 @@ function ManualAwardWindow:createTable()
     parent.contents.rowHighlight:Hide()
 
     parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
     highlightTexture:SetAllPoints()
     highlightTexture:SetColorTexture(1, 1, 0, 0.3)
     highlightTexture:SetBlendMode('ADD')
@@ -133,11 +135,19 @@ function ManualAwardWindow:show(itemLink)
     local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
-    self.mainFrame.itemIcon:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemIcon:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.itemLabel:SetText(itemLink)
-    self.mainFrame.itemLabel:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemLabel:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.awardButton:Disable()
@@ -145,7 +155,7 @@ function ManualAwardWindow:show(itemLink)
     self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
 
     self.itemLink = itemLink
-    self.itemGp = ns.Lib:getGp(itemLink)
+    self.itemGp = ns.Lib.getGp(itemLink)
     self.selectedPlayer = nil
 
     self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
@@ -161,7 +171,7 @@ function ManualAwardWindow:setData()
     local rows = List:new()
 
     for player in pairs(ns.addon.raidRoster) do
-        local playerColored = ns.Lib:getColoredByClass(player)
+        local playerColored = ns.Lib.getColoredByClass(player)
         rows:bininsert({player, playerColored}, function(left, right) return left[1] < right[1] end)
     end
 
@@ -235,8 +245,6 @@ end
 
 
 function ManualAwardWindow:checkAward()
-    self = ManualAwardWindow
-
     if not IsMasterLooter() then
 		ns.print('You are not the master looter!')
 		-- return

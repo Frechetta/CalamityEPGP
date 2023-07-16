@@ -99,11 +99,11 @@ function List:sort(func)
 end
 
 function List:toTable()
-    return ns.Lib:deepcopy(self._list)
+    return ns.Lib.deepcopy(self._list)
 end
 
 function List:bininsert(value, fcomp)
-    ns.Lib:bininsert(self._list, value, fcomp)
+    ns.Lib.bininsert(self._list, value, fcomp)
 end
 
 
@@ -181,7 +181,7 @@ function Dict:values()
 end
 
 function Dict:toTable()
-    return ns.Lib:deepcopy(self._dict)
+    return ns.Lib.deepcopy(self._dict)
 end
 
 function Dict:isEmpty()
@@ -254,11 +254,11 @@ function Set:clear()
 end
 
 function Set:toTable()
-    return ns.Lib:deepcopy(self._values)
+    return ns.Lib.deepcopy(self._values)
 end
 
 function Set:difference(...)
-    local newSet = ns.Lib:deepcopy(self)
+    local newSet = ns.Lib.deepcopy(self)
     for _, other in ... do
         for item in other:iter() do
             newSet:remove(item)

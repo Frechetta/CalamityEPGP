@@ -1,8 +1,6 @@
 local addonName, ns = ...  -- Namespace
 
 local List = ns.List
-local Dict = ns.Dict
-local Set = ns.Set
 
 local LootDistWindow = {
     data = {
@@ -17,7 +15,7 @@ local LootDistWindow = {
     itemLink = nil,
     defaultItemIcon = 'Interface\\Icons\\INV_Misc_QuestionMark',
     rolling = false,
-    rollPattern = ns.Lib:createPattern(RANDOM_ROLL_RESULT),
+    rollPattern = ns.Lib.createPattern(RANDOM_ROLL_RESULT),
     selectedRoller = nil,
     currentLoot = {},
     trading = {},
@@ -148,11 +146,11 @@ function LootDistWindow:createWindow()
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'TOPRIGHT', 0, 10)
 
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
-    mainFrame.startButton:SetScript('OnClick', self.startRoll)
+    mainFrame.startButton:SetScript('OnClick', function() self:startRoll() end)
     mainFrame.stopButton:SetScript('OnClick', function() duration = 0 end)
-    mainFrame.clearButton:SetScript('OnClick', self.clearRolls)
-    mainFrame.awardButton:SetScript('OnClick', self.checkAward)
-    mainFrame.deButton:SetScript('OnClick', self.disenchant)
+    mainFrame.clearButton:SetScript('OnClick', function() self:clearRolls() end)
+    mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
+    mainFrame.deButton:SetScript('OnClick', function() self:disenchant() end)
 
     self:createTable()
 
@@ -165,7 +163,12 @@ function LootDistWindow:createTable()
     local data = self.data
 
     -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
+    parent.scrollFrame = CreateFrame(
+        'ScrollFrame',
+        parent:GetName() .. 'ScrollFrame',
+        parent,
+        'UIPanelScrollFrameTemplate'
+    )
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
@@ -175,7 +178,6 @@ function LootDistWindow:createTable()
     parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
     parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
 
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
     parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
@@ -227,7 +229,7 @@ function LootDistWindow:createTable()
     parent.contents.rowHighlight:Hide()
 
     parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
     highlightTexture:SetAllPoints()
     highlightTexture:SetColorTexture(1, 1, 0, 0.3)
     highlightTexture:SetBlendMode('ADD')
@@ -246,11 +248,19 @@ function LootDistWindow:show(itemLink)
     local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
-    self.mainFrame.itemIcon:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemIcon:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.itemLabel:SetText(itemLink)
-    self.mainFrame.itemLabel:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemLabel:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.countdownLabel:SetText('0 seconds left')
@@ -261,7 +271,7 @@ function LootDistWindow:show(itemLink)
     self.data.rolls = {}
 
     self.itemLink = itemLink
-    self.itemGp = ns.Lib:getGp(itemLink)
+    self.itemGp = ns.Lib.getGp(itemLink)
 
     self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
 
@@ -271,8 +281,6 @@ end
 
 
 function LootDistWindow:startRoll()
-    self = LootDistWindow
-
     duration = self.mainFrame.timerEditBox:GetNumber()
 
     if duration < 5 or duration > 600 then
@@ -310,8 +318,6 @@ end
 
 
 function LootDistWindow:stopRoll()
-    self = LootDistWindow
-
     ns.RollWindow:hide()
 
     ns.printPublic('Stop your rolls!', true)
@@ -361,14 +367,15 @@ function LootDistWindow:stopRoll()
     if rolls:len() > 0 then
         ns.printPublic('Rolls:')
         for rollData in rolls:iter() do
-            ns.printPublic(string.format('- %s [%s]  PR: %.3f,  Roll: %d', rollData[1], rollData[2], rollData[3], rollData[4]))
+            ns.printPublic(
+                string.format('- %s [%s]  PR: %.3f,  Roll: %d', rollData[1], rollData[2], rollData[3], rollData[4])
+            )
         end
     end
 end
 
 
 function LootDistWindow:clearRolls()
-    self = LootDistWindow
     self.selectedRoller = nil
     self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
@@ -381,15 +388,15 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
         return
     end
 
-    local rollerGuid = ns.Lib:getPlayerGuid(roller)
+    local rollerGuid = ns.Lib.getPlayerGuid(roller)
     local charData = ns.db.standings[rollerGuid]
     local priority = tonumber(string.format("%.3f", charData.ep / charData.gp))
 
-    local newRoll = false
+    -- local newRoll = false
 
     if self.data.rolls[roller] == nil then
         self.data.rolls[roller] = {}
-        newRoll = true
+        -- newRoll = true
     end
 
     local rollerData = self.data.rolls[roller]
@@ -439,7 +446,7 @@ function LootDistWindow:setData()
             local roll = rollData[type]
             local pr = rollData.pr
 
-            ns.Lib:bininsert(rows, {roller, type, pr, roll}, function(left, right)
+            ns.Lib.bininsert(rows, {roller, type, pr, roll}, function(left, right)
                 local rollTypeLeft = left[2]
                 local rollTypeRight = right[2]
                 local prLeft = left[3]
@@ -576,8 +583,6 @@ end
 
 
 function LootDistWindow:checkAward()
-    self = LootDistWindow
-
     if not IsMasterLooter() then
 		ns.print('You are not the master looter!')
 		-- return
@@ -596,8 +601,6 @@ end
 
 
 function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
-    self = LootDistWindow
-
     ns.debug(itemLink .. ' awarded to ' .. awardee)
 
     -- add item to awarded table
@@ -640,7 +643,7 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
         self:successfulAward(itemLink, awardee)
     else
         -- item is in inventory and awarded to someone else and must be traded
-        self:markAsToTrade(itemLink, awardee)
+        self.markAsToTrade(itemLink, awardee)
 	end
 
     local itemName = GetItemInfo(itemLink)
@@ -648,7 +651,7 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
     if rollType ~= nil then
         -- add gp
         local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
-        ns.addon:modifyEpgp({ns.Lib:getPlayerGuid(awardee)}, 'GP', gp, reason)
+        ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, 'GP', gp, reason)
         ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
     else
         ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
@@ -686,7 +689,7 @@ function LootDistWindow:handleLootReceived(itemLink, player)
                     self:successfulAward(itemLink, myName)
                 else
                     -- else, mark it as to trade
-                    self:markAsToTrade(itemLink, awardedPlayer)
+                    self.markAsToTrade(itemLink, awardedPlayer)
                 end
 
                 return
@@ -699,7 +702,7 @@ function LootDistWindow:handleLootReceived(itemLink, player)
 end
 
 
-function LootDistWindow:markAsToTrade(itemLink, player)
+function LootDistWindow.markAsToTrade(itemLink, player)
     ns.debug('marked as to trade: ' .. itemLink .. ' - ' .. player)
 
     local toTrade = ns.db.loot.toTrade
@@ -712,7 +715,7 @@ function LootDistWindow:markAsToTrade(itemLink, player)
 end
 
 
-function LootDistWindow:handleTradeRequest(player)
+function LootDistWindow.handleTradeRequest(player)
 	if ns.db.loot.toTrade[player] == nil then
 		return
 	end
@@ -755,7 +758,11 @@ function LootDistWindow:handleTradeShow()
             if items:contains(containerItemLink) then
                 ns.debug('-- trade ' .. container .. ' ' .. slot .. ' ' .. containerItemLink)
 
-                C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot); items:remove(containerItemLink) end)
+                C_Timer.After(i * 0.1, function()
+                    self.addItemToTrade(container, slot)
+                    items:remove(containerItemLink)
+                end)
+
                 i = i + 1
             end
         end
@@ -763,7 +770,7 @@ function LootDistWindow:handleTradeShow()
 end
 
 
-function LootDistWindow:getToTradeItem(player, itemLink)
+function LootDistWindow.getToTradeItem(player, itemLink)
     local items = ns.db.loot.toTrade[player]
 
     if items == nil then
@@ -778,17 +785,12 @@ function LootDistWindow:getToTradeItem(player, itemLink)
 end
 
 
-function LootDistWindow:addItemToTrade(container, slot)
+function LootDistWindow.addItemToTrade(container, slot)
     if (UseContainerItem) then
         UseContainerItem(container, slot)
     else
         C_Container.UseContainerItem(container, slot);
     end
-end
-
-
-function LootDistWindow:handleTradeClosed()
-	-- no need?
 end
 
 
@@ -827,11 +829,11 @@ end
 function LootDistWindow:successfulAward(itemLink, player)
     ns.debug(itemLink .. ' successfully given to ' .. player)
 
-    local itemToTrade = self:getToTradeItem(player, itemLink)
+    local itemToTrade = self.getToTradeItem(player, itemLink)
     if itemToTrade ~= nil then
         local items = ns.db.loot.toTrade[player]
         if items ~= nil then
-            ns.Lib:remove(items, itemToTrade)
+            ns.Lib.remove(items, itemToTrade)
         end
     end
 
@@ -852,8 +854,6 @@ end
 
 
 function LootDistWindow:disenchant()
-    self = LootDistWindow
-
     if self.disenchanter == nil then
         ns.DeSelectWindow:show()
         return

@@ -8,7 +8,7 @@ local Lib = {
 ns.Lib = Lib
 
 
-function Lib:find(array, value)
+function Lib.find(array, value)
     if type(array) == 'table' then
         for i, v in ipairs(array) do
             if v == value then
@@ -28,12 +28,12 @@ function Lib:find(array, value)
 end
 
 
-function Lib:contains(array, value)
-    return self:find(array, value) ~= -1
+function Lib.contains(array, value)
+    return Lib.find(array, value) ~= -1
 end
 
 
-function Lib:dictContains(array, value)
+function Lib.dictContains(array, value)
     for k in pairs(array) do
         if k == value then
             return true
@@ -44,7 +44,7 @@ function Lib:dictContains(array, value)
 end
 
 
-function Lib:deepcopy(orig, copies)
+function Lib.deepcopy(orig, copies)
     copies = copies or {}
     local orig_type = type(orig)
     local copy
@@ -55,9 +55,9 @@ function Lib:deepcopy(orig, copies)
             copy = {}
             copies[orig] = copy
             for orig_key, orig_value in next, orig, nil do
-                copy[self:deepcopy(orig_key, copies)] = self:deepcopy(orig_value, copies)
+                copy[Lib.deepcopy(orig_key, copies)] = Lib.deepcopy(orig_value, copies)
             end
-            setmetatable(copy, self:deepcopy(getmetatable(orig), copies))
+            setmetatable(copy, Lib.deepcopy(getmetatable(orig), copies))
         end
     else -- number, string, boolean, etc
         copy = orig
@@ -66,13 +66,13 @@ function Lib:deepcopy(orig, copies)
 end
 
 
-function Lib:remove(array, value, all)
+function Lib.remove(array, value, all)
     if array == nil then
         return
     end
 
     while true do
-        local i = self:find(array, value)
+        local i = Lib.find(array, value)
         table.remove(array, i)
 
         if i == -1 or not all then
@@ -82,10 +82,10 @@ function Lib:remove(array, value, all)
 end
 
 
-function Lib:keys(table)
+function Lib.keys(dict)
     local keys = {}
 
-    for k, _ in pairs(table) do
+    for k in pairs(dict) do
         tinsert(keys, k)
     end
 
@@ -93,7 +93,7 @@ function Lib:keys(table)
 end
 
 
-function Lib:split(str, sep)
+function Lib.split(str, sep)
     if sep == nil then
         sep = "%s"
     end
@@ -108,19 +108,19 @@ function Lib:split(str, sep)
 end
 
 
-function Lib:getPlayerGuid(playerName)
-    local guid = self.playerNameToGuid[playerName]
+function Lib.getPlayerGuid(playerName)
+    local guid = Lib.playerNameToGuid[playerName]
 
     if guid == nil then
         guid = UnitGUID(playerName)
-        self.playerNameToGuid[playerName] = guid
+        Lib.playerNameToGuid[playerName] = guid
     end
 
     return guid
 end
 
 
-function Lib:getClickCombination(mouseButton)
+function Lib.getClickCombination(mouseButton)
     local keySegments = {};
 
     if IsControlKeyDown() then
@@ -145,7 +145,7 @@ function Lib:getClickCombination(mouseButton)
 end
 
 
-function Lib:getItemIDFromLink(itemLink)
+function Lib.getItemIDFromLink(itemLink)
     if not itemLink or type(itemLink) ~= 'string' or itemLink == '' then
         return false;
     end
@@ -161,7 +161,7 @@ function Lib:getItemIDFromLink(itemLink)
 end
 
 
-function Lib:createPattern(pattern, maximize)
+function Lib.createPattern(pattern, maximize)
     pattern = string.gsub(pattern, "[%(%)%-%+%[%]]", "%%%1");
 
     if not maximize then
@@ -182,12 +182,12 @@ function Lib:createPattern(pattern, maximize)
 end
 
 
-function Lib:getGp(itemLink)
+function Lib.getGp(itemLink)
     if ns.cfg == nil then
         return
     end
 
-    local _, _, rarity, ilvl, _, class, subClass, _, slot, _, _ = GetItemInfo(itemLink)
+    local _, _, rarity, ilvl, _, _, _, _, slot, _, _ = GetItemInfo(itemLink)
 
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
 
@@ -211,7 +211,7 @@ function Lib:getGp(itemLink)
 end
 
 
-function Lib:itemExists(itemId)
+function Lib.itemExists(itemId)
 	if not itemId or not tonumber(itemId) then return false; end
 
 	if C_Item.DoesItemExistByID(tonumber(itemId)) then
@@ -222,7 +222,7 @@ function Lib:itemExists(itemId)
 end
 
 
-function Lib:getItemString(itemLink)
+function Lib.getItemString(itemLink)
 	if not itemLink then
 		return nil;
 	end
@@ -234,20 +234,20 @@ function Lib:getItemString(itemLink)
 end
 
 
-function Lib:getItemID(itemString)
+function Lib.getItemID(itemString)
 	if not itemString or not string.find(itemString, "item:") then
 		return nil;
 	end
 
-	local itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
+	itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
 	return string.sub(itemString, 1, string.find(itemString, ":") - 1);
 end
 
 
-function Lib:len(table)
+function Lib.len(dict)
     local count = 0
 
-    for item in pairs(table) do
+    for _ in pairs(dict) do
         count = count + 1
     end
 
@@ -255,19 +255,19 @@ function Lib:len(table)
 end
 
 
-function Lib:validateEpgpValue(value)
+function Lib.validateEpgpValue(value)
     if value == nil then
         return false
     end
 
     for i = 1, #value do
         local c = value:sub(i, i)
-        if not self:contains(self.epgpAllowedCharacters, c) then
+        if not Lib.contains(Lib.epgpAllowedCharacters, c) then
             return false
         end
     end
 
-    local minusIndex = self:find(value, '-')
+    local minusIndex = Lib.find(value, '-')
     if minusIndex ~= -1 and minusIndex ~= 1 then
         return false
     end
@@ -276,7 +276,7 @@ function Lib:validateEpgpValue(value)
 end
 
 
-function Lib:canPlayerUseItem(itemLink)
+function Lib.canPlayerUseItem(itemLink)
     -- GameTooltip:ClearLines()
     GameTooltip:SetOwner(WorldFrame, 'ANCHOR_NONE')
     GameTooltip:SetHyperlink(itemLink)
@@ -308,14 +308,14 @@ function Lib:canPlayerUseItem(itemLink)
 end
 
 
-function Lib:hash(data)
+function Lib.hash(data)
     local hasher = ns.addon.libc:fcs32init()
     hasher = ns.addon.libc:fcs32update(hasher, tostring(data))
     return ns.addon.libc:fcs32final(hasher)
 end
 
 
-function Lib:getVersionNum(version)
+function Lib.getVersionNum(version)
     --[[
         0.7.0   == --- --7 000
         0.7.1   == --- --7 001
@@ -325,7 +325,7 @@ function Lib:getVersionNum(version)
         1.5.0   == --1 005 000
         1.15.12 == --1 015 012
     --]]
-    local parts = self:split(version, '.')
+    local parts = Lib.split(version, '.')
 
     local major = tostring(parts[1])
     local minor = tostring(parts[2])
@@ -350,7 +350,7 @@ function Lib:getVersionNum(version)
 end
 
 
-function Lib:getVersionStr(versionNum)
+function Lib.getVersionStr(versionNum)
     local patch = versionNum % 1000
     versionNum = math.floor(versionNum / 1000)
     local minor = versionNum % 1000
@@ -363,7 +363,7 @@ end
 
 
 local fcomp_default = function(a, b) return a < b end
-function Lib:bininsert(t, value, fcomp)
+function Lib.bininsert(t, value, fcomp)
     -- Initialise compare function
     fcomp = fcomp or fcomp_default
 
@@ -388,7 +388,7 @@ function Lib:bininsert(t, value, fcomp)
  end
 
 
- function Lib:getColoredText(text, color)
+ function Lib.getColoredText(text, color)
     if color == nil then
         return text
     end
@@ -397,8 +397,8 @@ function Lib:bininsert(t, value, fcomp)
  end
 
 
- function Lib:getColoredByClass(player, text)
-    local playerGuid = self:getPlayerGuid(player)
+ function Lib.getColoredByClass(player, text)
+    local playerGuid = Lib.getPlayerGuid(player)
     local playerData = ns.db.standings[playerGuid]
 
     local coloredText
@@ -409,11 +409,11 @@ function Lib:bininsert(t, value, fcomp)
     end
 
     local classColor = RAID_CLASS_COLORS[playerData.classFileName]
-    return self:getColoredText(coloredText, classColor)
+    return Lib.getColoredText(coloredText, classColor)
  end
 
 
- function Lib:getMl()
+ function Lib.getMl()
     for name, playerData in ns.addon.raidRoster:iter() do
         if playerData.ml then
             return name

@@ -61,9 +61,9 @@ function DecayEpgpWindow:createWindow()
     mainFrame.cancelButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
     mainFrame.cancelButton:SetWidth(70)
 
-    mainFrame.cancelButton:SetScript('OnClick', self.hide)
-    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
-    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
+    mainFrame.cancelButton:SetScript('OnClick', function() self:hide() end)
+    mainFrame.confirmButton:SetScript('OnClick', function() self:confirm() end)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', function() self:confirm() end)
 
     tinsert(UISpecialFrames, mainFrameName)
 
@@ -84,8 +84,6 @@ function DecayEpgpWindow:show()
 end
 
 function DecayEpgpWindow:hide()
-    self = DecayEpgpWindow
-
     if self.mainFrame ~= nil then
         self.mainFrame:Hide()
     end
@@ -96,15 +94,13 @@ function DecayEpgpWindow:isShown()
 end
 
 function DecayEpgpWindow:confirm()
-    self = DecayEpgpWindow
-
     local value = self.mainFrame.amountEditBox:GetText()
 
-    if not ns.Lib:validateEpgpValue(value) then
+    if not ns.Lib.validateEpgpValue(value) then
         return
     end
 
-    local value = tonumber(value)
+    value = tonumber(value)
 
     if value == 0
             or value < -1000
@@ -116,7 +112,7 @@ function DecayEpgpWindow:confirm()
 
     local players = {}
     for _, charData in ipairs(ns.MainWindow.data.rows) do
-        local guid = ns.Lib:getPlayerGuid(charData[1])
+        local guid = ns.Lib.getPlayerGuid(charData[1])
         tinsert(players, guid)
     end
 

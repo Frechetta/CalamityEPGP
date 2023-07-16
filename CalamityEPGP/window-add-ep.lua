@@ -60,9 +60,9 @@ function AddEpWindow:createWindow()
     mainFrame.cancelButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
     mainFrame.cancelButton:SetWidth(70)
 
-    mainFrame.cancelButton:SetScript('OnClick', self.hide)
-    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
-    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
+    mainFrame.cancelButton:SetScript('OnClick', function() self:hide() end)
+    mainFrame.confirmButton:SetScript('OnClick', function() self:confirm() end)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', function() self:confirm() end)
 
     tinsert(UISpecialFrames, mainFrameName)
 
@@ -83,8 +83,6 @@ function AddEpWindow:show()
 end
 
 function AddEpWindow:hide()
-    self = AddEpWindow
-
     if self.mainFrame ~= nil then
         self.mainFrame:Hide()
     end
@@ -95,15 +93,13 @@ function AddEpWindow:isShown()
 end
 
 function AddEpWindow:confirm()
-    self = AddEpWindow
-
     local value = self.mainFrame.amountEditBox:GetText()
 
-    if not ns.Lib:validateEpgpValue(value) then
+    if not ns.Lib.validateEpgpValue(value) then
         return
     end
 
-    local value = tonumber(value)
+    value = tonumber(value)
 
     if value == 0
             or value < -1000000
@@ -121,7 +117,7 @@ function AddEpWindow:confirm()
 
     local players = {}
     for _, charData in ipairs(ns.MainWindow.data.rowsFiltered) do
-        local guid = ns.Lib:getPlayerGuid(charData[1])
+        local guid = ns.Lib.getPlayerGuid(charData[1])
         tinsert(players, guid)
     end
 

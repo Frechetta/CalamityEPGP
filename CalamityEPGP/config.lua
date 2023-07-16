@@ -1,7 +1,7 @@
 local addonName, ns = ...  -- Namespace
 
-List = ns.List
-Set = ns.Set
+local List = ns.List
+local Set = ns.Set
 
 local Config = {
     altManagementMenuInitialized = false,
@@ -164,15 +164,13 @@ function Config:initAltManagementMenu()
     self.aamPanel = CreateFrame('FRAME', addonName .. '_AltManagement')
     self.aamPanel.name = 'Alt Management'
     self.aamPanel.parent = addonName
-    self.aamPanel.refresh = self.refreshAltManagementMenu
+    self.aamPanel.refresh = function() self:refreshAltManagementMenu() end
 
     InterfaceOptions_AddCategory(self.aamPanel)
 end
 
 
 function Config:refreshAltManagementMenu()
-    self = Config
-
     if not self.altManagementMenuInitialized and self.aamPanel:GetWidth() ~= 0 then
         self:createAltManagementMenu()
         self.altManagementMenuInitialized = true
@@ -235,7 +233,7 @@ function Config:createAltManagementMenu()
 
         for _, altData in pairs(GRM_Alts[ns.guild]) do
             if #altData.main > 0 then
-                local main = ns.addon:getCharName(altData.main)
+                local main = ns.addon.getCharName(altData.main)
 
                 if ns.db.altData.mainAltMapping[main] == nil then
                     ns.db.altData.mainAltMapping[main] = {}
@@ -244,9 +242,9 @@ function Config:createAltManagementMenu()
                 for _, alt in ipairs(altData) do
                     local name = alt.name
                     if name ~= nil then
-                        name = ns.addon:getCharName(name)
+                        name = ns.addon.getCharName(name)
 
-                        if not ns.Lib:contains(ns.db.altData.mainAltMapping[main], name) then
+                        if not ns.Lib.contains(ns.db.altData.mainAltMapping[main], name) then
                             tinsert(ns.db.altData.mainAltMapping[main], name)
                         end
                     end
@@ -261,13 +259,13 @@ function Config:createAltManagementMenu()
     panel.synchroniseEpCheck:SetChecked(ns.cfg.syncAltEp)
     panel.synchroniseEpCheck:SetScript('OnClick', function()
         ns.cfg.syncAltEp = panel.synchroniseEpCheck:GetChecked()
-        ns.addon:modifiedLmSettings()
+        ns.addon.modifiedLmSettings()
     end)
 
     panel.synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
     panel.synchroniseGpCheck:SetScript('OnClick', function()
         ns.cfg.syncAltGp = panel.synchroniseGpCheck:GetChecked()
-        ns.addon:modifiedLmSettings()
+        ns.addon.modifiedLmSettings()
     end)
 
     self:createAltManagementTable()
@@ -278,7 +276,12 @@ function Config:createAltManagementTable()
     local parent = self.aamPanel.tableFrame
 
     -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
+    parent.scrollFrame = CreateFrame(
+        'ScrollFrame',
+        parent:GetName() .. 'ScrollFrame',
+        parent,
+        'UIPanelScrollFrameTemplate'
+    )
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
@@ -288,7 +291,6 @@ function Config:createAltManagementTable()
     parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton']
     parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton']
 
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints()
     parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0)
 
@@ -345,7 +347,7 @@ function Config:setAltManagementData()
     local rows = List:new()
     for _, playerData in pairs(ns.db.standings) do
         local player = playerData.name
-        local playerColored = ns.Lib:getColoredByClass(player)
+        local playerColored = ns.Lib.getColoredByClass(player)
 
         local main_alt = 'Unknown'
         if self.mains:contains(player) then
@@ -484,7 +486,7 @@ function Config:showEditPlayerWindow(player)
 
     editPlayerWindow:SetPoint('CENTER', parent)
 
-    editPlayerWindow.title:SetText(ns.Lib:getColoredByClass(player))
+    editPlayerWindow.title:SetText(ns.Lib.getColoredByClass(player))
 
     local setButtonText
     local setButtonFunc
@@ -531,7 +533,12 @@ function Config:showAltsWindow(player)
     local altsWindow = parent.altsWindow
 
     if altsWindow == nil then
-        altsWindow = CreateFrame('Frame', self.aamPanel:GetName() .. '_AltsWindow', parent, 'TooltipBorderedFrameTemplate')
+        altsWindow = CreateFrame(
+            'Frame',
+            self.aamPanel:GetName() .. '_AltsWindow',
+            parent,
+            'TooltipBorderedFrameTemplate'
+        )
         altsWindow:SetWidth(200)
         altsWindow:SetFrameStrata('DIALOG')
 
@@ -578,7 +585,7 @@ function Config:showAltsWindow(player)
     altsWindow:SetPoint('CENTER', parent)
 
     local title = player .. ' Alts'
-    altsWindow.title:SetText(ns.Lib:getColoredByClass(player, title))
+    altsWindow.title:SetText(ns.Lib.getColoredByClass(player, title))
 
     for cell in altsWindow.cells:iter() do
         cell:Hide()
@@ -632,10 +639,10 @@ function Config:showAltsWindow(player)
                     end)
                 end
 
-                local text = ns.Lib:getColoredByClass(alt)
+                local text = ns.Lib.getColoredByClass(alt)
 
                 if alt == main then
-                    text = text .. '\n' .. ns.Lib:getColoredText('(main)', CreateColor(1, 0, 0))
+                    text = text .. '\n' .. ns.Lib.getColoredText('(main)', CreateColor(1, 0, 0))
                 end
 
                 cell.text:SetText(text)
@@ -655,7 +662,12 @@ function Config:showAltsWindow(player)
     end
 
     altsWindow.cellsFrame:SetHeight(cellsFrameHeight)
-    altsWindow:SetHeight(7 + altsWindow.title:GetHeight() + 5 + cellsFrameHeight + 5 + altsWindow.addAltButton:GetHeight() + 5)
+    altsWindow:SetHeight(
+          7 + altsWindow.title:GetHeight()
+        + 5 + cellsFrameHeight
+        + 5 + altsWindow.addAltButton:GetHeight()
+        + 5
+    )
 
     altsWindow:Show()
 end
@@ -667,7 +679,12 @@ function Config:showAltEditWindow(selectedPlayer, clickedPlayer, clickedFrame)
     local altEditWindow = parent.altEditWindow
 
     if altEditWindow == nil then
-        altEditWindow = CreateFrame('Frame', self.aamPanel:GetName() .. '_AltEditWindow', parent, 'TooltipBorderedFrameTemplate')
+        altEditWindow = CreateFrame(
+            'Frame',
+            self.aamPanel:GetName() .. '_AltEditWindow',
+            parent,
+            'TooltipBorderedFrameTemplate'
+        )
         altEditWindow:SetWidth(80)
         altEditWindow:SetFrameStrata('DIALOG')
         altEditWindow:SetFrameLevel(5000)
@@ -719,7 +736,7 @@ function Config:showAltEditWindow(selectedPlayer, clickedPlayer, clickedFrame)
             ns.db.altData.mainAltMapping[clickedPlayer] = nil
         else
             local main = ns.db.altData.altMainMapping[clickedPlayer]
-            ns.Lib:remove(ns.db.altData.mainAltMapping[main], clickedPlayer)
+            ns.Lib.remove(ns.db.altData.mainAltMapping[main], clickedPlayer)
         end
 
         altEditWindow:Hide()
@@ -731,7 +748,11 @@ function Config:showAltEditWindow(selectedPlayer, clickedPlayer, clickedFrame)
 
     altEditWindow.title:SetText(clickedPlayer)
 
-    local height = 7 + altEditWindow.title:GetHeight() + 5 + altEditWindow.cancelButton:GetHeight() + 1 + altEditWindow.removeButton:GetHeight() + 1 + altEditWindow.setAsButton:GetHeight() + 5
+    local height = 7 + altEditWindow.title:GetHeight()
+                 + 5 + altEditWindow.cancelButton:GetHeight()
+                 + 1 + altEditWindow.removeButton:GetHeight()
+                 + 1 + altEditWindow.setAsButton:GetHeight()
+                 + 5
     altEditWindow:SetHeight(height)
 
     local mainAlt
@@ -754,7 +775,12 @@ function Config:showAltSelector(player)
     local addAltWindow = parent.addAltWindow
 
     if addAltWindow == nil then
-        addAltWindow = CreateFrame('Frame', self.aamPanel:GetName() .. '_AddAltWindow', parent, 'TooltipBorderedFrameTemplate')
+        addAltWindow = CreateFrame(
+            'Frame',
+            self.aamPanel:GetName() .. '_AddAltWindow',
+            parent,
+            'TooltipBorderedFrameTemplate'
+        )
         addAltWindow:SetSize(135, parent:GetHeight())
         addAltWindow:SetPoint('TOPLEFT', parent, 'TOPRIGHT', -3, 0)
         addAltWindow:SetFrameStrata('DIALOG')
@@ -838,18 +864,18 @@ function Config:showAltSelector(player)
 
         if Config.mains:contains(player) then
             local alts = ns.db.altData.mainAltMapping[player]
-            if not ns.Lib:contains(alts, alt) then
+            if not ns.Lib.contains(alts, alt) then
                 tinsert(alts, alt)
             end
 
             local oldMain = ns.db.altData.altMainMapping[alt]
             if oldMain ~= nil then
-                ns.Lib:remove(ns.db.altData.mainAltMapping[oldMain], alt)
+                ns.Lib.remove(ns.db.altData.mainAltMapping[oldMain], alt)
             end
         elseif Config.alts:contains(player) then
             local main = ns.db.altData.altMainMapping[player]
             local alts = ns.db.altData.mainAltMapping[main]
-            if not ns.Lib:contains(alts, alt) then
+            if not ns.Lib.contains(alts, alt) then
                 tinsert(alts, alt)
             end
         else
@@ -891,7 +917,7 @@ function Config:filterPlayers(text)
         local player = row.player
 
         if row.mainAltColumn:GetText() == 'Unknown' and string.find(string.lower(player), string.lower(text)) then
-            local playerText = ns.Lib:getColoredByClass(player)
+            local playerText = ns.Lib.getColoredByClass(player)
             players:bininsert({player, playerText}, function(left, right) return left[1] < right[1] end)
         end
     end
@@ -963,7 +989,7 @@ function Config:setAltMainMapping()
     for main, alts in pairs(ns.db.altData.mainAltMapping) do
         self.mains:add(main)
 
-        if not ns.Lib:contains(alts, main) then
+        if not ns.Lib.contains(alts, main) then
             tinsert(alts, main)
         end
 
@@ -978,15 +1004,18 @@ function Config:setAltMainMapping()
 end
 
 
-function Config:clearData()
-    ns.ConfirmWindow:show('Are you sure you want to clear all data?\nWARNING: this is irreversible!', ns.addon.clearData)
+function Config.clearData()
+    ns.ConfirmWindow:show(
+        'Are you sure you want to clear all data?\nWARNING: this is irreversible!',
+        function() ns.addon:clearData() end
+    )
 end
 
 
 -------------------------
 -- OPTION GETTERS/SETTERS
 -------------------------
-function Config:getLmMode(info)
+function Config:getLmMode(_)
     if not ns.addon.isOfficer then
         ns.cfg.lmMode = false
     end
@@ -994,7 +1023,7 @@ function Config:getLmMode(info)
     return ns.cfg.lmMode
 end
 
-function Config:setLmMode(info, input)
+function Config:setLmMode(_, input)
     if not ns.addon.isOfficer then
         ns.cfg.lmMode = false
         return
@@ -1005,36 +1034,36 @@ function Config:setLmMode(info, input)
     ns.MainWindow:refresh()
 end
 
-function Config:getDefaultDecay(info)
+function Config:getDefaultDecay(_)
     return tostring(ns.cfg.defaultDecay)
 end
 
-function Config:setDefaultDecay(info, input)
+function Config:setDefaultDecay(_, input)
     ns.cfg.defaultDecay = input
-    ns.addon:modifiedLmSettings()
+    ns.addon.modifiedLmSettings()
 end
 
-function Config:getRollDuration(info)
+function Config:getRollDuration(_)
     return tostring(ns.cfg.rollDuration)
 end
 
-function Config:setRollDuration(info, input)
+function Config:setRollDuration(_, input)
     ns.cfg.rollDuration = input
 end
 
-function Config:getCloseOnAward(info)
+function Config:getCloseOnAward(_)
     return ns.cfg.closeOnAward
 end
 
-function Config:setCloseOnAward(info, input)
+function Config:setCloseOnAward(_, input)
     ns.cfg.closeOnAward = input
 end
 
-function Config:getShowMinimapButton(info)
+function Config:getShowMinimapButton(_)
     return not ns.cfg.minimap.hide
 end
 
-function Config:setShowMinimapButton(info, input)
+function Config:setShowMinimapButton(_, input)
     ns.cfg.minimap.hide = not input
 
     if ns.cfg.minimap.hide then
@@ -1044,21 +1073,21 @@ function Config:setShowMinimapButton(info, input)
     end
 end
 
-function Config:getBaseGp(info)
+function Config:getBaseGp(_)
     return tostring(ns.cfg.gpBase)
 end
 
-function Config:setBaseGp(info, input)
+function Config:setBaseGp(_, input)
     ns.cfg.gpBase = tonumber(input)
-    ns.addon:modifiedLmSettings()
-    ns.addon:fixGp()
+    ns.addon.modifiedLmSettings()
+    ns.addon.fixGp()
 end
 
-function Config:setDebugMode(info, input)
+function Config:setDebugMode(_, input)
     ns.cfg.debugMode = input
 end
 
-function Config:getDebugMode(info)
+function Config:getDebugMode(_)
     return ns.cfg.debugMode
 end
 

@@ -1,6 +1,5 @@
 local addonName, ns = ...  -- Namespace
 
-local List = ns.List
 local Set = ns.Set
 
 local HistoryWindow = {
@@ -123,7 +122,7 @@ function HistoryWindow:createWindow()
     mainFrame.dropDown:SetPoint('LEFT', mainFrame.playerLabel, 'RIGHT', -10, 0)
     mainFrame.dropDown:SetWidth(100)
     mainFrame.dropDown.Text:SetText(self.selectedPlayer)
-    mainFrame.dropDown.Button:SetScript('onClick', self.handleDropdownClick)
+    mainFrame.dropDown.Button:SetScript('onClick', function() self:handleDropdownClick() end)
     mainFrame.dropDown:SetShown(mainFrame.detailCheck:GetChecked())
 
     mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
@@ -173,7 +172,12 @@ function HistoryWindow:createTable()
     local parent = self.mainFrame.tableFrame
 
     -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
+    parent.scrollFrame = CreateFrame(
+        'ScrollFrame',
+        parent:GetName() .. 'ScrollFrame',
+        parent,
+        'UIPanelScrollFrameTemplate'
+    )
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -20)
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 3)
@@ -183,7 +187,6 @@ function HistoryWindow:createTable()
     parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
     parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
 
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
     parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
@@ -251,7 +254,7 @@ end
 
 
 function HistoryWindow:handleDropdownClick()
-    local itemsFrame = HistoryWindow.mainFrame.dropDown.itemsFrame
+    local itemsFrame = self.mainFrame.dropDown.itemsFrame
 
     if itemsFrame:IsShown() then
         itemsFrame:Hide()
@@ -633,7 +636,8 @@ function HistoryWindow:getData()
         local reason = event[7]
         local percent = event[8]
 
-        local reason, prettyReason = self:getFormattedReason(reason)
+        local prettyReason
+        reason, prettyReason = self:getFormattedReason(reason)
 
         local row = {
             time,
@@ -645,7 +649,7 @@ function HistoryWindow:getData()
             {baseReason = prettyReason, players = players}
         }
 
-        ns.Lib:bininsert(self.data.rows, row, function(left, right)
+        ns.Lib.bininsert(self.data.rows, row, function(left, right)
             return left[1] > right[1]
         end)
     end
@@ -657,12 +661,12 @@ function HistoryWindow:getFormattedReason(reason)
         return nil
     end
 
-    local reasonSplit = ns.Lib:split(reason, ':')
+    local reasonSplit = ns.Lib.split(reason, ':')
     local baseReason = reasonSplit[1]
     local details = strtrim(reasonSplit[2])
 
     if baseReason == ns.values.epgpReasons.AWARD then
-        local detailsSplit = ns.Lib:split(details, '-')
+        local detailsSplit = ns.Lib.split(details, '-')
         details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
     elseif baseReason == ns.values.epgpReasons.BOSS_KILL then
         local i = string.find(details, '%(')
@@ -739,8 +743,8 @@ function HistoryWindow:getRenderedData()
                 local epBefore = epAfter
                 local gpBefore = gpAfter
 
-                local getDelta = function(mode)
-                    if mode == 'ep' then
+                local getDelta = function(m)
+                    if m == 'ep' then
                         if percent then
                             local multiplier = (100 - value) / 100
                             epBefore = epAfter * multiplier
@@ -751,7 +755,7 @@ function HistoryWindow:getRenderedData()
                         epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
                     end
 
-                    if mode == 'gp' then
+                    if m == 'gp' then
                         if percent then
                             local multiplier = (100 - value) / 100
                             gpBefore = gpAfter * multiplier
@@ -853,7 +857,7 @@ function HistoryWindow:getRenderedData()
 end
 
 
-function HistoryWindow:fixHistory()
+function HistoryWindow.fixHistory()
     local fixedHistory = {}
 
     local eventsByTime = {}
@@ -913,11 +917,11 @@ function HistoryWindow:fixHistory()
             end
         end
 
-        local hash = ns.Lib:hash(newEvent)
+        local hash = ns.Lib.hash(newEvent)
         tinsert(fixedHistory, {newEvent, hash})
     end
 
-    sort(fixedHistory, function(left, right)
+    table.sort(fixedHistory, function(left, right)
         return left[1][1] < right[1][1]
     end)
 

@@ -1,6 +1,6 @@
 local addonName, ns = ...  -- Namespace
 
-List = ns.List
+local List = ns.List
 
 local DeSelectWindow = {
     selectedPlayer = nil,
@@ -58,10 +58,14 @@ end
 
 function DeSelectWindow:createTable()
     local parent = self.mainFrame.tableFrame
-    local data = self.data
 
     -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
+    parent.scrollFrame = CreateFrame(
+        'ScrollFrame',
+        parent:GetName() .. 'ScrollFrame',
+        parent,
+        'UIPanelScrollFrameTemplate'
+    )
     parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
     parent.scrollFrame:SetWidth(parent:GetWidth())
     parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
@@ -71,7 +75,6 @@ function DeSelectWindow:createTable()
     parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
     parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
 
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
     parent.scrollUpButton:ClearAllPoints();
     parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
 
@@ -99,7 +102,7 @@ function DeSelectWindow:createTable()
     parent.contents.rowHighlight:Hide()
 
     parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
     highlightTexture:SetAllPoints()
     highlightTexture:SetColorTexture(1, 1, 0, 0.3)
     highlightTexture:SetBlendMode('ADD')
@@ -116,7 +119,7 @@ function DeSelectWindow:show()
 
     local players = List:new()
     for player in pairs(ns.addon.raidRoster) do
-        local playerColored = ns.Lib:getColoredByClass(player)
+        local playerColored = ns.Lib.getColoredByClass(player)
         players:bininsert({player, playerColored}, function(left, right) return left[1] < right[1] end)
     end
 
@@ -131,7 +134,6 @@ function DeSelectWindow:show()
         local player = rowData[1]
         local playerColored = rowData[2]
 
-        local row = parent.rows:get(i)
         row.text:SetText(playerColored)
         row.player = player
 

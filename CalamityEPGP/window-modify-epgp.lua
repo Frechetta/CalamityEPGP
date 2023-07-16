@@ -84,9 +84,9 @@ function ModifyEpgpWindow:createWindow()
         ModifyEpgpWindow:fillIn()
     end)
 
-    mainFrame.cancelButton:SetScript('OnClick', self.hide)
-    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
-    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
+    mainFrame.cancelButton:SetScript('OnClick', function() ModifyEpgpWindow:hide() end)
+    mainFrame.confirmButton:SetScript('OnClick', function() ModifyEpgpWindow:confirm() end)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', function() ModifyEpgpWindow:confirm() end)
 
     tinsert(UISpecialFrames, mainFrameName)
 
@@ -111,8 +111,6 @@ function ModifyEpgpWindow:show(charName, charGuid)
 end
 
 function ModifyEpgpWindow:hide()
-    self = ModifyEpgpWindow
-
     if self.mainFrame ~= nil then
         self.mainFrame:Hide()
     end
@@ -130,15 +128,13 @@ function ModifyEpgpWindow:fillIn()
 end
 
 function ModifyEpgpWindow:confirm()
-    self = ModifyEpgpWindow
-
     local value = self.mainFrame.amountEditBox:GetText()
 
-    if not ns.Lib:validateEpgpValue(value) then
+    if not ns.Lib.validateEpgpValue(value) then
         return
     end
 
-    local value = tonumber(value)
+    value = tonumber(value)
 
     if value == nil
             or value == 0
@@ -158,7 +154,9 @@ function ModifyEpgpWindow:confirm()
     ns.addon:modifyEpgp({self.charGuid}, self.mode, value, reason)
 
     if ns.addon.useForRaid and ns.addon.raidRoster:contains(self.charName) then
-        ns.printPublic(string.format('Awarded %d EP to %s. Reason: %s', value, self.charName, enteredReason))
+        ns.printPublic(
+            string.format('Awarded %d EP to %s. Reason: %s', value, self.charName, enteredReason)
+        )
     end
 
     self:hide()
