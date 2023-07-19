@@ -552,46 +552,49 @@ function addon.syncAltEpGp(players)
 
             for _, playerGuid in ipairs(players) do
                 local playerData = ns.db.standings[playerGuid]
-                local player = playerData.name
 
-                if not synced:contains(player) then
-                    synced:add(player)
+                if playerData ~= nil then
+                    local player = playerData.name
 
-                    local main = ns.db.altData.altMainMapping[player]
+                    if not synced:contains(player) then
+                        synced:add(player)
 
-                    if main ~= nil then
-                        local alts = ns.db.altData.mainAltMapping[main]
+                        local main = ns.db.altData.altMainMapping[player]
 
-                        if alts ~= nil then
-                            for _, alt in ipairs(alts) do
-                                if alt ~= player then
-                                    local altGuid = ns.Lib.getPlayerGuid(alt)
-                                    local altData = ns.db.standings[altGuid]
+                        if main ~= nil then
+                            local alts = ns.db.altData.mainAltMapping[main]
 
-                                    -- local epGpMsgPart
+                            if alts ~= nil then
+                                for _, alt in ipairs(alts) do
+                                    if alt ~= player then
+                                        local altGuid = ns.Lib.getPlayerGuid(alt)
+                                        local altData = ns.db.standings[altGuid]
 
-                                    if ns.cfg.syncAltEp then
-                                        altData.ep = playerData.ep
-                                        -- epGpMsgPart = 'EP'
-                                    end
+                                        -- local epGpMsgPart
 
-                                    if ns.cfg.syncAltGp then
-                                        altData.gp = playerData.gp
+                                        if ns.cfg.syncAltEp then
+                                            altData.ep = playerData.ep
+                                            -- epGpMsgPart = 'EP'
+                                        end
+
+                                        if ns.cfg.syncAltGp then
+                                            altData.gp = playerData.gp
+
+                                            -- if epGpMsgPart then
+                                            --     epGpMsgPart = epGpMsgPart .. ' and GP'
+                                            -- else
+                                            --     epGpMsgPart = 'GP'
+                                            -- end
+                                        end
 
                                         -- if epGpMsgPart then
-                                        --     epGpMsgPart = epGpMsgPart .. ' and GP'
-                                        -- else
-                                        --     epGpMsgPart = 'GP'
+                                        --     ns.debug(
+                                        --         string.format('synced %s of %s with alt %s',epGpMsgPart, alt, player)
+                                        --     )
                                         -- end
+
+                                        synced:add(alt)
                                     end
-
-                                    -- if epGpMsgPart then
-                                    --     ns.debug(
-                                    --         string.format('synced %s of %s with alt %s',epGpMsgPart, alt, player)
-                                    --     )
-                                    -- end
-
-                                    synced:add(alt)
                                 end
                             end
                         end
@@ -838,14 +841,14 @@ end
 function addon:handleEnteredRaid()
     self:loadRaidRoster()
 
-    if ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() and not self.useForRaidPrompted then
+    if ns.cfg and ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() and not self.useForRaidPrompted then
         self:showUseForRaidWindow()
     end
 end
 
 
 function addon:handlePartyLootMethodChanged()
-    if ns.cfg ~= nil and ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() then
+    if ns.cfg and ns.cfg.lmMode and GetLootMethod() == 'master' and IsMasterLooter() then
         if not self.useForRaid then
             self:showUseForRaidWindow()
         end
@@ -857,7 +860,7 @@ end
 
 
 function addon:handleLootReady()
-    if not ns.cfg.lmMode then
+    if not ns.cfg or not ns.cfg.lmMode then
         return
     end
 
@@ -917,7 +920,7 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
         local reason = string.format('%s: "%s" (%s)', ns.values.epgpReasons.BOSS_KILL, encounterName, encounterId)
 
         local players = {}
-        for player in pairs(self.raidRoster) do
+        for player in self.raidRoster:iter() do
             local guid = ns.Lib.getPlayerGuid(player)
             tinsert(players, guid)
         end

@@ -587,11 +587,15 @@ function HistoryWindow:filterData()
 
             local hasMain = false
             for _, playerGuid in ipairs(playerGuids) do
-                local player = ns.db.standings[playerGuid].name
-                players:add(player)
+                local playerData = ns.db.standings[playerGuid]
 
-                if ns.db.altData.mainAltMapping[player] ~= nil then
-                    hasMain = true
+                if playerData ~= nil then
+                    local player = playerData.name
+                    players:add(player)
+
+                    if ns.db.altData.mainAltMapping[player] ~= nil then
+                        hasMain = true
+                    end
                 end
             end
 
@@ -721,87 +725,91 @@ function HistoryWindow:getRenderedData()
             local players = metadata.players
 
             for _, playerGuid in ipairs(players) do
-                local player = ns.db.standings[playerGuid].name
+                local playerData = ns.db.standings[playerGuid]
 
-                -- get action
-                local valueStr = tostring(value)
-                valueStr = percent and valueStr .. '%' or valueStr
-                valueStr = value > 0 and '+' .. valueStr or valueStr
+                if playerData ~= nil then
+                    local player = playerData.name
 
-                local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
-                local action = string.format('%s %s', actionMode, valueStr)
+                    -- get action
+                    local valueStr = tostring(value)
+                    valueStr = percent and valueStr .. '%' or valueStr
+                    valueStr = value > 0 and '+' .. valueStr or valueStr
 
-                -- get ep, gp, pr deltas
-                local standings = playerValsTracker[playerGuid]
+                    local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
+                    local action = string.format('%s %s', actionMode, valueStr)
 
-                local epDelta
-                local gpDelta
+                    -- get ep, gp, pr deltas
+                    local standings = playerValsTracker[playerGuid]
 
-                local epAfter = standings['EP']
-                local gpAfter = standings['GP']
+                    local epDelta
+                    local gpDelta
 
-                local epBefore = epAfter
-                local gpBefore = gpAfter
+                    local epAfter = standings['EP']
+                    local gpAfter = standings['GP']
 
-                local getDelta = function(m)
-                    if m == 'ep' then
-                        if percent then
-                            local multiplier = (100 - value) / 100
-                            epBefore = epAfter * multiplier
-                        else
-                            epBefore = epBefore - value
+                    local epBefore = epAfter
+                    local gpBefore = gpAfter
+
+                    local getDelta = function(m)
+                        if m == 'ep' then
+                            if percent then
+                                local multiplier = (100 - value) / 100
+                                epBefore = epAfter * multiplier
+                            else
+                                epBefore = epBefore - value
+                            end
+
+                            epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
                         end
 
-                        epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
-                    end
+                        if m == 'gp' then
+                            if percent then
+                                local multiplier = (100 - value) / 100
+                                gpBefore = gpAfter * multiplier
+                            else
+                                gpBefore = gpBefore - value
+                            end
 
-                    if m == 'gp' then
-                        if percent then
-                            local multiplier = (100 - value) / 100
-                            gpBefore = gpAfter * multiplier
-                        else
-                            gpBefore = gpBefore - value
+                            gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
                         end
-
-                        gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
                     end
+
+                    if mode == 'both' then
+                        getDelta('ep')
+                        getDelta('gp')
+                    else
+                        getDelta(mode)
+                    end
+
+                    if epDelta == nil then
+                        epDelta = string.format('%.2f', epAfter)
+                    end
+
+                    if gpDelta == nil then
+                        gpDelta = string.format('%.2f', gpAfter)
+                    end
+
+                    local prAfter = epAfter / gpAfter
+                    local prBefore = epBefore / gpBefore
+                    local prDelta = string.format('%.3f -> %.3f', prBefore, prAfter)
+
+                    local newRow = {
+                        time,
+                        issuedBy,
+                        player,
+                        reason,
+                        action,
+                        epDelta,
+                        gpDelta,
+                        prDelta,
+                        {baseReason = baseReason}
+                    }
+
+                    tinsert(self.data.rowsRendered, newRow)
+
+                    standings['EP'] = epBefore
+                    standings['GP'] = gpBefore
                 end
-
-                if mode == 'both' then
-                    getDelta('ep')
-                    getDelta('gp')
-                else
-                    getDelta(mode)
-                end
-
-                if epDelta == nil then
-                    epDelta = string.format('%.2f', epAfter)
-                end
-
-                if gpDelta == nil then
-                    gpDelta = string.format('%.2f', gpAfter)
-                end
-
-                local prAfter = epAfter / gpAfter
-                local prBefore = epBefore / gpBefore
-                local prDelta = string.format('%.3f -> %.3f', prBefore, prAfter)
-
-                local newRow = {
-                    time,
-                    issuedBy,
-                    player,
-                    reason,
-                    action,
-                    epDelta,
-                    gpDelta,
-                    prDelta,
-                    {baseReason = baseReason}
-                }
-
-                tinsert(self.data.rowsRendered, newRow)
-
-                standings['EP'] = epBefore
-                standings['GP'] = gpBefore
             end
         end
     else

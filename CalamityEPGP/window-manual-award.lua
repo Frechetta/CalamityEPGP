@@ -170,7 +170,7 @@ function ManualAwardWindow:setData()
 
     local rows = List:new()
 
-    for player in pairs(ns.addon.raidRoster) do
+    for player in ns.addon.raidRoster:iter() do
         local playerColored = ns.Lib.getColoredByClass(player)
         rows:bininsert({player, playerColored}, function(left, right) return left[1] < right[1] end)
     end
