@@ -1,3 +1,8 @@
+# 0.11.1
+
+- fix players in history not existing in standings
+- passing now cancels roll
+
 # 0.11.0
 
 - change loot distribution click combo to Alt+Click
