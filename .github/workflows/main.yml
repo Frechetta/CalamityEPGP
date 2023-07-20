@@ -39,4 +39,11 @@ jobs:
       - name: LuaUnit
         run: |
           cd "$GITHUB_WORKSPACE"
-          scripts/test.sh
+          scripts/test.sh -o junit -n ut_results.xml
+      
+      - name: Upload UT Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ut-results
+          path: ut_results.xml
