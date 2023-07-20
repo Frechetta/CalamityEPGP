@@ -6,4 +6,4 @@ root_dir=$(cd -- "$script_dir/.." &> /dev/null && pwd)
 
 cd "$root_dir"
 
-lua test/main.lua -v
+lua test/main.lua -v $@
