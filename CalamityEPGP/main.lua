@@ -40,28 +40,54 @@ local dbDefaults = {
     }
 }
 
-addon.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
-addon.author = C_AddOns.GetAddOnMetadata(addonName, 'Author')
-
-addon.versionNum = ns.Lib.getVersionNum(addon.version)
-
-addon.initialized = false
-addon.minimapButtonInitialized = false
-addon.isOfficer = nil
-addon.useForRaidPrompted = false
-addon.useForRaid = false
-addon.raidRoster = Dict:new()
-addon.whisperCommands = {
-    INFO = '!ceinfo',
-}
-
-ns.minSyncVersion = ns.Lib.getVersionNum('0.9.0')
-
 
 function addon:OnInitialize()
+    self.version = C_AddOns.GetAddOnMetadata(addonName, 'Version')
+    self.author = C_AddOns.GetAddOnMetadata(addonName, 'Author')
+
+    self.versionNum = ns.Lib.getVersionNum(self.version)
+
     self.initialized = false
+    self.minimapButtonInitialized = false
+    self.isOfficer = nil
     self.useForRaidPrompted = false
     self.useForRaid = false
+    self.raidRoster = Dict:new()
+    self.whisperCommands = {
+        INFO = '!ceinfo',
+    }
+
+    ns.minSyncVersion = ns.Lib.getVersionNum('0.9.0')
+
+    self:RegisterChatCommand('ce', 'handleSlashCommand')
+    self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
+    self:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
+    self:RegisterEvent('CHAT_MSG_PARTY', 'handleChatMsg')
+    self:RegisterEvent('CHAT_MSG_PARTY_LEADER', 'handleChatMsg')
+    self:RegisterEvent('CHAT_MSG_RAID', 'handleChatMsg')
+    self:RegisterEvent('CHAT_MSG_RAID_LEADER', 'handleChatMsg')
+    self:RegisterEvent('CHAT_MSG_RAID_WARNING', 'handleChatMsg')
+    self:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
+    self:RegisterEvent('CHAT_MSG_WHISPER', 'handleChatMsgWhisper')
+    self:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
+    self:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
+    self:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
+    self:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
+    self:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
+    self:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
+    self:RegisterEvent('LOOT_READY', 'handleLootReady')
+    self:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
+    self:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
+    self:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
+    self:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
+
+    hooksecurefunc("HandleModifiedItemClick", function(itemLink)
+        self:handleItemClick(itemLink, GetMouseButtonClicked())
+    end);
+
+    hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
+        self:handleTooltipUpdate(frame)
+    end)
 
     if IsInGuild() then
         -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
@@ -420,6 +446,11 @@ function addon.fixGp()
 end
 
 
+---@param players table
+---@param mode 'ep' | 'gp' | 'both'
+---@param value number
+---@param reason string
+---@param percent boolean
 function addon:modifyEpgp(players, mode, value, reason, percent)
     if not ns.cfg.lmMode then
         ns.print('Cannot modify EPGP when loot master mode is off')
@@ -455,9 +486,14 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
 end
 
 
+---@param charGuid string
+---@param mode 'ep' | 'gp'
+---@param value number
+---@param reason string
+---@param percent boolean
 function addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
     if not ns.cfg.lmMode then
-        ns.print('Cannot edit EPGP when loot master mode is off')
+        ns.print('Cannot modify EPGP when loot master mode is off')
         return
     end
 
@@ -517,28 +553,13 @@ function addon.syncAltEpGp(players)
                         local altGuid = ns.Lib.getPlayerGuid(alt)
                         local altData = ns.db.standings[altGuid]
 
-                        -- local epGpMsgPart
-
                         if ns.cfg.syncAltEp then
                             altData.ep = playerData.ep
-                            -- epGpMsgPart = 'EP'
                         end
 
                         if ns.cfg.syncAltGp then
                             altData.gp = playerData.gp
-
-                            -- if epGpMsgPart then
-                            --     epGpMsgPart = epGpMsgPart .. ' and GP'
-                            -- else
-                            --     epGpMsgPart = 'GP'
-                            -- end
                         end
-
-                        -- if epGpMsgPart then
-                        --     ns.debug(
-                        --         string.format('synced %s of %s with alt %s', epGpMsgPart, alt, player
-                        --     )
-                        -- end
                     end
                 end
             end
@@ -570,28 +591,13 @@ function addon.syncAltEpGp(players)
                                         local altGuid = ns.Lib.getPlayerGuid(alt)
                                         local altData = ns.db.standings[altGuid]
 
-                                        -- local epGpMsgPart
-
                                         if ns.cfg.syncAltEp then
                                             altData.ep = playerData.ep
-                                            -- epGpMsgPart = 'EP'
                                         end
 
                                         if ns.cfg.syncAltGp then
                                             altData.gp = playerData.gp
-
-                                            -- if epGpMsgPart then
-                                            --     epGpMsgPart = epGpMsgPart .. ' and GP'
-                                            -- else
-                                            --     epGpMsgPart = 'GP'
-                                            -- end
                                         end
-
-                                        -- if epGpMsgPart then
-                                        --     ns.debug(
-                                        --         string.format('synced %s of %s with alt %s',epGpMsgPart, alt, player)
-                                        --     )
-                                        -- end
 
                                         synced:add(alt)
                                     end
@@ -993,34 +999,3 @@ function addon:handleTooltipUpdate(frame)
         end
     end
 end
-
-
-addon:RegisterChatCommand('ce', 'handleSlashCommand')
-addon:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
-addon:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
-addon:RegisterEvent('CHAT_MSG_PARTY', 'handleChatMsg')
-addon:RegisterEvent('CHAT_MSG_PARTY_LEADER', 'handleChatMsg')
-addon:RegisterEvent('CHAT_MSG_RAID', 'handleChatMsg')
-addon:RegisterEvent('CHAT_MSG_RAID_LEADER', 'handleChatMsg')
-addon:RegisterEvent('CHAT_MSG_RAID_WARNING', 'handleChatMsg')
-addon:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
-addon:RegisterEvent('CHAT_MSG_WHISPER', 'handleChatMsgWhisper')
-addon:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
-addon:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
-addon:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
-addon:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
-addon:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
-addon:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
-addon:RegisterEvent('LOOT_READY', 'handleLootReady')
-addon:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
-addon:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
-addon:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
-addon:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
-
-hooksecurefunc("HandleModifiedItemClick", function(itemLink)
-    addon:handleItemClick(itemLink, GetMouseButtonClicked())
-end);
-
-hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
-    addon:handleTooltipUpdate(frame)
-end)
