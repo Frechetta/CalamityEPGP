@@ -13,6 +13,7 @@ TestModifyEpgpSingle = {}
             }
         }
 
+        Util:loadModule('constants', ns)
         Util:loadModule('lib', ns)
         Util:loadModule('main', ns)
 
@@ -167,6 +168,7 @@ TestModifyEpgp = {}
             }
         }
 
+        Util:loadModule('constants', ns)
         Util:loadModule('lib', ns)
         Util:loadModule('main', ns)
 

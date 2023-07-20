@@ -12,6 +12,7 @@
 
 embeds.xml
 
+constants.lua
 datatypes.lua
 values.lua
 lib.lua

@@ -450,22 +450,20 @@ end
 ---@param mode 'ep' | 'gp' | 'both'
 ---@param value number
 ---@param reason string
----@param percent boolean
+---@param percent boolean?
 function addon:modifyEpgp(players, mode, value, reason, percent)
     if not ns.cfg.lmMode then
         ns.print('Cannot modify EPGP when loot master mode is off')
         return
     end
 
-    mode = string.lower(mode)
-
     for _, playerGuid in ipairs(players) do
-        if mode == 'both' or mode == 'ep' then
-            self._modifyEpgpSingle(playerGuid, 'ep', value, reason, percent)
+        if mode == ns.consts.MODE_BOTH or mode == ns.consts.MODE_EP then
+            self._modifyEpgpSingle(playerGuid, ns.consts.MODE_EP, value, reason, percent)
         end
 
-        if mode == 'both' or mode == 'gp' then
-            self._modifyEpgpSingle(playerGuid, 'gp', value, reason, percent)
+        if mode == ns.consts.MODE_BOTH or mode == ns.consts.MODE_GP then
+            self._modifyEpgpSingle(playerGuid, ns.consts.MODE_GP, value, reason, percent)
         end
     end
 
@@ -490,7 +488,7 @@ end
 ---@param mode 'ep' | 'gp'
 ---@param value number
 ---@param reason string
----@param percent boolean
+---@param percent boolean?
 function addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
     if not ns.cfg.lmMode then
         ns.print('Cannot modify EPGP when loot master mode is off')
@@ -510,7 +508,7 @@ function addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
         newValue = oldValue + value
     end
 
-    if mode == 'gp' and newValue < ns.cfg.gpBase then
+    if mode == ns.consts.MODE_GP and newValue < ns.cfg.gpBase then
         newValue = ns.cfg.gpBase
     end
 
@@ -931,7 +929,7 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
             tinsert(players, guid)
         end
 
-        self:modifyEpgp(players, 'EP', ep, reason)
+        self:modifyEpgp(players, ns.consts.MODE_EP, ep, reason)
 
         ns.printPublic(string.format('Awarded %d EP to raid for killing %s', ep, encounterName))
     end
