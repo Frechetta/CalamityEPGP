@@ -26,10 +26,10 @@ jobs:
       
       - name: Install Lua and LuaRocks
         run: |
-          apt install lua5.1
-          apt install luarocks
-          luarocks install luacheck
-          luarocks install luaunit
+          sudo apt install lua5.1
+          sudo apt install luarocks
+          sudo luarocks install luacheck
+          sudo luarocks install luaunit
 
       - name: Luacheck
         run: |
