@@ -33,6 +33,8 @@ jobs:
           sudo apt install luarocks
           sudo luarocks install luacheck
           sudo luarocks install luaunit
+          sudo luarocks install luacov
+          sudo luarocks install luacov-cobertura
 
       - name: Luacheck
         run: luacheck CalamityEPGP || true
@@ -40,8 +42,17 @@ jobs:
       - name: LuaUnit
         run: scripts/test.sh -o junit -n ut_results.xml
       
-      - name: Publish UT Report
+      - name: Publish UT report
         if: success() || failure()
         uses: mikepenz/action-junit-report@v3
         with:
           report_paths: ut_results.xml
+      
+      - name: Luacov
+        run: luacov-cobertura luacov.stats.out
+      
+      - name: Publish coverage report
+        uses: 5monkeys/cobertura-action@v13
+        with:
+          path: luacov.report.out
+          skip_covered: false
