@@ -6,4 +6,6 @@ root_dir=$(cd -- "$script_dir/.." &> /dev/null && pwd)
 
 cd "$root_dir"
 
-lua test/main.lua -v $@
+rm -f "$root_dir/luacov.stats.out"
+
+lua -lluacov test/main.lua -v $@
