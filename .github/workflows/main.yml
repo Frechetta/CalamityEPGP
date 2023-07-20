@@ -32,20 +32,14 @@ jobs:
           sudo luarocks install luaunit
 
       - name: Luacheck
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          luacheck CalamityEPGP || true
+        run: luacheck CalamityEPGP || true
       
       - name: LuaUnit
-        run: |
-          pwd
-          echo "$GITHUB_WORKSPACE"
-          cd "$GITHUB_WORKSPACE"
-          scripts/test.sh -o junit -n ut_results.xml
+        run: scripts/test.sh -o junit -n ut_results.xml
       
       - name: Upload UT Report
         if: success() || failure()
         uses: actions/upload-artifact@v3
         with:
           name: ut-results
-          path: "$GITHUB_WORKSPACE/ut_results.xml"
+          path: ut_results.xml
