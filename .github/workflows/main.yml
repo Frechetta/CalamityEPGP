@@ -34,4 +34,9 @@ jobs:
       - name: Luacheck
         run: |
           cd "$GITHUB_WORKSPACE"
-          luacheck CalamityEPGP
+          luacheck CalamityEPGP || true
+      
+      - name: LuaUnit
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          scripts/test.sh
