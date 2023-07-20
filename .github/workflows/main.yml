@@ -26,31 +26,31 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      
+
       - name: Install Lua and LuaRocks
         run: |
           sudo apt install lua5.1
           sudo apt install luarocks
           sudo luarocks install luacheck
-          sudo luarocks install luaunit
+          sudo luarocks install busted
           sudo luarocks install luacov
           sudo luarocks install luacov-cobertura
 
-      - name: Luacheck
+      - name: Static analysis
         run: luacheck CalamityEPGP || true
-      
-      - name: LuaUnit
-        run: scripts/test.sh -o junit -n ut_results.xml
-      
-      - name: Publish UT report
+
+      - name: Unit test
+        run: scripts/test.sh -o TAP > ut_results.tap
+
+      - name: Publish unit test report
         if: success() || failure()
-        uses: mikepenz/action-junit-report@v3
+        uses: pcolby/tap-summary@v1.0.1
         with:
-          report_paths: ut_results.xml
-      
-      - name: Luacov
+          path: ut_results.tap
+
+      - name: Coverage report
         run: luacov-cobertura luacov.stats.out
-      
+
       - name: Publish coverage report
         uses: 5monkeys/cobertura-action@v13
         with:
