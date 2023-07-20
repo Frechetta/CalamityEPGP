@@ -43,16 +43,14 @@ jobs:
         run: scripts/test.sh -o junit > ut_results.xml
 
       - name: Publish UT report
-        if: success() || failure()
         uses: mikepenz/action-junit-report@v3
+        if: success() || failure()
         with:
           report_paths: ut_results.xml
 
-      - name: Coverage report
-        run: luacov-cobertura luacov.stats.out
-
       - name: Publish coverage report
         uses: 5monkeys/cobertura-action@v13
+        if: success() || failure()
         with:
           path: luacov.report.out
           skip_covered: false
