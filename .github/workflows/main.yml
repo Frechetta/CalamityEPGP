@@ -40,13 +40,11 @@ jobs:
         run: luacheck CalamityEPGP || true
 
       - name: Unit test
-        run: scripts/test.sh -o TAP > ut_results.tap
+        run: scripts/test.sh -o TAP > ut_results.tap; ls -la
 
       - name: Publish unit test report
         if: success() || failure()
         uses: pcolby/tap-summary@v1.0.1
-        with:
-          path: ut_results.tap
 
       - name: Coverage report
         run: luacov-cobertura luacov.stats.out
