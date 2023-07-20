@@ -56,3 +56,4 @@ jobs:
         with:
           path: luacov.report.out
           skip_covered: false
+          minimum_coverage: 0
