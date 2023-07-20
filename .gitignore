@@ -1,3 +1,4 @@
 *.zip
 .env
 settings.json
+luacov*
