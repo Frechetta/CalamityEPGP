@@ -37,9 +37,8 @@ jobs:
       - name: LuaUnit
         run: scripts/test.sh -o junit -n ut_results.xml
       
-      - name: Upload UT Report
+      - name: Publish UT Report
         if: success() || failure()
-        uses: actions/upload-artifact@v3
+        uses: mikepenz/action-junit-report@v3
         with:
-          name: ut-results
-          path: ut_results.xml
+          report_paths: ut_results.xml
