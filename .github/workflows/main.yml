@@ -46,7 +46,7 @@ jobs:
         if: success() || failure()
         uses: pcolby/tap-summary@v1.0.1
         with:
-          path: ut_results.tap
+          path: "*.tap"
 
       - name: Coverage report
         run: luacov-cobertura luacov.stats.out
