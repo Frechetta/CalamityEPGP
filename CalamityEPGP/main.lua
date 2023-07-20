@@ -907,6 +907,15 @@ function addon:handleUiInfoMessage(_, _, msg)
 end
 
 
+---@diagnostic disable-next-line: duplicate-doc-param
+---@param _ any
+---@param encounterId number
+---@param encounterName string
+---@diagnostic disable-next-line: duplicate-doc-param
+---@param _ any
+---@diagnostic disable-next-line: duplicate-doc-param
+---@param _ any
+---@param success number
 function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
     if not self.useForRaid or
             success ~= 1 then

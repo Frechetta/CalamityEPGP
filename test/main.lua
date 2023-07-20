@@ -20,7 +20,7 @@ function Addon:Print(msg)
     table.insert(self.printed, msg)
 end
 
-LibStub = function(_)
+LibStub = function(_, _)
     local Lib = {}
     function Lib:NewAddon(...)
         return Addon:new()
