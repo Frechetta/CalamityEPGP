@@ -1,4 +1,4 @@
-LU = require('luaunit')
+-- LU = require('luaunit')
 Util = require('test.util')
 
 -- MOCK --
@@ -43,6 +43,6 @@ function C_Timer.After(_, func)
     func()
 end
 
-require('test.test-main')
+-- require('test.test-main')
 
-os.exit(LU.LuaUnit.run())
+-- os.exit(LU.LuaUnit.run())

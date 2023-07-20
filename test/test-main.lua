@@ -1,9 +1,24 @@
+require('test.setup')
+
 local patch = Util.patch
 
 
-TestModifyEpgpSingle = {}
-    function TestModifyEpgpSingle:setUp()
-        local ns = {
+describe('modifyEpgpSingle', function()
+    local ns
+    local addon
+
+    local charGuid
+    local reason
+
+    local initialEp
+    local initialGp
+
+    local expectedPrinted
+    local expectedNewEp
+    local expectedNewGp
+
+    before_each(function()
+        ns = {
             cfg = {
                 lmMode = true,
                 gpBase = 250,
@@ -17,147 +32,157 @@ TestModifyEpgpSingle = {}
         Util:loadModule('lib', ns)
         Util:loadModule('main', ns)
 
-        self.ns = ns
-        self.addon = ns.addon
+        addon = ns.addon
 
-        self.charGuid = '0'
-        self.reason = 'stuff: stuff'
+        charGuid = '0'
+        reason = 'stuff: stuff'
 
-        self.initialEp = nil
-        self.initialGp = nil
+        initialEp = nil
+        initialGp = nil
 
-        self.expectedPrinted = {}
-        self.expectedNewEp = nil
-        self.expectedNewGp = nil
-    end
+        expectedPrinted = {}
+        expectedNewEp = nil
+        expectedNewGp = nil
+    end)
 
-    function TestModifyEpgpSingle:doIt(mode, value, percent)
-        self.ns.db.standings[self.charGuid] = {
+    local doIt = function(mode, value, percent)
+        ns.db.standings[charGuid] = {
             name = 'p1',
-            ep = self.initialEp,
-            gp = self.initialGp,
+            ep = initialEp,
+            gp = initialGp,
         }
 
-        self.addon._modifyEpgpSingle(self.charGuid, mode, value, self.reason, percent)
+        addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
 
-        LU.assertEquals(self.addon.printed, self.expectedPrinted)
-        LU.assertEquals(self.ns.db.standings[self.charGuid].ep, self.expectedNewEp)
-        LU.assertEquals(self.ns.db.standings[self.charGuid].gp, self.expectedNewGp)
+        assert.same(expectedPrinted, addon.printed)
+        assert.same(expectedNewEp, ns.db.standings[charGuid].ep)
+        assert.same(expectedNewGp, ns.db.standings[charGuid].gp)
     end
 
-    function TestModifyEpgpSingle:testLmModeOff()
-        self.ns.cfg.lmMode = false
+    it('should return when LM mode is off', function()
+        ns.cfg.lmMode = false
 
-        self.expectedPrinted = {'Cannot modify EPGP when loot master mode is off'}
+        expectedPrinted = {'Cannot modify EPGP when loot master mode is off'}
 
-        self:doIt()
-    end
+        doIt()
+    end)
 
-    function TestModifyEpgpSingle:testPosEp()
-        self.initialEp = 100
-        self.initialGp = 300
+    it('should add EP', function()
+        initialEp = 100
+        initialGp = 300
 
-        self.expectedNewEp = 150
-        self.expectedNewGp = 300
+        expectedNewEp = 150
+        expectedNewGp = 300
 
-        self:doIt('ep', 50, false)
-    end
+        doIt('ep', 50, false)
+    end)
 
-    function TestModifyEpgpSingle:testNegEp()
-        self.initialEp = 100
-        self.initialGp = 300
+    it('should substract EP', function()
+        initialEp = 100
+        initialGp = 300
 
-        self.expectedNewEp = 90
-        self.expectedNewGp = 300
+        expectedNewEp = 90
+        expectedNewGp = 300
 
-        self:doIt('ep', -10, false)
-    end
+        doIt('ep', -10, false)
+    end)
 
-    function TestModifyEpgpSingle:testPosGp()
-        self.initialEp = 100
-        self.initialGp = 300
+    it('should add GP', function()
+        initialEp = 100
+        initialGp = 300
 
-        self.expectedNewEp = 100
-        self.expectedNewGp = 350
+        expectedNewEp = 100
+        expectedNewGp = 350
 
-        self:doIt('gp', 50, false)
-    end
+        doIt('gp', 50, false)
+    end)
 
-    function TestModifyEpgpSingle:testNegGp()
-        self.initialEp = 100
-        self.initialGp = 300
+    it('should substract GP', function()
+        initialEp = 100
+        initialGp = 300
 
-        self.expectedNewEp = 100
-        self.expectedNewGp = 290
+        expectedNewEp = 100
+        expectedNewGp = 290
 
-        self:doIt('gp', -10, false)
-    end
+        doIt('gp', -10, false)
+    end)
 
-    function TestModifyEpgpSingle:testNegGpBelowMin()
-        self.initialEp = 100
-        self.initialGp = 300
+    it('should not let GP go below min', function()
+        initialEp = 100
+        initialGp = 300
 
-        self.expectedNewEp = 100
-        self.expectedNewGp = self.ns.cfg.gpBase
+        expectedNewEp = 100
+        expectedNewGp = ns.cfg.gpBase
 
-        self:doIt('gp', -100, false)
-    end
+        doIt('gp', -100, false)
+    end)
 
-    function TestModifyEpgpSingle:testPosPercEp()
-        self.initialEp = 150
-        self.initialGp = 300
+    it('should add EP %', function()
+        initialEp = 150
+        initialGp = 300
 
-        self.expectedNewEp = 165
-        self.expectedNewGp = 300
+        expectedNewEp = 165
+        expectedNewGp = 300
 
-        self:doIt('ep', 10, true)
-    end
+        doIt('ep', 10, true)
+    end)
 
-    function TestModifyEpgpSingle:testNegPercEp()
-        self.initialEp = 150
-        self.initialGp = 300
+    it('should subtract EP %', function()
+        initialEp = 150
+        initialGp = 300
 
-        self.expectedNewEp = 135
-        self.expectedNewGp = 300
+        expectedNewEp = 135
+        expectedNewGp = 300
 
-        self:doIt('ep', -10, true)
-    end
+        doIt('ep', -10, true)
+    end)
 
-    function TestModifyEpgpSingle:testPosPercGp()
-        self.initialEp = 150
-        self.initialGp = 300
+    it('should add GP %', function()
+        initialEp = 150
+        initialGp = 300
 
-        self.expectedNewEp = 150
-        self.expectedNewGp = 330
+        expectedNewEp = 150
+        expectedNewGp = 330
 
-        self:doIt('gp', 10, true)
-    end
+        doIt('gp', 10, true)
+    end)
 
-    function TestModifyEpgpSingle:testNegPercGp()
-        self.initialEp = 150
-        self.initialGp = 300
+    it('should subtract GP %', function()
+        initialEp = 150
+        initialGp = 300
 
-        self.expectedNewEp = 150
-        self.expectedNewGp = 270
+        expectedNewEp = 150
+        expectedNewGp = 270
 
-        self:doIt('gp', -10, true)
-    end
+        doIt('gp', -10, true)
+    end)
 
-    function TestModifyEpgpSingle:testNegPercGpBelowMin()
-        self.initialEp = 150
-        self.initialGp = 300
+    it('should not let GP go below min %', function()
+        initialEp = 150
+        initialGp = 300
 
-        self.expectedNewEp = 150
-        self.expectedNewGp = self.ns.cfg.gpBase
+        expectedNewEp = 150
+        expectedNewGp = ns.cfg.gpBase
 
-        self:doIt('gp', -50, true)
-    end
--- end of TestModifyEpgpSingle
+        doIt('gp', -50, true)
+    end)
+end)
 
 
-TestModifyEpgp = {}
-    function TestModifyEpgp:setUp()
-        local ns = {
+describe('modifyEpgp', function()
+    local ns
+    local addon
+
+    local modifyEpgpSingleMock
+    local syncAltEpGpMock
+
+    local reason
+
+    local expectedPrinted
+    local expectedCalls
+
+    before_each(function()
+        ns = {
             cfg = {
                 lmMode = true,
                 gpBase = 250,
@@ -172,16 +197,15 @@ TestModifyEpgp = {}
         Util:loadModule('lib', ns)
         Util:loadModule('main', ns)
 
-        self.ns = ns
-        self.addon = ns.addon
+        addon = ns.addon
 
         ns.Lib.hash = patch(function() return 0 end)
 
-        self.modifyEpgpSingleMock = patch()
-        self.addon._modifyEpgpSingle = self.modifyEpgpSingleMock
+        modifyEpgpSingleMock = patch()
+        addon._modifyEpgpSingle = modifyEpgpSingleMock
 
-        self.syncAltEpGpMock = patch()
-        self.addon.syncAltEpGp = self.syncAltEpGpMock
+        syncAltEpGpMock = patch()
+        addon.syncAltEpGp = syncAltEpGpMock
 
         ns.MainWindow = {}
         ns.MainWindow.refresh = patch()
@@ -192,118 +216,135 @@ TestModifyEpgp = {}
         ns.Comm = {}
         ns.Comm.sendUpdate = patch()
 
-        self.reason = 'stuff: stuff'
+        reason = 'stuff: stuff'
 
-        self.expectedPrinted = {}
-        self.expectedCalls = {}
-    end
+        expectedPrinted = {}
+        expectedCalls = {}
+    end)
 
-    function TestModifyEpgp:doIt(players, mode, value, percent)
-        self.addon:modifyEpgp(players, mode, value, self.reason, percent)
+    local doIt = function(players, mode, value, percent)
+        addon:modifyEpgp(players, mode, value, reason, percent)
 
-        LU.assertEquals(self.addon.printed, self.expectedPrinted)
-        LU.assertEquals(self.modifyEpgpSingleMock.calls, self.expectedCalls)
+        assert.same(expectedPrinted, addon.printed)
+        assert.same(expectedCalls, modifyEpgpSingleMock.calls)
 
         local expectedSyncAltGpCalls = players and {{players}} or {}
-        LU.assertEquals(self.syncAltEpGpMock.calls, expectedSyncAltGpCalls)
+        assert.same(expectedSyncAltGpCalls, syncAltEpGpMock.calls)
     end
 
-    function TestModifyEpgp:testLmModeOff()
-        self.ns.cfg.lmMode = false
+    it('should return when LM mode is off', function()
+        ns.cfg.lmMode = false
 
-        self.expectedPrinted = {'Cannot modify EPGP when loot master mode is off'}
+        expectedPrinted = {'Cannot modify EPGP when loot master mode is off'}
 
-        self:doIt()
-    end
+        doIt()
+    end)
 
-    function TestModifyEpgp:testZeroPlayers()
-        self:doIt({}, 'ep', 0, false)
-    end
+    it('no players', function()
+        doIt({}, 'ep', 0, false)
+    end)
 
-    function TestModifyEpgp:testOnePlayerEp()
+    it('one player EP', function()
         local players = {'1'}
 
-        self.expectedCalls = {
-            {'1', 'ep', 50, self.reason, false}
+        expectedCalls = {
+            {'1', 'ep', 50, reason, false}
         }
 
-        self:doIt(players, 'ep', 50, false)
-    end
+        doIt(players, 'ep', 50, false)
+    end)
 
-    function TestModifyEpgp:testOnePlayerGp()
+    it('one player GP', function()
         local players = {'1'}
 
-        self.expectedCalls = {
-            {'1', 'gp', 50, self.reason, false}
+        expectedCalls = {
+            {'1', 'gp', 50, reason, false}
         }
 
-        self:doIt(players, 'gp', 50, false)
-    end
+        doIt(players, 'gp', 50, false)
+    end)
 
-    function TestModifyEpgp:testOnePlayerBoth()
+    it('one player both', function()
         local players = {'1'}
 
-        self.expectedCalls = {
-            {'1', 'ep', 50, self.reason, false},
-            {'1', 'gp', 50, self.reason, false},
+        expectedCalls = {
+            {'1', 'ep', 50, reason, false},
+            {'1', 'gp', 50, reason, false},
         }
 
-        self:doIt(players, 'both', 50, false)
-    end
+        doIt(players, 'both', 50, false)
+    end)
 
-    function TestModifyEpgp:testMulPlayerEp()
+    it('multiple players EP', function()
         local players = {'1', '2'}
 
-        self.expectedCalls = {
-            {'1', 'ep', 50, self.reason, false},
-            {'2', 'ep', 50, self.reason, false},
+        expectedCalls = {
+            {'1', 'ep', 50, reason, false},
+            {'2', 'ep', 50, reason, false},
         }
 
-        self:doIt(players, 'ep', 50, false)
-    end
+        doIt(players, 'ep', 50, false)
+    end)
 
-    function TestModifyEpgp:testMulPlayerGp()
+    it('multiple players GP', function()
         local players = {'1', '2'}
 
-        self.expectedCalls = {
-            {'1', 'gp', 50, self.reason, false},
-            {'2', 'gp', 50, self.reason, false},
+        expectedCalls = {
+            {'1', 'gp', 50, reason, false},
+            {'2', 'gp', 50, reason, false},
         }
 
-        self:doIt(players, 'gp', 50, false)
-    end
+        doIt(players, 'gp', 50, false)
+    end)
 
-    function TestModifyEpgp:testMulPlayerBoth()
+    it('multiple players both', function()
         local players = {'1', '2'}
 
-        self.expectedCalls = {
-            {'1', 'ep', 50, self.reason, false},
-            {'1', 'gp', 50, self.reason, false},
-            {'2', 'ep', 50, self.reason, false},
-            {'2', 'gp', 50, self.reason, false},
+        expectedCalls = {
+            {'1', 'ep', 50, reason, false},
+            {'1', 'gp', 50, reason, false},
+            {'2', 'ep', 50, reason, false},
+            {'2', 'gp', 50, reason, false},
         }
 
-        self:doIt(players, 'both', 50, false)
-    end
+        doIt(players, 'both', 50, false)
+    end)
 
-    function TestModifyEpgp:testMulPlayerPerc()
+    it('multiple players %', function()
         local players = {'1', '2'}
 
-        self.expectedCalls = {
-            {'1', 'ep', -10, self.reason, true},
-            {'1', 'gp', -10, self.reason, true},
-            {'2', 'ep', -10, self.reason, true},
-            {'2', 'gp', -10, self.reason, true},
+        expectedCalls = {
+            {'1', 'ep', -10, reason, true},
+            {'1', 'gp', -10, reason, true},
+            {'2', 'ep', -10, reason, true},
+            {'2', 'gp', -10, reason, true},
         }
 
-        self:doIt(players, 'both', -10, true)
-    end
--- end of TestModifyEpgp
+        doIt(players, 'both', -10, true)
+    end)
+end)
 
 
-TestHandleEncounterEnd = {}
-    function TestHandleEncounterEnd:setUp()
-        local ns = {
+describe('handleEncounterEnd', function()
+    local ns
+    local addon
+
+    local encounterNames
+
+    local confirmWindowMsg
+    local confirmWindowShowMock
+
+    local modifyEpgpMock
+
+    local success
+
+    local expectedPrinted
+    local expectedConfirmWindowMsg
+    local expectedProceedCalled
+    local expectedModifyEpgpCalls
+
+    before_each(function()
+        ns = {
             cfg = {
                 encounterEp = {
                     e1 = 1,
@@ -318,96 +359,95 @@ TestHandleEncounterEnd = {}
         Util:loadModule('lib', ns)
         Util:loadModule('main', ns)
 
-        self.ns = ns
-        self.addon = ns.addon
+        addon = ns.addon
 
-        self.encounterNames = {
+        encounterNames = {
             e1 = 'E1',
             e2 = 'E2',
             e3 = 'E3',
         }
 
-        self.confirmWindowMsg = nil
-        self.confirmWindowShowMock = patch(function(_, msg, func)
-            self.confirmWindowMsg = msg
+        confirmWindowMsg = nil
+        confirmWindowShowMock = patch(function(_, msg, func)
+            confirmWindowMsg = msg
             func()
         end)
 
         ns.ConfirmWindow = {}
-        ns.ConfirmWindow.show = self.confirmWindowShowMock
+        ns.ConfirmWindow.show = confirmWindowShowMock
 
-        self.addon.raidRoster = ns.List:new({'1', '2'})
+        addon.raidRoster = ns.List:new({'1', '2'})
 
         ns.Lib.getPlayerGuid = patch(function(player) return 'g' .. player end)
 
         ns.printedPublic = {}
         ns.printPublic = patch(function(msg, _) table.insert(ns.printPublic, msg) end)
 
-        self.modifyEpgpMock = patch(nil, true)
-        self.addon.modifyEpgp = self.modifyEpgpMock
+        modifyEpgpMock = patch(nil, true)
+        addon.modifyEpgp = modifyEpgpMock
 
-        self.addon.useForRaid = true
-        self.success = 1
+        addon.useForRaid = true
+        success = 1
 
-        self.expectedPrinted = {}
-        self.expectedConfirmWindowMsg = nil
-        self.expectedProceedCalled = false
-        self.expectedModifyEpgpCalls = {}
-    end
+        expectedPrinted = {}
+        expectedConfirmWindowMsg = nil
+        expectedProceedCalled = false
+        expectedModifyEpgpCalls = {}
+    end)
 
-    function TestHandleEncounterEnd:doIt(encounterId)
+    local doIt = function(encounterId)
         local encounterName
         if encounterId ~= nil then
-            encounterName = self.encounterNames[encounterId]
+            encounterName = encounterNames[encounterId]
         end
 
-        self.addon:handleEncounterEnd(nil, encounterId, encounterName, nil, nil, self.success)
+        addon:handleEncounterEnd(nil, encounterId, encounterName, nil, nil, success)
 
-        LU.assertEquals(self.addon.printed, self.expectedPrinted)
-        LU.assertEquals(self.confirmWindowMsg, self.expectedConfirmWindowMsg)
-        LU.assertEquals(self.confirmWindowShowMock.called, self.expectedProceedCalled)
-        LU.assertEquals(self.modifyEpgpMock.calls, self.expectedModifyEpgpCalls)
+        assert.same(expectedPrinted, addon.printed)
+        assert.same(expectedConfirmWindowMsg, confirmWindowMsg)
+        assert.same(expectedProceedCalled, confirmWindowShowMock.called)
+        assert.same(expectedModifyEpgpCalls, modifyEpgpMock.calls)
     end
 
-    function TestHandleEncounterEnd:testUseForRaidOffFail()
-        self.addon.useForRaid = false
-        self.success = 0
+    it('useForRaid off, fail', function()
+        addon.useForRaid = false
+        success = 0
 
-        self:doIt()
-    end
+        doIt()
+    end)
 
-    function TestHandleEncounterEnd:testUseForRaidOffSuccess()
-        self.addon.useForRaid = false
-        self.success = 1
+    it('useForRaid off, success', function()
+        addon.useForRaid = false
+        success = 1
 
-        self:doIt()
-    end
+        doIt()
+    end)
 
-    function TestHandleEncounterEnd:testUseForRaidOnFail()
-        self.addon.useForRaid = true
-        self.success = 0
+    it('useForRaid on, fail', function()
+        addon.useForRaid = true
+        success = 0
 
-        self:doIt()
-    end
+        doIt()
+    end)
 
-    function TestHandleEncounterEnd:testNoEncounter()
-        self.expectedPrinted = {'Encounter "E3" (e3) not in encounters table!'}
-        self:doIt('e3')
-    end
+    it('no encounter', function()
+        expectedPrinted = {'Encounter "E3" (e3) not in encounters table!'}
+        doIt('e3')
+    end)
 
-    function TestHandleEncounterEnd:testEncounter1()
-        self.expectedConfirmWindowMsg = 'Award 1 EP to raid for killing E1?'
-        self.expectedProceedCalled = true
-        self.expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)'}}
+    it('encounter 1', function()
+        expectedConfirmWindowMsg = 'Award 1 EP to raid for killing E1?'
+        expectedProceedCalled = true
+        expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)'}}
 
-        self:doIt('e1')
-    end
+        doIt('e1')
+    end)
 
-    function TestHandleEncounterEnd:testEncounter2()
-        self.expectedConfirmWindowMsg = 'Award 2 EP to raid for killing E2?'
-        self.expectedProceedCalled = true
-        self.expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)'}}
+    it('encounter 2', function()
+        expectedConfirmWindowMsg = 'Award 2 EP to raid for killing E2?'
+        expectedProceedCalled = true
+        expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)'}}
 
-        self:doIt('e2')
-    end
--- end of TestHandleEncounterEnd
+        doIt('e2')
+    end)
+end)

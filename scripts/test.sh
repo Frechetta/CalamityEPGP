@@ -8,4 +8,4 @@ cd "$root_dir"
 
 rm -f "$root_dir/luacov.stats.out"
 
-lua -lluacov test/main.lua -v $@
+busted --shuffle $@
