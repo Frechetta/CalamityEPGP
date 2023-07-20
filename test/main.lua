@@ -38,6 +38,11 @@ UnitGUID = function(_)
     return '0'
 end
 
+C_Timer = {}
+function C_Timer.After(_, func)
+    func()
+end
+
 require('test.test-main')
 
 os.exit(LU.LuaUnit.run())

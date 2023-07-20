@@ -31,14 +31,14 @@ TestModifyEpgpSingle = {}
         self.expectedNewGp = nil
     end
 
-    function TestModifyEpgpSingle:doIt(mode, vaLUe, percent)
+    function TestModifyEpgpSingle:doIt(mode, value, percent)
         self.ns.db.standings[self.charGuid] = {
             name = 'p1',
             ep = self.initialEp,
             gp = self.initialGp,
         }
 
-        self.addon._modifyEpgpSingle(self.charGuid, mode, vaLUe, self.reason, percent)
+        self.addon._modifyEpgpSingle(self.charGuid, mode, value, self.reason, percent)
 
         LU.assertEquals(self.addon.printed, self.expectedPrinted)
         LU.assertEquals(self.ns.db.standings[self.charGuid].ep, self.expectedNewEp)
@@ -198,8 +198,8 @@ TestModifyEpgp = {}
         self.expectedCalls = {}
     end
 
-    function TestModifyEpgp:doIt(players, mode, vaLUe, percent)
-        self.addon:modifyEpgp(players, mode, vaLUe, self.reason, percent)
+    function TestModifyEpgp:doIt(players, mode, value, percent)
+        self.addon:modifyEpgp(players, mode, value, self.reason, percent)
 
         LU.assertEquals(self.addon.printed, self.expectedPrinted)
         LU.assertEquals(self.modifyEpgpSingleMock.calls, self.expectedCalls)
@@ -299,3 +299,115 @@ TestModifyEpgp = {}
         self:doIt(players, 'both', -10, true)
     end
 -- end of TestModifyEpgp
+
+
+TestHandleEncounterEnd = {}
+    function TestHandleEncounterEnd:setUp()
+        local ns = {
+            cfg = {
+                encounterEp = {
+                    e1 = 1,
+                    e2 = 2,
+                },
+            },
+        }
+
+        Util:loadModule('constants', ns)
+        Util:loadModule('values', ns)
+        Util:loadModule('datatypes', ns)
+        Util:loadModule('lib', ns)
+        Util:loadModule('main', ns)
+
+        self.ns = ns
+        self.addon = ns.addon
+
+        self.encounterNames = {
+            e1 = 'E1',
+            e2 = 'E2',
+            e3 = 'E3',
+        }
+
+        self.confirmWindowMsg = nil
+        self.confirmWindowShowMock = patch(function(_, msg, func)
+            self.confirmWindowMsg = msg
+            func()
+        end)
+
+        ns.ConfirmWindow = {}
+        ns.ConfirmWindow.show = self.confirmWindowShowMock
+
+        self.addon.raidRoster = ns.List:new({'1', '2'})
+
+        ns.Lib.getPlayerGuid = patch(function(player) return 'g' .. player end)
+
+        ns.printedPublic = {}
+        ns.printPublic = patch(function(msg, _) table.insert(ns.printPublic, msg) end)
+
+        self.modifyEpgpMock = patch(nil, true)
+        self.addon.modifyEpgp = self.modifyEpgpMock
+
+        self.addon.useForRaid = true
+        self.success = 1
+
+        self.expectedPrinted = {}
+        self.expectedConfirmWindowMsg = nil
+        self.expectedProceedCalled = false
+        self.expectedModifyEpgpCalls = {}
+    end
+
+    function TestHandleEncounterEnd:doIt(encounterId)
+        local encounterName
+        if encounterId ~= nil then
+            encounterName = self.encounterNames[encounterId]
+        end
+
+        self.addon:handleEncounterEnd(nil, encounterId, encounterName, nil, nil, self.success)
+
+        LU.assertEquals(self.addon.printed, self.expectedPrinted)
+        LU.assertEquals(self.confirmWindowMsg, self.expectedConfirmWindowMsg)
+        LU.assertEquals(self.confirmWindowShowMock.called, self.expectedProceedCalled)
+        LU.assertEquals(self.modifyEpgpMock.calls, self.expectedModifyEpgpCalls)
+    end
+
+    function TestHandleEncounterEnd:testUseForRaidOffFail()
+        self.addon.useForRaid = false
+        self.success = 0
+
+        self:doIt()
+    end
+
+    function TestHandleEncounterEnd:testUseForRaidOffSuccess()
+        self.addon.useForRaid = false
+        self.success = 1
+
+        self:doIt()
+    end
+
+    function TestHandleEncounterEnd:testUseForRaidOnFail()
+        self.addon.useForRaid = true
+        self.success = 0
+
+        self:doIt()
+    end
+
+    function TestHandleEncounterEnd:testNoEncounter()
+        self.expectedPrinted = {'Encounter "E3" (e3) not in encounters table!'}
+        self:doIt('e3')
+    end
+
+    function TestHandleEncounterEnd:testEncounter1()
+        self.expectedConfirmWindowMsg = 'Award 1 EP to raid for killing E1?'
+        self.expectedProceedCalled = true
+        self.expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)'}}
+
+        self:doIt('e1')
+    end
+
+    function TestHandleEncounterEnd:testEncounter2()
+        self.expectedConfirmWindowMsg = 'Award 2 EP to raid for killing E2?'
+        self.expectedProceedCalled = true
+        self.expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)'}}
+
+        self:doIt('e2')
+    end
+-- end of TestHandleEncounterEnd

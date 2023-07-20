@@ -9,29 +9,51 @@ end
 
 local Mock = {}
 
-function Mock:new(newFunc)
+function Mock:new(newFunc, ignoreFirstArg)
     local o = {}
     setmetatable(o, self)
     self.__index = self
 
+    o.called = false
+    o.callNum = 0
     o.calls = {}
 
     if newFunc == nil then
         newFunc = function() end
     end
 
-    o.func = newFunc
+    if ignoreFirstArg == nil then
+        ignoreFirstArg = false
+    end
+
+    o._func = newFunc
+    o._ignoreFirstArg = ignoreFirstArg
 
     return o
 end
 
 function Mock:__call(...)
-    table.insert(self.calls, {...})
-    return self.func(...)
+    self.called = true
+    self.callNum = self.callNum + 1
+
+    local rawArgs = {...}
+    local args = {}
+    if self._ignoreFirstArg then
+        for i = 2, #rawArgs do
+            local arg = rawArgs[i]
+            table.insert(args, arg)
+        end
+    else
+        args = rawArgs
+    end
+
+    table.insert(self.calls, args)
+
+    return self._func(...)
 end
 
-function Util.patch(newFunc)
-    return Mock:new(newFunc)
+function Util.patch(newFunc, ignoreFirstArg)
+    return Mock:new(newFunc, ignoreFirstArg)
 end
 
 return Util
