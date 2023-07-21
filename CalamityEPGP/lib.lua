@@ -187,7 +187,7 @@ function Lib.getGp(itemLink)
         return
     end
 
-    local _, _, rarity, ilvl, _, _, _, _, slot, _, _ = GetItemInfo(itemLink)
+    local _, _, rarity, ilvl, _, _, _, _, slot, _, _ = ns.Lib.getItemInfo(itemLink)
 
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
 
@@ -421,4 +421,21 @@ function Lib.bininsert(t, value, fcomp)
     end
 
     return nil
+ end
+
+
+ function Lib.getItemInfo(itemLink)
+    local info = {GetItemInfo(itemLink)}
+
+    local attempts = 0
+    while #info == 0 do
+        attempts = attempts + 1
+        if attempts >= 10 then
+            break
+        end
+
+        info = {GetItemInfo(itemLink)}
+    end
+
+    return unpack(info)
  end

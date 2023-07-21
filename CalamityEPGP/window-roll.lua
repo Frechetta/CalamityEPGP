@@ -97,7 +97,7 @@ function RollWindow:show(itemLink, duration)
         RollWindow.mainFrame.osButton:Disable()
     end
 
-    local _, _, _, _, _, _, _, _, _, itemTexture, _ = GetItemInfo(itemLink)
+    local _, _, _, _, _, _, _, _, _, itemTexture, _ = ns.Lib.getItemInfo(itemLink)
 
     self.mainFrame.timerBar = ns.addon.candy:New(
         'Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar',

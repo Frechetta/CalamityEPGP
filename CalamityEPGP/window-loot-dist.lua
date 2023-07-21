@@ -245,7 +245,7 @@ function LootDistWindow:show(itemLink)
         return
     end
 
-    local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
+    local _, _, _, _, _, _, _, _, _, texture, _ = ns.Lib.getItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
     self.mainFrame.itemIcon:SetScript('OnEnter', function()
@@ -646,7 +646,7 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
         self.markAsToTrade(itemLink, awardee)
 	end
 
-    local itemName = GetItemInfo(itemLink)
+    local itemName = ns.Lib.getItemInfo(itemLink)
 
     if rollType ~= nil then
         -- add gp
@@ -837,17 +837,23 @@ function LootDistWindow:successfulAward(itemLink, player)
         end
     end
 
-    local awardedItems = ns.db.loot.awarded[itemLink][player]
+    local awardedPlayers = ns.db.loot.awarded[itemLink]
+    if awardedPlayers == nil then
+        return
+    end
 
-    if awardedItems ~= nil then
-        for _, awardedItem in ipairs(awardedItems) do
-            ns.debug(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
-            if not awardedItem.given then
-                ns.debug('---- set given')
-                awardedItem.given = true
-                awardedItem.givenTime = time()
-                return
-            end
+    local awardedItems = awardedPlayers[player]
+    if awardedItems == nil then
+        return
+    end
+
+    for _, awardedItem in ipairs(awardedItems) do
+        ns.debug(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
+        if not awardedItem.given then
+            ns.debug('---- set given')
+            awardedItem.given = true
+            awardedItem.givenTime = time()
+            return
         end
     end
 end

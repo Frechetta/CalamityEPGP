@@ -25,6 +25,10 @@ function List:new(items)
     return o
 end
 
+function List:contains(item)
+    return ns.Lib.contains(self._list, item)
+end
+
 function List:iter(reverse)
     if not reverse then
         local i = 1

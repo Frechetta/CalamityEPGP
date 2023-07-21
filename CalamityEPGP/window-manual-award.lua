@@ -132,7 +132,7 @@ end
 function ManualAwardWindow:show(itemLink)
     self:createWindow()
 
-    local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
+    local _, _, _, _, _, _, _, _, _, texture, _ = ns.Lib.getItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
     self.mainFrame.itemIcon:SetScript('OnEnter', function()
