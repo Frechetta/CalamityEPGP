@@ -34,6 +34,7 @@ jobs:
           sudo luarocks install luacheck
           sudo luarocks install busted
           sudo luarocks install luacov
+          sudo luarocks install luacov-html
           sudo luarocks install luacov-cobertura
 
       - name: Static analysis
