@@ -1,21 +1,12 @@
-require('test.setup')
-
-local patch = Util.patch
+loadfile('test/setup.lua')(spy, stub, mock)
 
 
 describe('modifyEpgpSingle', function()
     local ns
     local addon
 
-    local charGuid
-    local reason
-
-    local initialEp
-    local initialGp
-
-    local expectedPrinted
-    local expectedNewEp
-    local expectedNewGp
+    local charGuid = '0'
+    local reason = 'stuff: stuff'
 
     before_each(function()
         ns = {
@@ -33,138 +24,125 @@ describe('modifyEpgpSingle', function()
         Util:loadModule('main', ns)
 
         addon = ns.addon
-
-        charGuid = '0'
-        reason = 'stuff: stuff'
-
-        initialEp = nil
-        initialGp = nil
-
-        expectedPrinted = {}
-        expectedNewEp = nil
-        expectedNewGp = nil
     end)
 
-    local doIt = function(mode, value, percent)
+    local initEpGp = function(initialEp, initialGp)
         ns.db.standings[charGuid] = {
             name = 'p1',
             ep = initialEp,
             gp = initialGp,
         }
-
-        addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
-
-        assert.same(expectedPrinted, addon.printed)
-        assert.same(expectedNewEp, ns.db.standings[charGuid].ep)
-        assert.same(expectedNewGp, ns.db.standings[charGuid].gp)
     end
 
     it('should return when LM mode is off', function()
         ns.cfg.lmMode = false
 
-        expectedPrinted = {'Cannot modify EPGP when loot master mode is off'}
+        addon._modifyEpgpSingle()
 
-        doIt()
+        assert.spy(addon.Print).was.called(1)
+        assert.spy(addon.Print).was.called_with(addon, 'Cannot modify EPGP when loot master mode is off')
+        assert.is.falsy(ns.db.standings[charGuid])
+        assert.is.falsy(ns.db.standings[charGuid])
     end)
 
     it('should add EP', function()
-        initialEp = 100
-        initialGp = 300
+        initEpGp(100, 300)
 
-        expectedNewEp = 150
-        expectedNewGp = 300
+        addon._modifyEpgpSingle(charGuid, 'ep', 50, reason, false)
 
-        doIt('ep', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(150, ns.db.standings[charGuid].ep)
+        assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
     it('should substract EP', function()
-        initialEp = 100
-        initialGp = 300
+        initEpGp(100, 300)
 
-        expectedNewEp = 90
-        expectedNewGp = 300
+        addon._modifyEpgpSingle(charGuid, 'ep', -10, reason, false)
 
-        doIt('ep', -10, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(90, ns.db.standings[charGuid].ep)
+        assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
     it('should add GP', function()
-        initialEp = 100
-        initialGp = 300
+        initEpGp(100, 300)
 
-        expectedNewEp = 100
-        expectedNewGp = 350
+        addon._modifyEpgpSingle(charGuid, 'gp', 50, reason, false)
 
-        doIt('gp', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(100, ns.db.standings[charGuid].ep)
+        assert.same(350, ns.db.standings[charGuid].gp)
     end)
 
     it('should substract GP', function()
-        initialEp = 100
-        initialGp = 300
+        initEpGp(100, 300)
 
-        expectedNewEp = 100
-        expectedNewGp = 290
+        addon._modifyEpgpSingle(charGuid, 'gp', -10, reason, false)
 
-        doIt('gp', -10, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(100, ns.db.standings[charGuid].ep)
+        assert.same(290, ns.db.standings[charGuid].gp)
     end)
 
     it('should not let GP go below min', function()
-        initialEp = 100
-        initialGp = 300
+        initEpGp(100, 300)
 
-        expectedNewEp = 100
-        expectedNewGp = ns.cfg.gpBase
+        addon._modifyEpgpSingle(charGuid, 'gp', -200, reason, false)
 
-        doIt('gp', -100, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(100, ns.db.standings[charGuid].ep)
+        assert.same(ns.cfg.gpBase, ns.db.standings[charGuid].gp)
     end)
 
     it('should add EP %', function()
-        initialEp = 150
-        initialGp = 300
+        initEpGp(150, 300)
 
-        expectedNewEp = 165
-        expectedNewGp = 300
+        addon._modifyEpgpSingle(charGuid, 'ep', 10, reason, true)
 
-        doIt('ep', 10, true)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(165, ns.db.standings[charGuid].ep)
+        assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
     it('should subtract EP %', function()
-        initialEp = 150
-        initialGp = 300
+        initEpGp(150, 300)
 
-        expectedNewEp = 135
-        expectedNewGp = 300
+        addon._modifyEpgpSingle(charGuid, 'ep', -10, reason, true)
 
-        doIt('ep', -10, true)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(135, ns.db.standings[charGuid].ep)
+        assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
     it('should add GP %', function()
-        initialEp = 150
-        initialGp = 300
+        initEpGp(150, 300)
 
-        expectedNewEp = 150
-        expectedNewGp = 330
+        addon._modifyEpgpSingle(charGuid, 'gp', 10, reason, true)
 
-        doIt('gp', 10, true)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(150, ns.db.standings[charGuid].ep)
+        assert.same(330, ns.db.standings[charGuid].gp)
     end)
 
     it('should subtract GP %', function()
-        initialEp = 150
-        initialGp = 300
+        initEpGp(150, 300)
 
-        expectedNewEp = 150
-        expectedNewGp = 270
+        addon._modifyEpgpSingle(charGuid, 'gp', -10, reason, true)
 
-        doIt('gp', -10, true)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(150, ns.db.standings[charGuid].ep)
+        assert.same(270, ns.db.standings[charGuid].gp)
     end)
 
     it('should not let GP go below min %', function()
-        initialEp = 150
-        initialGp = 300
+        initEpGp(150, 300)
 
-        expectedNewEp = 150
-        expectedNewGp = ns.cfg.gpBase
+        addon._modifyEpgpSingle(charGuid, 'gp', -50, reason, true)
 
-        doIt('gp', -50, true)
+        assert.spy(addon.Print).was.not_called()
+        assert.same(150, ns.db.standings[charGuid].ep)
+        assert.same(ns.cfg.gpBase, ns.db.standings[charGuid].gp)
     end)
 end)
 
@@ -173,13 +151,7 @@ describe('modifyEpgp', function()
     local ns
     local addon
 
-    local modifyEpgpSingleMock
-    local syncAltEpGpMock
-
-    local reason
-
-    local expectedPrinted
-    local expectedCalls
+    local reason = 'stuff: stuff'
 
     before_each(function()
         ns = {
@@ -194,133 +166,133 @@ describe('modifyEpgp', function()
         }
 
         Util:loadModule('constants', ns)
-        Util:loadModule('lib', ns)
         Util:loadModule('main', ns)
 
         addon = ns.addon
 
-        ns.Lib.hash = patch(function() return 0 end)
+        stub(addon, '_modifyEpgpSingle')
+        stub(addon, 'syncAltEpGp')
 
-        modifyEpgpSingleMock = patch()
-        addon._modifyEpgpSingle = modifyEpgpSingleMock
+        ns.Lib = mock({
+            hash = function() return 0 end
+        })
 
-        syncAltEpGpMock = patch()
-        addon.syncAltEpGp = syncAltEpGpMock
+        ns.MainWindow = mock({
+            refresh = function() end
+        })
 
-        ns.MainWindow = {}
-        ns.MainWindow.refresh = patch()
+        ns.HistoryWindow = mock({
+            refresh = function() end
+        })
 
-        ns.HistoryWindow = {}
-        ns.HistoryWindow.refresh = patch()
-
-        ns.Comm = {}
-        ns.Comm.sendUpdate = patch()
-
-        reason = 'stuff: stuff'
-
-        expectedPrinted = {}
-        expectedCalls = {}
+        ns.Comm = mock({
+            sendUpdate = function() end
+        })
     end)
-
-    local doIt = function(players, mode, value, percent)
-        addon:modifyEpgp(players, mode, value, reason, percent)
-
-        assert.same(expectedPrinted, addon.printed)
-        assert.same(expectedCalls, modifyEpgpSingleMock.calls)
-
-        local expectedSyncAltGpCalls = players and {{players}} or {}
-        assert.same(expectedSyncAltGpCalls, syncAltEpGpMock.calls)
-    end
 
     it('should return when LM mode is off', function()
         ns.cfg.lmMode = false
 
-        expectedPrinted = {'Cannot modify EPGP when loot master mode is off'}
+        addon:modifyEpgp()
 
-        doIt()
+        assert.spy(addon.Print).was.called(1)
+        assert.spy(addon.Print).was.called_with(addon, 'Cannot modify EPGP when loot master mode is off')
+        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.not_called()
     end)
 
     it('no players', function()
-        doIt({}, 'ep', 0, false)
+        addon:modifyEpgp({}, 'ep', 0, reason, false)
+
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.called_with({})
     end)
 
     it('one player EP', function()
         local players = {'1'}
 
-        expectedCalls = {
-            {'1', 'ep', 50, reason, false}
-        }
+        addon:modifyEpgp(players, 'ep', 50, reason, false)
 
-        doIt(players, 'ep', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(1)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
     it('one player GP', function()
         local players = {'1'}
 
-        expectedCalls = {
-            {'1', 'gp', 50, reason, false}
-        }
+        addon:modifyEpgp(players, 'gp', 50, reason, false)
 
-        doIt(players, 'gp', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(1)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
     it('one player both', function()
         local players = {'1'}
 
-        expectedCalls = {
-            {'1', 'ep', 50, reason, false},
-            {'1', 'gp', 50, reason, false},
-        }
+        addon:modifyEpgp(players, 'both', 50, reason, false)
 
-        doIt(players, 'both', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(2)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
     it('multiple players EP', function()
         local players = {'1', '2'}
 
-        expectedCalls = {
-            {'1', 'ep', 50, reason, false},
-            {'2', 'ep', 50, reason, false},
-        }
+        addon:modifyEpgp(players, 'ep', 50, reason, false)
 
-        doIt(players, 'ep', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(2)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'ep', 50, reason, false)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
     it('multiple players GP', function()
         local players = {'1', '2'}
 
-        expectedCalls = {
-            {'1', 'gp', 50, reason, false},
-            {'2', 'gp', 50, reason, false},
-        }
+        addon:modifyEpgp(players, 'gp', 50, reason, false)
 
-        doIt(players, 'gp', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(2)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'gp', 50, reason, false)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
     it('multiple players both', function()
         local players = {'1', '2'}
 
-        expectedCalls = {
-            {'1', 'ep', 50, reason, false},
-            {'1', 'gp', 50, reason, false},
-            {'2', 'ep', 50, reason, false},
-            {'2', 'gp', 50, reason, false},
-        }
+        addon:modifyEpgp(players, 'both', 50, reason, false)
 
-        doIt(players, 'both', 50, false)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(4)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'ep', 50, reason, false)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'gp', 50, reason, false)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
     it('multiple players %', function()
         local players = {'1', '2'}
 
-        expectedCalls = {
-            {'1', 'ep', -10, reason, true},
-            {'1', 'gp', -10, reason, true},
-            {'2', 'ep', -10, reason, true},
-            {'2', 'gp', -10, reason, true},
-        }
+        addon:modifyEpgp(players, 'both', -10, reason, true)
 
-        doIt(players, 'both', -10, true)
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon._modifyEpgpSingle).was.called(4)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', -10, reason, true)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', -10, reason, true)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'ep', -10, reason, true)
+        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'gp', -10, reason, true)
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 end)
 
@@ -329,19 +301,7 @@ describe('handleEncounterEnd', function()
     local ns
     local addon
 
-    local encounterNames
-
     local confirmWindowMsg
-    local confirmWindowShowMock
-
-    local modifyEpgpMock
-
-    local success
-
-    local expectedPrinted
-    local expectedConfirmWindowMsg
-    local expectedProceedCalled
-    local expectedModifyEpgpCalls
 
     before_each(function()
         ns = {
@@ -361,93 +321,88 @@ describe('handleEncounterEnd', function()
 
         addon = ns.addon
 
-        encounterNames = {
-            e1 = 'E1',
-            e2 = 'E2',
-            e3 = 'E3',
-        }
+        stub(ns, 'printPublic')
+        stub(addon, 'modifyEpgp')
 
         confirmWindowMsg = nil
-        confirmWindowShowMock = patch(function(_, msg, func)
-            confirmWindowMsg = msg
-            func()
-        end)
 
-        ns.ConfirmWindow = {}
-        ns.ConfirmWindow.show = confirmWindowShowMock
+        ns.ConfirmWindow = mock({
+            show = function(_, msg, func)
+                confirmWindowMsg = msg
+                func()
+            end
+        })
 
-        addon.raidRoster = ns.List:new({'1', '2'})
-
-        ns.Lib.getPlayerGuid = patch(function(player) return 'g' .. player end)
-
-        ns.printedPublic = {}
-        ns.printPublic = patch(function(msg, _) table.insert(ns.printPublic, msg) end)
-
-        modifyEpgpMock = patch(nil, true)
-        addon.modifyEpgp = modifyEpgpMock
+        ns.Lib = mock({
+            getPlayerGuid = function(player)
+                return 'g' .. player
+            end
+        })
 
         addon.useForRaid = true
-        success = 1
-
-        expectedPrinted = {}
-        expectedConfirmWindowMsg = nil
-        expectedProceedCalled = false
-        expectedModifyEpgpCalls = {}
+        addon.raidRoster = ns.List:new({'1', '2'})
     end)
-
-    local doIt = function(encounterId)
-        local encounterName
-        if encounterId ~= nil then
-            encounterName = encounterNames[encounterId]
-        end
-
-        addon:handleEncounterEnd(nil, encounterId, encounterName, nil, nil, success)
-
-        assert.same(expectedPrinted, addon.printed)
-        assert.same(expectedConfirmWindowMsg, confirmWindowMsg)
-        assert.same(expectedProceedCalled, confirmWindowShowMock.called)
-        assert.same(expectedModifyEpgpCalls, modifyEpgpMock.calls)
-    end
 
     it('useForRaid off, fail', function()
         addon.useForRaid = false
-        success = 0
 
-        doIt()
+        addon:handleEncounterEnd(nil, nil, nil, nil, nil, 0)
+
+        assert.spy(addon.Print).was.not_called()
+        assert.is.falsy(confirmWindowMsg)
+        assert.spy(ns.ConfirmWindow.show).was.not_called()
+        assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
     it('useForRaid off, success', function()
         addon.useForRaid = false
-        success = 1
 
-        doIt()
+        addon:handleEncounterEnd(nil, nil, nil, nil, nil, 1)
+
+        assert.spy(addon.Print).was.not_called()
+        assert.is.falsy(confirmWindowMsg)
+        assert.spy(ns.ConfirmWindow.show).was.not_called()
+        assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
     it('useForRaid on, fail', function()
         addon.useForRaid = true
-        success = 0
 
-        doIt()
+        addon:handleEncounterEnd(nil, nil, nil, nil, nil, 0)
+
+        assert.spy(addon.Print).was.not_called()
+        assert.is.falsy(confirmWindowMsg)
+        assert.spy(ns.ConfirmWindow.show).was.not_called()
+        assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
-    it('no encounter', function()
-        expectedPrinted = {'Encounter "E3" (e3) not in encounters table!'}
-        doIt('e3')
+    it('unknown encounter', function()
+        addon:handleEncounterEnd(nil, 'e3', 'E3', nil, nil, 1)
+
+        assert.spy(addon.Print).was.called(1)
+        assert.spy(addon.Print).was.called_with(addon, 'Encounter "E3" (e3) not in encounters table!')
+        assert.is.falsy(confirmWindowMsg)
+        assert.spy(ns.ConfirmWindow.show).was.not_called()
+        assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
     it('encounter 1', function()
-        expectedConfirmWindowMsg = 'Award 1 EP to raid for killing E1?'
-        expectedProceedCalled = true
-        expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)'}}
+        addon:handleEncounterEnd(nil, 'e1', 'E1', nil, nil, 1)
 
-        doIt('e1')
+        assert.spy(addon.Print).was.not_called()
+        assert.same('Award 1 EP to raid for killing E1?', confirmWindowMsg)
+        assert.spy(ns.ConfirmWindow.show).was.called(1)
+        assert.stub(addon.modifyEpgp).was.called(1)
+        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)')
     end)
 
     it('encounter 2', function()
-        expectedConfirmWindowMsg = 'Award 2 EP to raid for killing E2?'
-        expectedProceedCalled = true
-        expectedModifyEpgpCalls = {{{'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)'}}
+        addon:handleEncounterEnd(nil, 'e2', 'E2', nil, nil, 1)
 
-        doIt('e2')
+        assert.spy(addon.Print).was.not_called()
+        assert.same('Award 2 EP to raid for killing E2?', confirmWindowMsg)
+        assert.spy(ns.ConfirmWindow.show).was.called(1)
+        assert.stub(addon.modifyEpgp).was.called(1)
+        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)')
     end)
 end)

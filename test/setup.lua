@@ -1,29 +1,17 @@
--- LU = require('luaunit')
+local spy, stub, mock = ...
+
 Util = require('test.util')
 
 -- MOCK --
 SlashCmdList = {}
 NUM_CHAT_WINDOWS = 0
 
-local Addon = {}
-function Addon:new()
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
-
-    o.printed = {}
-
-    return o
-end
-
-function Addon:Print(msg)
-    table.insert(self.printed, msg)
-end
-
 LibStub = function(_, _)
     local Lib = {}
     function Lib:NewAddon(...)
-        return Addon:new()
+        return mock({
+            Print = spy.new(function(_) end)
+        })
     end
     return Lib
 end
@@ -42,7 +30,3 @@ C_Timer = {}
 function C_Timer.After(_, func)
     func()
 end
-
--- require('test.test-main')
-
--- os.exit(LU.LuaUnit.run())
