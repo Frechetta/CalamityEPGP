@@ -34,7 +34,7 @@ describe('modifyEpgpSingle', function()
         }
     end
 
-    it('should return when LM mode is off', function()
+    test('return when LM mode is off', function()
         ns.cfg.lmMode = false
 
         addon._modifyEpgpSingle()
@@ -45,7 +45,7 @@ describe('modifyEpgpSingle', function()
         assert.is.falsy(ns.db.standings[charGuid])
     end)
 
-    it('should add EP', function()
+    test('add EP', function()
         initEpGp(100, 300)
 
         addon._modifyEpgpSingle(charGuid, 'ep', 50, reason, false)
@@ -55,7 +55,7 @@ describe('modifyEpgpSingle', function()
         assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
-    it('should substract EP', function()
+    test('substract EP', function()
         initEpGp(100, 300)
 
         addon._modifyEpgpSingle(charGuid, 'ep', -10, reason, false)
@@ -65,7 +65,7 @@ describe('modifyEpgpSingle', function()
         assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
-    it('should add GP', function()
+    test('add GP', function()
         initEpGp(100, 300)
 
         addon._modifyEpgpSingle(charGuid, 'gp', 50, reason, false)
@@ -75,7 +75,7 @@ describe('modifyEpgpSingle', function()
         assert.same(350, ns.db.standings[charGuid].gp)
     end)
 
-    it('should substract GP', function()
+    test('subtract GP', function()
         initEpGp(100, 300)
 
         addon._modifyEpgpSingle(charGuid, 'gp', -10, reason, false)
@@ -85,7 +85,7 @@ describe('modifyEpgpSingle', function()
         assert.same(290, ns.db.standings[charGuid].gp)
     end)
 
-    it('should not let GP go below min', function()
+    test('don\'t let GP go below min', function()
         initEpGp(100, 300)
 
         addon._modifyEpgpSingle(charGuid, 'gp', -200, reason, false)
@@ -95,7 +95,7 @@ describe('modifyEpgpSingle', function()
         assert.same(ns.cfg.gpBase, ns.db.standings[charGuid].gp)
     end)
 
-    it('should add EP %', function()
+    test('add EP %', function()
         initEpGp(150, 300)
 
         addon._modifyEpgpSingle(charGuid, 'ep', 10, reason, true)
@@ -105,7 +105,7 @@ describe('modifyEpgpSingle', function()
         assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
-    it('should subtract EP %', function()
+    test('subtract EP %', function()
         initEpGp(150, 300)
 
         addon._modifyEpgpSingle(charGuid, 'ep', -10, reason, true)
@@ -115,7 +115,7 @@ describe('modifyEpgpSingle', function()
         assert.same(300, ns.db.standings[charGuid].gp)
     end)
 
-    it('should add GP %', function()
+    test('add GP %', function()
         initEpGp(150, 300)
 
         addon._modifyEpgpSingle(charGuid, 'gp', 10, reason, true)
@@ -125,7 +125,7 @@ describe('modifyEpgpSingle', function()
         assert.same(330, ns.db.standings[charGuid].gp)
     end)
 
-    it('should subtract GP %', function()
+    test('subtract GP %', function()
         initEpGp(150, 300)
 
         addon._modifyEpgpSingle(charGuid, 'gp', -10, reason, true)
@@ -135,7 +135,7 @@ describe('modifyEpgpSingle', function()
         assert.same(270, ns.db.standings[charGuid].gp)
     end)
 
-    it('should not let GP go below min %', function()
+    test('don\'t let GP go below min %', function()
         initEpGp(150, 300)
 
         addon._modifyEpgpSingle(charGuid, 'gp', -50, reason, true)
@@ -190,7 +190,7 @@ describe('modifyEpgp', function()
         })
     end)
 
-    it('should return when LM mode is off', function()
+    test('return when LM mode is off', function()
         ns.cfg.lmMode = false
 
         addon:modifyEpgp()
@@ -201,7 +201,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.not_called()
     end)
 
-    it('no players', function()
+    test('no players', function()
         addon:modifyEpgp({}, 'ep', 0, reason, false)
 
         assert.spy(addon.Print).was.not_called()
@@ -209,7 +209,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with({})
     end)
 
-    it('one player EP', function()
+    test('one player EP', function()
         local players = {'1'}
 
         addon:modifyEpgp(players, 'ep', 50, reason, false)
@@ -220,7 +220,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
-    it('one player GP', function()
+    test('one player GP', function()
         local players = {'1'}
 
         addon:modifyEpgp(players, 'gp', 50, reason, false)
@@ -231,7 +231,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
-    it('one player both', function()
+    test('one player both', function()
         local players = {'1'}
 
         addon:modifyEpgp(players, 'both', 50, reason, false)
@@ -243,7 +243,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
-    it('multiple players EP', function()
+    test('multiple players EP', function()
         local players = {'1', '2'}
 
         addon:modifyEpgp(players, 'ep', 50, reason, false)
@@ -255,7 +255,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
-    it('multiple players GP', function()
+    test('multiple players GP', function()
         local players = {'1', '2'}
 
         addon:modifyEpgp(players, 'gp', 50, reason, false)
@@ -267,7 +267,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
-    it('multiple players both', function()
+    test('multiple players both', function()
         local players = {'1', '2'}
 
         addon:modifyEpgp(players, 'both', 50, reason, false)
@@ -281,7 +281,7 @@ describe('modifyEpgp', function()
         assert.stub(addon.syncAltEpGp).was.called_with(players)
     end)
 
-    it('multiple players %', function()
+    test('multiple players %', function()
         local players = {'1', '2'}
 
         addon:modifyEpgp(players, 'both', -10, reason, true)
@@ -343,7 +343,7 @@ describe('handleEncounterEnd', function()
         addon.raidRoster = ns.List:new({'1', '2'})
     end)
 
-    it('useForRaid off, fail', function()
+    test('useForRaid off, fail', function()
         addon.useForRaid = false
 
         addon:handleEncounterEnd(nil, nil, nil, nil, nil, 0)
@@ -354,7 +354,7 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
-    it('useForRaid off, success', function()
+    test('useForRaid off, success', function()
         addon.useForRaid = false
 
         addon:handleEncounterEnd(nil, nil, nil, nil, nil, 1)
@@ -365,7 +365,7 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
-    it('useForRaid on, fail', function()
+    test('useForRaid on, fail', function()
         addon.useForRaid = true
 
         addon:handleEncounterEnd(nil, nil, nil, nil, nil, 0)
@@ -376,7 +376,7 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
-    it('unknown encounter', function()
+    test('unknown encounter', function()
         addon:handleEncounterEnd(nil, 'e3', 'E3', nil, nil, 1)
 
         assert.spy(addon.Print).was.called(1)
@@ -386,7 +386,7 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
-    it('encounter 1', function()
+    test('encounter 1', function()
         addon:handleEncounterEnd(nil, 'e1', 'E1', nil, nil, 1)
 
         assert.spy(addon.Print).was.not_called()
@@ -396,7 +396,7 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)')
     end)
 
-    it('encounter 2', function()
+    test('encounter 2', function()
         addon:handleEncounterEnd(nil, 'e2', 'E2', nil, nil, 1)
 
         assert.spy(addon.Print).was.not_called()

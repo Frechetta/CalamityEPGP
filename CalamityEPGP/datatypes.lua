@@ -10,6 +10,8 @@ local Set = {}
 ns.Set = Set
 
 ---------------
+---@param items table
+---@return table
 function List:new(items)
     local o = {}
     setmetatable(o, self)
@@ -17,60 +19,69 @@ function List:new(items)
 
     o._list = {}
 
-    items = items or {}
-    for _, item in ipairs(items) do
-        tinsert(o._list, item)
+    if items ~= nil then
+        for _, item in ipairs(items) do
+            table.insert(o._list, item)
+        end
     end
 
     return o
 end
 
+---@param item any
+---@return boolean
 function List:contains(item)
     return ns.Lib.contains(self._list, item)
 end
 
-function List:iter(reverse)
+---@return number
+function List:len()
+    return #self._list
+end
+
+---@param reverse boolean
+---@param enumerate boolean
+---@return function
+function List:iter(reverse, enumerate)
+    ---@type number
+    local i
+    ---@type function
+    local shouldContinue
+    ---@type function
+    local nextI
+    ---@type function
+    local index
+
     if not reverse then
-        local i = 1
-        return function()
-            if i <= self:len() then
-                local item = self:get(i)
-                i = i + 1
-                return item
-            end
-        end
+        i = 1
+        shouldContinue = function() return i <= self:len() end
+        nextI = function() return i + 1 end
+        index = function() return i - 1 end
     else
-        local i = self:len()
-        return function()
-            if i >= 1 then
-                local item = self:get(i)
-                i = i - 1
+        i = self:len()
+        shouldContinue = function() return i >= 1 end
+        nextI = function() return i - 1 end
+        index = function() return self:len() + 1 - i - 1 end
+    end
+
+    return function()
+        if shouldContinue() then
+            local item = self:get(i)
+            i = nextI()
+
+            if enumerate then
+                return index(), item
+            else
                 return item
             end
         end
     end
 end
 
+---@param reverse boolean
+---@return function
 function List:enumerate(reverse)
-    if not reverse then
-        local i = 1
-        return function()
-            if i <= self:len() then
-                local item = self:get(i)
-                i = i + 1
-                return i - 1, item
-            end
-        end
-    else
-        local i = self:len()
-        return function()
-            if i >= 1 then
-                local item = self:get(i)
-                i = i - 1
-                return self:len() + 1 - i - 1, item
-            end
-        end
-    end
+    return self:iter(reverse, true)
 end
 
 function List:clear()
@@ -78,7 +89,7 @@ function List:clear()
 end
 
 function List:append(item)
-    tinsert(self._list, item)
+    table.insert(self._list, item)
 end
 
 function List:get(index)
@@ -92,10 +103,6 @@ function List:set(index, value)
     assert(self._list[index] ~= nil, 'no item at index ' .. index)
 
     self._list[index] = value
-end
-
-function List:len()
-    return #self._list
 end
 
 function List:sort(func)
