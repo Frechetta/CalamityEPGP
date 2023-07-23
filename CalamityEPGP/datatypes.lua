@@ -112,6 +112,7 @@ function List:set(index, value)
     self._list[index] = value
 end
 
+---@param func? function
 function List:sort(func)
     table.sort(self._list, func)
 end
@@ -120,6 +121,8 @@ function List:toTable()
     return ns.Lib.deepcopy(self._list)
 end
 
+---@param value any
+---@param fcomp? function
 function List:bininsert(value, fcomp)
     ns.Lib.bininsert(self._list, value, fcomp)
 end

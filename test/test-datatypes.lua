@@ -432,4 +432,85 @@ describe('List', function()
             assert.same({6, 9, 8}, l._list)
         end)
     end)
+
+    describe('sort', function()
+        local l
+
+        before_each(function()
+            stub(table, 'sort')
+            l = List:new()
+        end)
+
+        after_each(function()
+            table.sort:revert()
+        end)
+
+        test('no func', function()
+            l:sort()
+
+            assert.stub(table.sort).was.called(1)
+            assert.stub(table.sort).was.called_with(l._list, nil)
+        end)
+
+        test('with func', function()
+            l:sort(5)
+
+            assert.stub(table.sort).was.called(1)
+            assert.stub(table.sort).was.called_with(l._list, 5)
+        end)
+    end)
+
+    describe('toTable', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('empty', function()
+            local l = List:new()
+            local t = l:toTable()
+            assert.are_not.equals(t, l._list)
+            assert.same(t, l._list)
+        end)
+
+        test('non empty', function()
+            local l = List:new({1, 2, 3})
+            local t = l:toTable()
+            assert.are_not.equals(t, l._list)
+            assert.same(t, l._list)
+        end)
+    end)
+
+    describe('sort', function()
+        local l
+
+        before_each(function()
+            ns.Lib = mock({
+                bininsert = spy.new()
+            })
+
+            l = List:new()
+        end)
+
+        after_each(function()
+            ns.Lib = nil
+        end)
+
+        test('no func', function()
+            l:bininsert(5)
+
+            assert.spy(ns.Lib.bininsert).was.called(1)
+            assert.spy(ns.Lib.bininsert).was.called_with(l._list, 5, nil)
+        end)
+
+        test('with func', function()
+            l:bininsert(5, 1)
+
+            assert.spy(ns.Lib.bininsert).was.called(1)
+            assert.spy(ns.Lib.bininsert).was.called_with(l._list, 5, 1)
+        end)
+    end)
 end)
