@@ -10,7 +10,7 @@ local Set = {}
 ns.Set = Set
 
 ---------------
----@param items table
+---@param items? table
 ---@return table
 function List:new(items)
     local o = {}
@@ -39,8 +39,8 @@ function List:len()
     return #self._list
 end
 
----@param reverse boolean
----@param enumerate boolean
+---@param reverse? boolean
+---@param enumerate? boolean
 ---@return function
 function List:iter(reverse, enumerate)
     ---@type number
@@ -78,7 +78,7 @@ function List:iter(reverse, enumerate)
     end
 end
 
----@param reverse boolean
+---@param reverse? boolean
 ---@return function
 function List:enumerate(reverse)
     return self:iter(reverse, true)
@@ -92,14 +92,21 @@ function List:append(item)
     table.insert(self._list, item)
 end
 
+---@param index number
 function List:get(index)
-    if index == -1 then
-        index = self:len()
+    if index < 0 then
+        index = self:len() + index + 1
     end
     return self._list[index]
 end
 
+---@param index number
+---@param value any
 function List:set(index, value)
+    if index < 0 then
+        index = self:len() + index + 1
+    end
+
     assert(self._list[index] ~= nil, 'no item at index ' .. index)
 
     self._list[index] = value
