@@ -3,10 +3,12 @@ loadfile('test/setup.lua')(spy, stub, mock)
 local ns = {}
 Util:loadModule('datatypes', ns)
 
+local List = ns.List
+local Set = ns.Set
+local Dict = ns.Dict
+
 
 describe('List', function()
-    local List = ns.List
-
     describe('new', function()
         test('no arg', function()
             local l = List:new()
@@ -484,7 +486,7 @@ describe('List', function()
         end)
     end)
 
-    describe('sort', function()
+    describe('bininsert', function()
         local l
 
         before_each(function()
@@ -511,6 +513,803 @@ describe('List', function()
 
             assert.spy(ns.Lib.bininsert).was.called(1)
             assert.spy(ns.Lib.bininsert).was.called_with(l._list, 5, 1)
+        end)
+    end)
+end)
+
+
+describe('Set', function()
+    describe('new', function()
+        test('no arg', function()
+            local s = Set:new()
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+
+        test('zero elements', function()
+            local s = Set:new({})
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+
+        test('one element', function()
+            local s = Set:new({1})
+            assert.same({
+                [1] = true,
+            }, s._set)
+            assert.same(1, s._len)
+        end)
+
+        test('multiple elements', function()
+            local s = Set:new({1, 5, 2})
+            assert.same({
+                [1] = true,
+                [2] = true,
+                [5] = true,
+            }, s._set)
+            assert.same(3, s._len)
+        end)
+    end)
+
+    describe('contains', function()
+        test('empty', function()
+            local s = Set:new()
+            assert.is_false(s:contains(1))
+        end)
+
+        test('one element', function()
+            local s = Set:new({1})
+            assert.is_true(s:contains(1))
+        end)
+
+        test('multiple elements 1', function()
+            local s = Set:new({1, 2, 3})
+            assert.is_true(s:contains(1))
+        end)
+
+        test('multiple elements 2', function()
+            local s = Set:new({2, 1, 3})
+            assert.is_true(s:contains(1))
+        end)
+
+        test('multiple elements 3', function()
+            local s = Set:new({2, 3, 1})
+            assert.is_true(s:contains(1))
+        end)
+
+        test('arg doesn\'t exist', function()
+            local s = Set:new({1, 2, 3})
+            assert.is_false(s:contains(4))
+        end)
+    end)
+
+    describe('len', function()
+        test('empty', function()
+            local s = Set:new()
+            assert.same(0, s:len())
+        end)
+
+        test('one element', function()
+            local s = Set:new({1})
+            assert.same(1, s:len())
+        end)
+
+        test('multiple elements', function()
+            local s = Set:new({1, 2, 3})
+            assert.same(3, s:len())
+        end)
+    end)
+
+    describe('add', function()
+        test('empty', function()
+            local s = Set:new()
+            s:add(2)
+            assert.same({
+                [2] = true
+            }, s._set)
+            assert.same(1, s._len)
+        end)
+
+        test('one element', function()
+            local s = Set:new({5})
+            s:add(3)
+            assert.same({
+                [5] = true,
+                [3] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+
+        test('different types', function()
+            local s = Set:new({5})
+            s:add('d')
+            assert.same({
+                [5] = true,
+                ['d'] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+
+        test('multiple elements', function()
+            local s = Set:new({5, 7})
+            s:add(3)
+            assert.same({
+                [5] = true,
+                [7] = true,
+                [3] = true,
+            }, s._set)
+            assert.same(3, s._len)
+        end)
+
+        test('already exists', function()
+            local s = Set:new({5, 7})
+            s:add(5)
+            assert.same({
+                [5] = true,
+                [7] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+    end)
+
+    describe('remove', function()
+        test('empty', function()
+            local s = Set:new()
+            s:remove(2)
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+
+        test('one element item exists', function()
+            local s = Set:new({5})
+            s:remove(5)
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+
+        test('one element item does not exist', function()
+            local s = Set:new({5})
+            s:remove(2)
+            assert.same({
+                [5] = true,
+            }, s._set)
+            assert.same(1, s._len)
+        end)
+
+        test('multiple elements item exists first', function()
+            local s = Set:new({5, 6, 7})
+            s:remove(5)
+            assert.same({
+                [6] = true,
+                [7] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+
+        test('multiple elements item exists middle', function()
+            local s = Set:new({5, 6, 7})
+            s:remove(6)
+            assert.same({
+                [5] = true,
+                [7] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+
+        test('multiple elements item exists last', function()
+            local s = Set:new({5, 6, 7})
+            s:remove(7)
+            assert.same({
+                [5] = true,
+                [6] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+
+        test('multiple elements item does not exist', function()
+            local s = Set:new({5, 6, 7})
+            s:remove(2)
+            assert.same({
+                [5] = true,
+                [6] = true,
+                [7] = true,
+            }, s._set)
+            assert.same(3, s._len)
+        end)
+
+        test('different types', function()
+            local s = Set:new({5, 'd', 7})
+            s:remove('d')
+            assert.same({
+                [5] = true,
+                [7] = true,
+            }, s._set)
+            assert.same(2, s._len)
+        end)
+    end)
+
+    describe('iter', function()
+        test('empty', function()
+            local s = Set:new()
+
+            local elements = {}
+            for element in s:iter() do
+                table.insert(elements, element)
+            end
+
+            assert.same({}, elements)
+        end)
+
+        test('one element', function()
+            local s = Set:new({1})
+
+            local elements = {}
+            for element in s:iter() do
+                table.insert(elements, element)
+            end
+
+            assert.same({1}, elements)
+        end)
+
+        test('multiple elements', function()
+            local s = Set:new({1, 2, 3})
+
+            local elements = {}
+            for element in s:iter() do
+                table.insert(elements, element)
+            end
+
+            assert.same({1, 2, 3}, elements)
+        end)
+
+        test('multiple elements with remove', function()
+            local s = Set:new({1, 2, 3})
+
+            s:remove(2)
+
+            local elements = {}
+            for element in s:iter() do
+                table.insert(elements, element)
+            end
+
+            assert.same({1, 3}, elements)
+        end)
+
+        test('multiple elements with add', function()
+            local s = Set:new({1, 5, 6})
+
+            s:add(4)
+
+            local elements = {}
+            for element in s:iter() do
+                table.insert(elements, element)
+            end
+
+            assert.same({1, 5, 6, 4}, elements)
+        end)
+    end)
+
+    describe('clear', function()
+        test('empty', function()
+            local s = Set:new()
+            s:clear()
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+
+        test('one element', function()
+            local s = Set:new({1})
+            s:clear()
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+
+        test('multiple elements', function()
+            local s = Set:new({1, 2, 3})
+            s:clear()
+            assert.same({}, s._set)
+            assert.same(0, s._len)
+        end)
+    end)
+
+    describe('toTable', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('empty', function()
+            local s = Set:new()
+            local t = s:toTable()
+            assert.same({}, t)
+        end)
+
+        test('non empty', function()
+            local s = Set:new({1, 2, 3})
+            local t = s:toTable()
+            assert.same({1, 2, 3}, t)
+        end)
+    end)
+
+    describe('difference', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('both empty', function()
+            local s1 = Set:new()
+            local s2 = Set:new()
+            local s = s1:difference(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('second empty', function()
+            local s1 = Set:new({5, 6, 7})
+            local s2 = Set:new()
+            local s = s1:difference(s2)
+            assert.same({
+                [5] = true,
+                [6] = true,
+                [7] = true,
+            }, s._set)
+        end)
+
+        test('first empty', function()
+            local s1 = Set:new()
+            local s2 = Set:new({5, 6, 7})
+            local s = s1:difference(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('first contains second', function()
+            local s1 = Set:new({5, 6, 7, 8})
+            local s2 = Set:new({5, 7})
+            local s = s1:difference(s2)
+            assert.same({
+                [6] = true,
+                [8] = true,
+            }, s._set)
+        end)
+
+        test('second contains first', function()
+            local s1 = Set:new({5, 7})
+            local s2 = Set:new({5, 6, 7, 8})
+            local s = s1:difference(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('some elements in common', function()
+            local s1 = Set:new({5, 6, 7, 8})
+            local s2 = Set:new({4, 5, 7, 9})
+            local s = s1:difference(s2)
+            assert.same({
+                [6] = true,
+                [8] = true,
+            }, s._set)
+        end)
+
+        test('no elements in common', function()
+            local s1 = Set:new({5, 6})
+            local s2 = Set:new({7, 8})
+            local s = s1:difference(s2)
+            assert.same({
+                [5] = true,
+                [6] = true,
+            }, s._set)
+        end)
+    end)
+end)
+
+
+describe('Dict', function()
+    describe('new', function()
+        test('no arg', function()
+            local d = Dict:new()
+
+            local expectedDict = {}
+            local expectedKeys = Set:new()
+            local expectedValues = List:new()
+            local expectedKeyToValueIndex = {}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('zero elements', function()
+            local d = Dict:new({})
+
+            local expectedDict = {}
+            local expectedKeys = Set:new()
+            local expectedValues = List:new()
+            local expectedKeyToValueIndex = {}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('one element', function()
+            local d = Dict:new({
+                a = 5,
+            })
+
+            local expectedDict = {a = 5}
+            local expectedKeys = Set:new({'a'})
+            local expectedValues = List:new({5})
+            local expectedKeyToValueIndex = {a = 1}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({
+                a = 5,
+                b = 6,
+                c = 7,
+            })
+
+            local expectedDict = {a = 5, c = 7, b = 6}
+            local expectedKeys = Set:new({'a', 'b', 'c'})
+            local expectedValues = List:new({5, 7, 6})
+            local expectedKeyToValueIndex = {a = 1, b = 3, c = 2}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+    end)
+
+    describe('contains', function()
+        test('empty', function()
+            local d = Dict:new()
+            assert.is_false(d:contains(1))
+        end)
+
+        test('one element', function()
+            local d = Dict:new({a = 1})
+            assert.is_true(d:contains('a'))
+        end)
+
+        test('multiple elements 1', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.is_true(d:contains('a'))
+        end)
+
+        test('multiple elements 2', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.is_true(d:contains('b'))
+        end)
+
+        test('multiple elements 3', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.is_true(d:contains('c'))
+        end)
+
+        test('arg doesn\'t exist', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.is_false(d:contains('d'))
+        end)
+    end)
+
+    describe('len', function()
+        test('empty', function()
+            local d = Dict:new()
+            assert.same(0, d:len())
+        end)
+
+        test('one element', function()
+            local d = Dict:new({a = 5})
+            assert.same(1, d:len())
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(3, d:len())
+        end)
+    end)
+
+    describe('isEmpty', function()
+        test('empty', function()
+            local d = Dict:new()
+            assert.is_true(d:isEmpty())
+        end)
+
+        test('one element', function()
+            local d = Dict:new({a = 5})
+            assert.is_false(d:isEmpty())
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.is_false(d:isEmpty())
+        end)
+    end)
+
+    describe('keys', function()
+        test('empty', function()
+            local d = Dict:new()
+            assert.same(Set:new(), d:keys())
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(Set:new({'a', 'b', 'c'}), d:keys())
+        end)
+    end)
+
+    describe('values', function()
+        test('empty', function()
+            local d = Dict:new()
+            assert.same(List:new(), d:values())
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(List:new({5, 7, 6}), d:values())
+        end)
+    end)
+
+    describe('get', function()
+        test('empty', function()
+            local d = Dict:new()
+            assert.same(nil, d:get('a'))
+        end)
+
+        test('one element key exists', function()
+            local d = Dict:new({a = 5})
+            assert.same(5, d:get('a'))
+        end)
+
+        test('one element key does not exist', function()
+            local d = Dict:new({a = 5})
+            assert.same(nil, d:get('c'))
+        end)
+
+        test('multiple elements 1', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(5, d:get('a'))
+        end)
+
+        test('multiple elements 2', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(6, d:get('b'))
+        end)
+
+        test('multiple elements 3', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(7, d:get('c'))
+        end)
+
+        test('multiple elements key does not exist', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            assert.same(nil, d:get(5))
+        end)
+    end)
+
+    describe('set', function()
+        test('empty', function()
+            local d = Dict:new()
+
+            d:set('a', 5)
+
+            local expectedDict = {a = 5}
+            local expectedKeys = Set:new({'a'})
+            local expectedValues = List:new({5})
+            local expectedKeyToValueIndex = {a = 1}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('one element key exists', function()
+            local d = Dict:new({a = 5})
+
+            d:set('a', 9)
+
+            local expectedDict = {a = 9}
+            local expectedKeys = Set:new({'a'})
+            local expectedValues = List:new({9})
+            local expectedKeyToValueIndex = {a = 1}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('one element key does not exist', function()
+            local d = Dict:new({a = 5})
+
+            d:set('b', 6)
+
+            local expectedDict = {a = 5, b = 6}
+            local expectedKeys = Set:new({'a', 'b'})
+            local expectedValues = List:new({5, 6})
+            local expectedKeyToValueIndex = {a = 1, b = 2}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('multiple elements key exists', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+
+            d:set('b', 9)
+
+            local expectedDict = {a = 5, c = 7, b = 9}
+            local expectedKeys = Set:new({'a', 'b', 'c'})
+            local expectedValues = List:new({5, 7, 9})
+            local expectedKeyToValueIndex = {a = 1, b = 3, c = 2}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('multiple elements key does not exist', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+
+            d:set('d', 1)
+
+            local expectedDict = {a = 5, c = 7, b = 6, d = 1}
+            local expectedKeys = Set:new({'a', 'b', 'c', 'd'})
+            local expectedValues = List:new({5, 7, 6, 1})
+            local expectedKeyToValueIndex = {a = 1, b = 3, c = 2, d = 4}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+    end)
+
+    describe('iter', function()
+        test('empty', function()
+            local d = Dict:new()
+
+            local actual = {}
+            for k, v in d:iter() do
+                actual[k] = v
+            end
+
+            assert.same({}, actual)
+        end)
+
+        test('one element', function()
+            local d = Dict:new({a = 5})
+
+            local actual = {}
+            for k, v in d:iter() do
+                actual[k] = v
+            end
+
+            assert.same({a = 5}, actual)
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+
+            local actual = {}
+            for k, v in d:iter() do
+                actual[k] = v
+            end
+
+            assert.same({a = 5, b = 6, c = 7}, actual)
+        end)
+
+        test('keys', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+
+            local keys = {}
+            for k in d:iter() do
+                table.insert(keys, k)
+            end
+
+            assert.same({'a', 'c', 'b'}, keys)
+        end)
+
+        test('values', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+
+            local values = {}
+            for _, v in d:iter() do
+                table.insert(values, v)
+            end
+
+            assert.same({5, 7, 6}, values)
+        end)
+    end)
+
+    describe('clear', function()
+        test('empty', function()
+            local d = Dict:new()
+
+            d:clear()
+
+            local expectedDict = {}
+            local expectedKeys = Set:new()
+            local expectedValues = List:new()
+            local expectedKeyToValueIndex = {}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('one element', function()
+            local d = Dict:new({a = 5})
+
+            d:clear()
+
+            local expectedDict = {}
+            local expectedKeys = Set:new()
+            local expectedValues = List:new()
+            local expectedKeyToValueIndex = {}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+
+        test('multiple elements', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+
+            d:clear()
+
+            local expectedDict = {}
+            local expectedKeys = Set:new()
+            local expectedValues = List:new()
+            local expectedKeyToValueIndex = {}
+
+            assert.same(expectedDict, d._dict)
+            assert.same(expectedKeys, d._keys)
+            assert.same(expectedValues, d._values)
+            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+    end)
+
+    describe('toTable', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('empty', function()
+            local d = Dict:new()
+            local t = d:toTable()
+            assert.are_not.equals(t, d._dict)
+            assert.same(t, d._dict)
+        end)
+
+        test('non empty', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            local t = d:toTable()
+            assert.are_not.equals(t, d._dict)
+            assert.same(t, d._dict)
         end)
     end)
 end)
