@@ -68,7 +68,7 @@ function MainWindow:createWindow()
     mainFrame.decayEpgpButton:SetPoint('LEFT', mainFrame.addEpButton, 'RIGHT', 2, 0)
     mainFrame.decayEpgpButton:SetWidth(100)
 
-    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true, false, self.handleHeaderClick, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOP', mainFrame.raidOnlyLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
@@ -83,9 +83,22 @@ function MainWindow:createWindow()
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 
-    self:refresh(true)
+    self:refresh()
 
 	return mainFrame;
+end
+
+function MainWindow:refresh()
+    if self.mainFrame == nil then
+        return
+    end
+
+    self:getData()
+    self:setData()
+end
+
+function MainWindow:setData()
+    self.mainFrame.tableFrame:setData(self.data)
 end
 
 function MainWindow:show()
@@ -110,293 +123,17 @@ function MainWindow:show()
     self.mainFrame:Show()
 end
 
-function MainWindow:refresh(initial)
-    if self.mainFrame == nil then
-        return
-    end
-
-    initial = initial or false
-
-    self:getData()
-
-    if initial then
-        self:createTable()
-    end
-
-    self:setData()
-end
-
-function MainWindow:createTable()
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-
-    -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame(
-        'ScrollFrame',
-        parent:GetName() .. 'ScrollFrame',
-        parent,
-        'UIPanelScrollFrameTemplate'
-    )
-    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
-    parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
-
-
-    local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar']
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton']
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton']
-
-    parent.scrollUpButton:ClearAllPoints()
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0)
-
-    parent.scrollDownButton:ClearAllPoints()
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, 0)
-
-    parent.scrollBar:ClearAllPoints()
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0)
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0)
-
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild)
-
-    -- Initialize header
-    parent.header = CreateFrame('Frame', nil, parent)
-    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
-    parent.header:SetHeight(10)
-    parent.header:SetPoint('RIGHT', parent.scrollBar, 'LEFT', -5, 0)
-
-    parent.header.columns = {}
-
-    for i, header in ipairs(data.header) do
-        local headerText = header[1]
-        local justify = header[2]
-
-        local column = CreateFrame('Frame', nil, parent.header)
-        column:SetHeight(parent.header:GetHeight())
-
-        local fontString = column:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        fontString:SetText(headerText)
-        fontString:SetJustifyH(justify)
-        fontString:SetTextColor(1, 1, 0)
-
-        column.fontString = fontString
-        column.textWidth = fontString:GetWrappedWidth()
-        column.maxWidth = column.textWidth
-
-        column:SetScript('OnEnter', function() fontString:SetTextColor(1, 1, 1) end)
-        column:SetScript('OnLeave', function() fontString:SetTextColor(1, 1, 0) end)
-
-        column:SetScript('OnMouseUp', function(_, button)
-            if button == 'LeftButton' then
-                MainWindow:handleHeaderClick(i)
-            end
-        end)
-
-        table.insert(parent.header.columns, column)
-    end
-
-    -- Initialize the content
-    parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
-    parent.contents:SetAllPoints(parent.scrollChild)
-
-    parent.contents.rowHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowHighlight:Hide()
-
-    parent.rows = {}
-
-    for i = 1, #data.rowsFiltered do
-        self:addRow(i)
-    end
-end
-
-function MainWindow:setData()
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    local main = ns.db.altData.altMainMapping[UnitName('player')]
-    local myChars = ns.db.altData.mainAltMapping[main]
-
-    local j = 0
-
-    for i, rowData in ipairs(data.rowsFiltered) do
-        if i > #parent.rows then
-            self:addRow(i)
-        end
-
-        local row = parent.rows[i]
-        row:Show()
-
-        row.charGuid = ns.Lib.getPlayerGuid(rowData[1])
-
-        local class = string.upper(rowData[2]):gsub(' ', '')
-        local classColorData = RAID_CLASS_COLORS[class]
-
-        for k, columnText in ipairs(rowData) do
-            local headerColumn = parent.header.columns[k]
-            local column = row.columns[k]
-
-            column:SetText(columnText)
-            column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
-
-            local text_width = column:GetWrappedWidth()
-            if (text_width > headerColumn.maxWidth) then
-                headerColumn.maxWidth = text_width
-            end
-        end
-
-        if ns.Lib.contains(myChars, rowData[1]) then
-            j = j + 1
-
-            if j > #self.myCharHighlights then
-                self:addMyCharHighlight()
-            end
-
-            local highlightFrame = self.myCharHighlights[j]
-            highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-            highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-            highlightFrame:Show()
-        end
-    end
-
-    if #parent.rows > #data.rowsFiltered then
-        for i = #data.rowsFiltered + 1, #parent.rows do
-            local row = parent.rows[i]
-            row:Hide()
-        end
-    end
-
-    if #self.myCharHighlights > j then
-        for i = j + 1, #self.myCharHighlights do
-            local highlightFrame = self.myCharHighlights[i]
-            highlightFrame:Hide()
-        end
-    end
-
-    -- Calculate column padding
-    local columnWidthTotal = 0
-    for _, column in ipairs(parent.header.columns) do
-        columnWidthTotal = columnWidthTotal + column.maxWidth
-    end
-
-    local leftover = parent.header:GetWidth() - columnWidthTotal
-    local columnPadding = leftover / #parent.header.columns
-
-    -- Finally set column widths
-    -- header
-    for i, column in ipairs(parent.header.columns) do
-        local relativeElement = parent.header
-        local relativePoint = 'LEFT'
-        local padding = 0
-        if (i > 1) then
-            relativeElement = parent.header.columns[i - 1]
-            relativePoint = 'RIGHT'
-            padding = relativeElement.padding
-        end
-
-        local xOffset = padding
-        column.padding = column.maxWidth + columnPadding - column.textWidth
-
-        if column.fontString:GetJustifyH() == 'RIGHT' then
-            xOffset = xOffset + column.maxWidth - column.textWidth
-            column.padding = columnPadding
-        end
-
-        column:SetPoint('LEFT', relativeElement, relativePoint, xOffset, 0)
-        column:SetWidth(column.textWidth)
-
-        column.fontString:SetAllPoints()
-    end
-
-    -- data
-    for _, row in ipairs(parent.rows) do
-        for i, column in ipairs(row.columns) do
-            local headerColumn = parent.header.columns[i]
-
-            local textHeight = column:GetLineHeight()
-            local verticalPadding = (row:GetHeight() - textHeight) / 2
-
-            local anchorPoint = headerColumn.fontString:GetJustifyH()
-            column:SetPoint(anchorPoint, headerColumn, anchorPoint, 0, 0)
-            column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
-        end
-    end
-end
-
-function MainWindow:addRow(index)
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    local rowHeight = 15
-
-    local row = CreateFrame('Frame', nil, parent.contents)
-
-    local yOffset = (rowHeight + 3) * (index - 1)
-
-    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-    row:SetWidth(parent.header:GetWidth())
-    row:SetHeight(rowHeight)
-
-    row.columns = {}
-
-    for _ = 1, #data.header do
-        -- We will set the size later, once we've computed the column width based on the data
-        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        column:SetPoint('CENTER', row)
-        table.insert(row.columns, column)
-    end
-
-    -- Highlight
-    row:EnableMouse()
-
-    local highlightFrame = parent.contents.rowHighlight
-
-    row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-        highlightFrame:Show()
-    end)
-
-    row:SetScript('OnLeave', function()
-        highlightFrame:Hide()
-    end)
-
-    row:SetScript('OnMouseUp', function(_, button)
-        if button == 'LeftButton' then
-            MainWindow:handleRowClick(row)
-        end
-    end)
-
-    table.insert(parent.rows, row)
-end
-
-function MainWindow:addMyCharHighlight()
-    local parent = self.mainFrame.tableFrame
-
-    local highlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = highlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(.9, .9, .9, 0.08)
-    highlightTexture:SetBlendMode('ADD')
-    highlight:Hide()
-
-    tinsert(self.myCharHighlights, highlight)
-end
-
-function MainWindow:handleHeaderClick(headerIndex)
+function MainWindow.handleHeaderClick(headerIndex)
     local order = 'ascending'
-    if self.data.sorted.columnIndex == headerIndex and self.data.sorted.order == order then
+    if MainWindow.data.sorted.columnIndex == headerIndex and MainWindow.data.sorted.order == order then
         order = 'descending'
     end
 
-    self:sortData(headerIndex, order)
-    self:setData()
+    MainWindow.data.sorted.columnIndex = headerIndex
+    MainWindow.data.sorted.order = order
+
+    MainWindow:sortData()
+    MainWindow:setData()
 end
 
 function MainWindow:handleHistoryClick()
@@ -410,7 +147,7 @@ function MainWindow:handleHistoryClick()
     ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end
 
-function MainWindow:handleRowClick(row)
+function MainWindow.handleRowClick(row)
     if not ns.addon.isOfficer or not ns.cfg.lmMode then
         return
     end
@@ -418,9 +155,12 @@ function MainWindow:handleRowClick(row)
     ns.AddEpWindow:hide()
     ns.DecayEpgpWindow:hide()
 
-    ns.ModifyEpgpWindow:show(row.columns[1]:GetText(), row.charGuid)
+    local name = row.data[1]
+    local guid = ns.Lib.getPlayerGuid(name)
 
-    ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
+    ns.ModifyEpgpWindow:show(name, guid)
+
+    ns.Lib.remove(UISpecialFrames, MainWindow.mainFrame:GetName(), true)
 end
 
 function MainWindow:handleAddEpClick()
@@ -450,9 +190,9 @@ function MainWindow:handleDecayEpgpClick()
 end
 
 function MainWindow:filterData()
-    self.data.rowsFiltered = {}
+    self.data.rows = {}
 
-    for _, row in ipairs(self.data.rows) do
+    for _, row in ipairs(self.data.rowsRaw) do
         local keep = true
         if (self.mainFrame.raidOnlyButton:GetChecked() and not ns.addon.raidRoster:contains(row[1]))
                 or (self.mainFrame.mainsOnlyButton:GetChecked()
@@ -461,27 +201,22 @@ function MainWindow:filterData()
         end
 
         if keep then
-            tinsert(self.data.rowsFiltered, row)
+            tinsert(self.data.rows, row)
         end
     end
 
     self:sortData()
 end
 
-function MainWindow:sortData(columnIndex, order)
-    if columnIndex == nil then
-        columnIndex = self.data.sorted.columnIndex
-    end
-
-    if order == nil then
-        order = self.data.sorted.order
-    end
+function MainWindow:sortData()
+    local columnIndex = self.data.sorted.columnIndex
+    local order = self.data.sorted.order
 
     if columnIndex == nil or order == nil then
         return
     end
 
-    table.sort(self.data.rowsFiltered, function(left, right)
+    table.sort(self.data.rows, function(left, right)
         if order == 'ascending' then
             return left[columnIndex] < right[columnIndex]
         else
@@ -497,6 +232,9 @@ function MainWindow:getData()
     local sorted = {}
     if self.data.sorted ~= nil and self.data.sorted.columnIndex ~= nil then
         sorted = self.data.sorted
+    else
+        sorted.columnIndex = 7
+        sorted.order = 'descending'
     end
 
     local data = {
@@ -509,8 +247,8 @@ function MainWindow:getData()
             {'GP', 'RIGHT'},
             {'PR', 'RIGHT'}
         },
+        ['rowsRaw'] = {},
         ['rows'] = {},
-        ['rowsFiltered'] = {},
         ['sorted'] = sorted,
     }
 
@@ -523,13 +261,16 @@ function MainWindow:getData()
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
             tonumber(string.format("%.3f", charData.ep / charData.gp)),
+            {
+                color = RAID_CLASS_COLORS[charData.classFileName],
+            }
         }
 
-        tinsert(data.rows, row)
+        tinsert(data.rowsRaw, row)
     end
 
     self.data = data
 
     self:filterData()
-    self:sortData(7, 'descending')
+    self:sortData()
 end

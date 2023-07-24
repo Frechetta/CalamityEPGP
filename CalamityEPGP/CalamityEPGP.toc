@@ -16,6 +16,7 @@ constants.lua
 datatypes.lua
 values.lua
 lib.lua
+Table.lua
 comm.lua
 window-confirm.lua
 window-confirm-award.lua

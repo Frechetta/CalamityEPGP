@@ -114,7 +114,7 @@ function Table:_setHeader()
         return
     end
 
-    local header = self._mainframe.header
+    local header = self._mainFrame.header
     local columns = header.columns
 
     for i, headerData in ipairs(self.data.header) do
@@ -168,6 +168,12 @@ function Table:_setRows()
     local rows = contents.rows
 
     for i, rowData in ipairs(self.data.rows) do
+        local color
+        if type(rowData[#rowData]) == 'table' then
+            local metadata = rowData[#rowData]
+            color = metadata.color
+        end
+
         local row = rows:get(i)
 
         if row == nil then
@@ -215,7 +221,9 @@ function Table:_setRows()
                 local existingFunc = row:GetScript('OnMouseUp')
 
                 row:SetScript('OnMouseUp', function(_, button)
-                    existingFunc()
+                    if existingFunc ~= nil then
+                        existingFunc()
+                    end
 
                     if button == 'LeftButton' then
                         self._rowClickCallback(row)
@@ -229,26 +237,35 @@ function Table:_setRows()
         end
 
         for k, columnText in ipairs(rowData) do
-            local headerColumn = headerColumns:get(k)
+            if type(columnText) ~= 'table' then
+                local headerColumn = headerColumns:get(k)
+                local column = row.columns:get(k)
+
+                if column == nil then
+                    column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
+                    column:SetPoint('LEFT', row)
+                    row.columns:append(column)
+                end
+
+                column:SetText(columnText)
+                column:SetJustifyH(headerColumn.text:GetJustifyH())
+
+                if color ~= nil then
+                    column:SetTextColor(color.r, color.g, color.b)
+                end
+
+                local text_width = column:GetWrappedWidth()
+                if (text_width > headerColumn.maxWidth) then
+                    headerColumn.maxWidth = text_width
+                end
+
+                column:Show()
+            end
+        end
+
+        for k = #rowData + 1, row.columns:len() do
             local column = row.columns:get(k)
-
-            if column == nil then
-                column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-                column:SetPoint('LEFT', row)
-                row.columns:append(column)
-            end
-
-            column:SetText(columnText)
-            column:SetJustifyH(headerColumn:GetJustifyH())
-
-            if row.color ~= nil then
-                column:SetTextColor(row.color.r, row.color.g, row.color.b)
-            end
-
-            local text_width = column:GetWrappedWidth()
-            if (text_width > headerColumn.maxWidth) then
-                headerColumn.maxWidth = text_width
-            end
+            column:Hide()
         end
 
         row.data = rowData
@@ -307,12 +324,12 @@ function Table:_setColumnWidths()
         for i, column in row.columns:enumerate() do
             local headerColumn = headerColumns:get(i)
 
-            -- local textHeight = column:GetLineHeight()
-            -- local verticalPadding = (row:GetHeight() - textHeight) / 2
+            local textHeight = column:GetLineHeight()
+            local verticalPadding = (row:GetHeight() - textHeight) / 2
 
-            local anchorPoint = headerColumn.text:GetJustifyH()
-            column:SetPoint(anchorPoint, headerColumn, anchorPoint, 0, 0)
-            -- column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
+            local anchorPoint = column:GetJustifyH()
+            column:SetPoint(anchorPoint, headerColumn)
+            column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
         end
     end
 end
@@ -324,5 +341,5 @@ end
 ---@param ofsX number
 ---@param ofsY number
 function Table:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
-    self.mainFrame:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
+    self._mainFrame:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
 end

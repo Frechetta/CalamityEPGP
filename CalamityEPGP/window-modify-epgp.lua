@@ -71,16 +71,16 @@ function ModifyEpgpWindow:createWindow()
     mainFrame.cancelButton:SetWidth(70)
 
     if self.mode == nil then
-        self.mode = 'EP'
+        self.mode = ns.consts.MODE_EP
     end
 
     mainFrame.epButton:SetScript('OnClick', function()
-        ModifyEpgpWindow.mode = 'EP'
+        ModifyEpgpWindow.mode = ns.consts.MODE_EP
         ModifyEpgpWindow:fillIn()
     end)
 
     mainFrame.gpButton:SetScript('OnClick', function()
-        ModifyEpgpWindow.mode = 'GP'
+        ModifyEpgpWindow.mode = ns.consts.MODE_GP
         ModifyEpgpWindow:fillIn()
     end)
 
@@ -124,7 +124,7 @@ end
 
 function ModifyEpgpWindow:fillIn()
     self.mainFrame.topLabel:SetText('Modify EP/GP for ' .. self.charName)
-    self.mainFrame.amountLabel:SetText(self.mode .. ' Amount')
+    self.mainFrame.amountLabel:SetText(string.upper(self.mode) .. ' Amount')
 end
 
 function ModifyEpgpWindow:confirm()

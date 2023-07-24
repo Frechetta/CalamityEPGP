@@ -453,18 +453,36 @@ end
 ---@param percent boolean?
 function addon:modifyEpgp(players, mode, value, reason, percent)
     if not ns.cfg.lmMode then
-        ns.print('Cannot modify EPGP when loot master mode is off')
+        error('Cannot modify EPGP when loot master mode is off')
         return
     end
+
+    if mode ~= ns.consts.MODE_EP and mode ~= ns.consts.MODE_GP and mode ~= ns.consts.MODE_BOTH then
+        error(string.format('mode (%s) is not one of allowed modes', mode))
+        return
+    end
+
+    if #players == 0 then
+        ns.print('Won\'t modify EP/GP for 0 players')
+        return
+    end
+
+    local modified = false
 
     for _, playerGuid in ipairs(players) do
         if mode == ns.consts.MODE_BOTH or mode == ns.consts.MODE_EP then
             self._modifyEpgpSingle(playerGuid, ns.consts.MODE_EP, value, reason, percent)
+            modified = true
         end
 
         if mode == ns.consts.MODE_BOTH or mode == ns.consts.MODE_GP then
             self._modifyEpgpSingle(playerGuid, ns.consts.MODE_GP, value, reason, percent)
+            modified = true
         end
+    end
+
+    if not modified then
+        return
     end
 
     self.syncAltEpGp(players)
