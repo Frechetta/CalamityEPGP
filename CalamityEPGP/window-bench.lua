@@ -35,12 +35,12 @@ function BenchWindow:createWindow()
     mainFrame.tableAvailable = ns.Table:new(mainFrame, 'Available', false, true, true, nil, self.handleRowClickAvailable)
     mainFrame.tableAvailable:SetPoint('TOP', mainFrame.TitleBg, 'BOTTOM', 0, -35)
     mainFrame.tableAvailable:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
-    mainFrame.tableAvailable:SetPoint('RIGHT', mainFrame, 'CENTER', -20, 0)
+    mainFrame.tableAvailable:SetPoint('RIGHT', mainFrame, 'CENTER', -35, 0)
     mainFrame.tableAvailable:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 10)
 
     mainFrame.tableBenched = ns.Table:new(mainFrame, 'Benched', false, true, true, nil, self.handleRowClickBenched)
     mainFrame.tableBenched:SetPoint('TOP', mainFrame.TitleBg, 'BOTTOM', 0, -35)
-    mainFrame.tableBenched:SetPoint('LEFT', mainFrame, 'CENTER', 20, 0)
+    mainFrame.tableBenched:SetPoint('LEFT', mainFrame, 'CENTER', 35, 0)
     mainFrame.tableBenched:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
     mainFrame.tableBenched:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 10)
 
@@ -52,7 +52,45 @@ function BenchWindow:createWindow()
 	mainFrame.benchedLabel:SetPoint('BOTTOM', mainFrame.tableBenched:getFrame(), 'TOP', 0, 5)
 	mainFrame.benchedLabel:SetText('Benched')
 
-    -- TODO: move buttons
+    mainFrame.benchButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.benchButton:SetText('Bench')
+    mainFrame.benchButton:SetPoint('LEFT', mainFrame.tableAvailable:getFrame(), 'RIGHT', 5, 0)
+    mainFrame.benchButton:SetPoint('RIGHT', mainFrame.tableBenched:getFrame(), 'LEFT', -5, 0)
+    mainFrame.benchButton:SetPoint('BOTTOM', mainFrame.tableAvailable:getFrame(), 'CENTER', 0, 7)
+    mainFrame.benchButton:Disable()
+
+    mainFrame.removeButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.removeButton:SetText('Remove')
+    mainFrame.removeButton:SetPoint('LEFT', mainFrame.tableAvailable:getFrame(), 'RIGHT', 5, 0)
+    mainFrame.removeButton:SetPoint('RIGHT', mainFrame.tableBenched:getFrame(), 'LEFT', -5, 0)
+    mainFrame.removeButton:SetPoint('TOP', mainFrame.tableAvailable:getFrame(), 'CENTER', 0, -7)
+    mainFrame.removeButton:Disable()
+
+    mainFrame.benchButton:SetScript('OnClick', function()
+        local player = self.playersAvailableSelected
+
+        if player == nil then
+            return
+        end
+
+        if not ns.Lib.contains(ns.db.benchedPlayers, player) then
+            tinsert(ns.db.benchedPlayers, player)
+        end
+
+        self:show()
+    end)
+
+    mainFrame.removeButton:SetScript('OnClick', function()
+        local player = self.playersBenchedSelected
+
+        if player == nil then
+            return
+        end
+
+        ns.Lib.remove(ns.db.benchedPlayers, player)
+
+        self:show()
+    end)
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 end
@@ -82,7 +120,7 @@ function BenchWindow:setData()
                 {color = RAID_CLASS_COLORS[charData.classFileName]}
             }
 
-            tinsert(dataAvailable.rows, row)
+            ns.Lib.bininsert(dataAvailable.rows, row, function(left, right) return left[1] < right[1] end)
         end
     end
 
@@ -93,7 +131,7 @@ function BenchWindow:setData()
             {color = ns.Lib.getPlayerClassColor(player)}
         }
 
-        tinsert(dataBenched.rows, row)
+        ns.Lib.bininsert(dataBenched.rows, row, function(left, right) return left[1] < right[1] end)
     end
 
     self.mainFrame.tableAvailable:setData(dataAvailable)
@@ -107,6 +145,9 @@ function BenchWindow.handleRowClickAvailable(button, row)
 
     local player = row.data[1]
     BenchWindow.playersAvailableSelected = player
+
+    BenchWindow.mainFrame.benchButton:Enable()
+    BenchWindow.mainFrame.removeButton:Disable()
 end
 
 function BenchWindow.handleRowClickBenched(button, row)
@@ -116,4 +157,7 @@ function BenchWindow.handleRowClickBenched(button, row)
 
     local player = row.data[1]
     BenchWindow.playersBenchedSelected = player
+
+    BenchWindow.mainFrame.benchButton:Disable()
+    BenchWindow.mainFrame.removeButton:Enable()
 end
