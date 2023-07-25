@@ -102,7 +102,7 @@ function MainWindow:setData()
 end
 
 function MainWindow:show()
-    if self.mainFrame == nil or not self.mainFrame:IsShown() then
+    if self.mainFrame == nil then
         return
     end
 

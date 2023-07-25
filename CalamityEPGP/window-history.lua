@@ -216,7 +216,7 @@ end
 
 
 function HistoryWindow:show()
-    if self.mainFrame == nil or not self.mainFrame:IsShown() then
+    if self.mainFrame == nil then
         return
     end
 
