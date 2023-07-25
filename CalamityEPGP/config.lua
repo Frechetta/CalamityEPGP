@@ -232,7 +232,7 @@ function Config:createAltManagementMenu()
             or not parent.editPlayerWindow:IsMouseOver()
     end
 
-    panel.tableFrame = ns.Table:new(panel, true, highlightHoverCondition, nil, nil, self.handleRowClick)
+    panel.tableFrame = ns.Table:new(panel, nil, true, highlightHoverCondition, nil, nil, self.handleRowClick)
     panel.tableFrame:SetPoint('TOPLEFT', panel.importAltMappingButton, 'BOTTOMLEFT', 5, -20)
     panel.tableFrame:SetPoint('BOTTOMRIGHT', panel.synchroniseEpCheck, 'TOPRIGHT', 0, 15)
 

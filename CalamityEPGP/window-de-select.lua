@@ -35,7 +35,7 @@ function DeSelectWindow:createWindow()
     mainFrame.cancelButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
     mainFrame.cancelButton:SetWidth(70)
 
-    mainFrame.tableFrame = ns.Table:new(mainFrame, false, true, true, nil, self.handleRowClick)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, nil, false, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame, 'TOPLEFT', 6, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -7, 0)
     mainFrame.tableFrame:SetPoint('BOTTOM', mainFrame.confirmButton, 'TOP', 0, 5)

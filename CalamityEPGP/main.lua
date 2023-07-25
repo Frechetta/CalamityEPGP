@@ -36,7 +36,8 @@ local dbDefaults = {
             toTrade = {},
             awarded = {},
         },
-        lmSettingsLastChange = -1
+        lmSettingsLastChange = -1,
+        benchedPlayers = {},
     }
 }
 

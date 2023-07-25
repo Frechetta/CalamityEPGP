@@ -7,17 +7,23 @@ ns.Table = Table
 
 
 ---@param parent Frame
+---@param name? string
 ---@param header? boolean
 ---@param highlightHoverCondition? boolean | function
 ---@param highlightClickCondition? boolean | function
 ---@param headerClickCallback? function
 ---@param rowClickCallback? function
-function Table:new(parent, header, highlightHoverCondition, highlightClickCondition, headerClickCallback, rowClickCallback)
+function Table:new(parent, name, header, highlightHoverCondition, highlightClickCondition, headerClickCallback, rowClickCallback)
     local o = {}
     setmetatable(o, self)
     self.__index = self
 
-    local mainFrame = CreateFrame('Frame', parent:GetName() .. 'TableFrame', parent)
+    local frameName = parent:GetName() .. 'Table'
+    if name ~= nil then
+        frameName = frameName .. name
+    end
+
+    local mainFrame = CreateFrame('Frame', frameName, parent)
 
     local scrollFrameYOffset = 0
     if header then
@@ -34,31 +40,32 @@ function Table:new(parent, header, highlightHoverCondition, highlightClickCondit
     mainFrame.scrollFrame:SetPoint('BOTTOMRIGHT', mainFrame)
 
     local scrollFrameName = mainFrame.scrollFrame:GetName()
-    mainFrame.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
-    mainFrame.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
-    mainFrame.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
+    mainFrame.scrollBar = _G[scrollFrameName .. 'ScrollBar']
+    mainFrame.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton']
+    mainFrame.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton']
 
-    mainFrame.scrollUpButton:ClearAllPoints();
-    mainFrame.scrollUpButton:SetPoint('TOPRIGHT', mainFrame.scrollFrame, 'TOPRIGHT', -2, 0);
+    mainFrame.scrollUpButton:ClearAllPoints()
+    mainFrame.scrollUpButton:SetPoint('TOPRIGHT', mainFrame.scrollFrame, 'TOPRIGHT', -2, 0)
 
-    mainFrame.scrollDownButton:ClearAllPoints();
-    mainFrame.scrollDownButton:SetPoint('BOTTOMRIGHT', mainFrame.scrollFrame, 'BOTTOMRIGHT', -2, -2);
+    mainFrame.scrollDownButton:ClearAllPoints()
+    mainFrame.scrollDownButton:SetPoint('BOTTOMRIGHT', mainFrame.scrollFrame, 'BOTTOMRIGHT', -2, -2)
 
-    mainFrame.scrollBar:ClearAllPoints();
-    mainFrame.scrollBar:SetPoint('TOP', mainFrame.scrollUpButton, 'BOTTOM', 0, 0);
-    mainFrame.scrollBar:SetPoint('BOTTOM', mainFrame.scrollDownButton, 'TOP', 0, 0);
+    mainFrame.scrollBar:ClearAllPoints()
+    mainFrame.scrollBar:SetPoint('TOP', mainFrame.scrollUpButton, 'BOTTOM', 0, 0)
+    mainFrame.scrollBar:SetPoint('BOTTOM', mainFrame.scrollDownButton, 'TOP', 0, 0)
 
     mainFrame.scrollChild = CreateFrame('Frame')
     mainFrame.scrollChild:SetSize(mainFrame.scrollFrame:GetWidth() - mainFrame.scrollBar:GetWidth() - 7, 1)
 
-    mainFrame.scrollFrame:SetScrollChild(mainFrame.scrollChild);
+    mainFrame.scrollFrame:SetScrollChild(mainFrame.scrollChild)
 
     -- header
+    mainFrame.header = CreateFrame('Frame', nil, mainFrame)
+    mainFrame.header:SetPoint('TOPLEFT', mainFrame, 'TOPLEFT', 2, 0)
+    mainFrame.header:SetPoint('RIGHT', mainFrame.scrollBar, 'LEFT', -7, 0)
+
     if header then
-        mainFrame.header = CreateFrame('Frame', nil, mainFrame)
-        mainFrame.header:SetPoint('TOPLEFT', mainFrame, 'TOPLEFT', 2, 0)
         mainFrame.header:SetHeight(10)
-        mainFrame.header:SetPoint('RIGHT', mainFrame.scrollBar, 'LEFT', -5, 0)
         mainFrame.header.columns = List:new()
     end
 
@@ -104,6 +111,8 @@ function Table:new(parent, header, highlightHoverCondition, highlightClickCondit
     o._headerClickCallback = headerClickCallback
     o._rowClickCallback = rowClickCallback
 
+    o._columnWidths = List:new()
+
     return o
 end
 
@@ -115,6 +124,8 @@ function Table:setData(data)
 
     self.data = data
 
+    self._columnWidths:clear()
+
     self:_setHeader()
     self:_setRows()
     self:_setColumnWidths()
@@ -122,7 +133,7 @@ end
 
 
 function Table:_setHeader()
-    if self.data.header == nil then
+    if not self._header then
         return
     end
 
@@ -150,7 +161,8 @@ function Table:_setHeader()
         column.text:SetJustifyH(justify)
 
         column.textWidth = column.text:GetWrappedWidth()
-        column.maxWidth = column.textWidth
+
+        self._columnWidths:append(column.textWidth)
 
         if self._headerClickCallback ~= nil then
             column:SetScript('OnEnter', function() column.text:SetTextColor(1, 1, 1) end)
@@ -176,6 +188,7 @@ end
 function Table:_setRows()
     local header = self._mainFrame.header
     local headerColumns = header.columns
+
     local contents = self._mainFrame.contents
     local rows = contents.rows
 
@@ -249,9 +262,10 @@ function Table:_setRows()
 
         row.metadata = metadata
 
+        local columnCount = 0
+
         for k, columnText in ipairs(rowData) do
             if type(columnText) ~= 'table' then
-                local headerColumn = headerColumns:get(k)
                 local column = row.columns:get(k)
 
                 if column == nil then
@@ -261,22 +275,33 @@ function Table:_setRows()
                 end
 
                 column:SetText(columnText)
-                column:SetJustifyH(headerColumn.text:GetJustifyH())
+
+                local textWidth = column:GetWrappedWidth()
+                local maxWidth = self._columnWidths:get(k)
+                if maxWidth == nil then
+                    maxWidth = textWidth
+                    self._columnWidths:append(maxWidth)
+                end
+                if (textWidth > maxWidth) then
+                    self._columnWidths:set(k, textWidth)
+                end
 
                 if metadata.color ~= nil then
                     column:SetTextColor(metadata.color.r, metadata.color.g, metadata.color.b)
                 end
 
-                local text_width = column:GetWrappedWidth()
-                if (text_width > headerColumn.maxWidth) then
-                    headerColumn.maxWidth = text_width
+                if headerColumns ~= nil then
+                    local headerColumn = headerColumns:get(k)
+                    column:SetJustifyH(headerColumn.text:GetJustifyH())
                 end
 
                 column:Show()
+
+                columnCount = columnCount + 1
             end
         end
 
-        for k = #rowData + 1, row.columns:len() do
+        for k = columnCount + 1, row.columns:len() do
             local column = row.columns:get(k)
             column:Hide()
         end
@@ -300,48 +325,62 @@ function Table:_setColumnWidths()
 
     -- Calculate column padding
     local columnWidthTotal = 0
-    for column in headerColumns:iter() do
-        columnWidthTotal = columnWidthTotal + column.maxWidth
+    for width in self._columnWidths:iter() do
+        columnWidthTotal = columnWidthTotal + width
     end
 
+    local columnCount = self._columnWidths:len()
+
     local leftover = header:GetWidth() - columnWidthTotal
-    local columnPadding = leftover / headerColumns:len()
+    local columnPadding = leftover / columnCount
 
     -- header
-    for i, column in headerColumns:enumerate() do
-        local relativeElement = header
-        local relativePoint = 'LEFT'
-        local padding = 0
-        if (i > 1) then
-            relativeElement = headerColumns:get(i - 1)
-            relativePoint = 'RIGHT'
-            padding = relativeElement.padding
+    if self._header then
+        for i = 1, columnCount do
+            local column = headerColumns:get(i)
+
+            local relativeElement = header
+            local relativePoint = 'LEFT'
+            local padding = 0
+            if (i > 1) then
+                relativeElement = headerColumns:get(i - 1)
+                relativePoint = 'RIGHT'
+                padding = relativeElement.padding
+            end
+
+            local xOffset = padding
+            local maxWidth = self._columnWidths:get(i)
+            column.padding = maxWidth + columnPadding - column.textWidth
+
+            if column.text:GetJustifyH() == 'RIGHT' then
+                xOffset = xOffset + maxWidth - column.textWidth
+                column.padding = columnPadding
+            end
+
+            column:SetPoint('LEFT', relativeElement, relativePoint, xOffset, 0)
+            column:SetWidth(column.textWidth)
         end
-
-        local xOffset = padding
-        column.padding = column.maxWidth + columnPadding - column.textWidth
-
-        if column.text:GetJustifyH() == 'RIGHT' then
-            xOffset = xOffset + column.maxWidth - column.textWidth
-            column.padding = columnPadding
-        end
-
-        column:SetPoint('LEFT', relativeElement, relativePoint, xOffset, 0)
-        column:SetWidth(column.textWidth)
-
-        -- column.text:SetAllPoints()
     end
 
     -- data
     for row in rows:iter() do
-        for i, column in row.columns:enumerate() do
-            local headerColumn = headerColumns:get(i)
+        for i = 1, columnCount do
+            local column = row.columns:get(i)
 
             local textHeight = column:GetLineHeight()
             local verticalPadding = (row:GetHeight() - textHeight) / 2
 
-            local anchorPoint = column:GetJustifyH()
-            column:SetPoint(anchorPoint, headerColumn)
+            local anchorPoint
+            local anchor
+            if self._header then
+                anchorPoint = column:GetJustifyH()
+                anchor = headerColumns:get(i)
+            else
+                anchorPoint = 'LEFT'
+                anchor = self._mainFrame.scrollFrame
+            end
+
+            column:SetPoint(anchorPoint, anchor)
             column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
         end
     end
@@ -355,6 +394,11 @@ end
 ---@param ofsY number
 function Table:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
     self._mainFrame:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
+end
+
+
+function Table:getFrame()
+    return self._mainFrame
 end
 
 

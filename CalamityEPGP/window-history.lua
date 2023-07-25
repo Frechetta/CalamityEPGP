@@ -33,9 +33,10 @@ function HistoryWindow:createWindow()
         return
     end
 
-    local mainFrame = CreateFrame('Frame', addonName .. '_HistoryWindow', UIParent, 'BasicFrameTemplateWithInset');
-	mainFrame:SetSize(900, 500);
-	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
+    local mainFrame = CreateFrame('Frame', addonName .. '_HistoryWindow', UIParent, 'BasicFrameTemplateWithInset')
+	mainFrame:SetSize(900, 500)
+	mainFrame:SetPoint('CENTER')
+    mainFrame:SetFrameStrata('HIGH')
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
@@ -43,13 +44,11 @@ function HistoryWindow:createWindow()
     mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
-    mainFrame:SetFrameStrata('HIGH')
-
     self.mainFrame = mainFrame
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0);
-	mainFrame.title:SetText('CalamityEPGP History');
+	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
+	mainFrame.title:SetText('CalamityEPGP History')
 
     mainFrame.reasonsLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.reasonsLabel:SetText('Reason:')
@@ -145,7 +144,7 @@ function HistoryWindow:createWindow()
         HistoryWindow:setTableData()
     end)
 
-    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, nil, true, true)
     mainFrame.tableFrame:SetPoint('TOP', mainFrame.detailLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)

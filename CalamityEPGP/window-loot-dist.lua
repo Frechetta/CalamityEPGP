@@ -142,7 +142,7 @@ function LootDistWindow:createWindow()
     mainFrame.closeButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -20, 20)
     mainFrame.closeButton:SetWidth(80)
 
-    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true, true, nil, self.handleRowClick)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, nil, true, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.timerLabel, 'BOTTOMLEFT', 0, -20)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'TOPRIGHT', 0, 10)
 

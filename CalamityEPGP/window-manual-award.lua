@@ -59,7 +59,7 @@ function ManualAwardWindow:createWindow()
     mainFrame.closeButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -20, 20)
     mainFrame.closeButton:SetWidth(70)
 
-    mainFrame.tableFrame = ns.Table:new(mainFrame, false, true, true, nil, self.handleRowClick)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, nil, false, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -20)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'BOTTOMLEFT', -15, 0)
 
