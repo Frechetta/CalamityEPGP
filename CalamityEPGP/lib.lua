@@ -388,6 +388,14 @@ function Lib.bininsert(t, value, fcomp)
  end
 
 
+ function Lib.getPlayerClassColor(player)
+    local playerGuid = Lib.getPlayerGuid(player)
+    local playerData = ns.db.standings[playerGuid]
+
+    return RAID_CLASS_COLORS[playerData.classFileName]
+ end
+
+
  function Lib.getColoredText(text, color)
     if color == nil then
         return text
@@ -398,9 +406,6 @@ function Lib.bininsert(t, value, fcomp)
 
 
  function Lib.getColoredByClass(player, text)
-    local playerGuid = Lib.getPlayerGuid(player)
-    local playerData = ns.db.standings[playerGuid]
-
     local coloredText
     if text ~= nil then
         coloredText = text
@@ -408,7 +413,7 @@ function Lib.bininsert(t, value, fcomp)
         coloredText = player
     end
 
-    local classColor = RAID_CLASS_COLORS[playerData.classFileName]
+    local classColor = Lib.getPlayerClassColor(player)
     return Lib.getColoredText(coloredText, classColor)
  end
 

@@ -1,7 +1,5 @@
 local addonName, ns = ...  -- Namespace
 
-local List = ns.List
-
 local ManualAwardWindow = {
     itemLink = nil,
     selectedPlayer = nil,
@@ -61,71 +59,14 @@ function ManualAwardWindow:createWindow()
     mainFrame.closeButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -20, 20)
     mainFrame.closeButton:SetWidth(70)
 
-    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, false, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -20)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'BOTTOMLEFT', -15, 0)
 
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
     mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
 
-    self:createTable()
-
 	return mainFrame;
-end
-
-
-function ManualAwardWindow:createTable()
-    local parent = self.mainFrame.tableFrame
-
-    -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame(
-        'ScrollFrame',
-        parent:GetName() .. 'ScrollFrame',
-        parent,
-        'UIPanelScrollFrameTemplate'
-    )
-    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, 0)
-    parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
-
-    local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
-
-    parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
-
-    parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -2);
-
-    parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0);
-
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild);
-
-    -- Initialize the content
-    parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
-    parent.contents:SetAllPoints(parent.scrollChild)
-
-    parent.contents.rowHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowHighlight:Hide()
-
-    parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
-    highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowSelectedHighlight:Hide()
-
-    parent.rows = List:new()
 end
 
 
@@ -152,8 +93,6 @@ function ManualAwardWindow:show(itemLink)
 
     self.mainFrame.awardButton:Disable()
 
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
-
     self.itemLink = itemLink
     self.itemGp = ns.Lib.getGp(itemLink)
     self.selectedPlayer = nil
@@ -166,81 +105,25 @@ end
 
 
 function ManualAwardWindow:setData()
-    local parent = self.mainFrame.tableFrame
-
-    local rows = List:new()
+    local data = {
+        rows = {}
+    }
 
     for player in ns.addon.raidRoster:iter() do
-        local playerColored = ns.Lib.getColoredByClass(player)
-        rows:bininsert({player, playerColored}, function(left, right) return left[1] < right[1] end)
+        local row = {
+            player,
+            {color = ns.Lib.getPlayerClassColor(player)}
+        }
+        ns.Lib.bininsert(data.rows, row, function(left, right) return left[1] < right[1] end)
     end
 
-    local rowHeight = 15
-
-    for i, rowData in rows:enumerate() do
-        local row = parent.rows:get(i)
-
-        if row == nil then
-            row = CreateFrame('Frame', nil, parent.contents)
-
-            local yOffset = (rowHeight + 3) * (i - 1)
-
-            row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-            row:SetWidth(parent.contents:GetWidth())
-            row:SetHeight(rowHeight)
-
-            row.text = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-            row.text:SetPoint('LEFT', row, 'LEFT', 5, 0)
-
-            -- Highlight
-            row:EnableMouse()
-
-            local highlightFrame = parent.contents.rowHighlight
-
-            row:SetScript('OnEnter', function()
-                highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-                highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-                highlightFrame:Show()
-            end)
-
-            row:SetScript('OnLeave', function()
-                highlightFrame:Hide()
-            end)
-
-            row:SetScript('OnMouseUp', function(_, button)
-                if button == 'LeftButton' then
-                    ManualAwardWindow:handleRowClick(row)
-                end
-            end)
-
-            parent.rows:append(row)
-        end
-
-        row:Show()
-
-        local player = rowData[1]
-        local playerColored = rowData[2]
-
-        row.text:SetText(playerColored)
-        row.player = player
-    end
-
-    for i = rows:len() + 1, parent.rows:len() do
-        local row = parent.rows:get(i)
-        row:Hide()
-    end
+    self.mainFrame.tableFrame:setData(data)
 end
 
 
-function ManualAwardWindow:handleRowClick(row)
-    self.selectedPlayer = row.player
-
-    self.mainFrame.awardButton:Enable()
-
-    local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
-    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
-    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
-    selectedHighlightFrame:Show()
+function ManualAwardWindow.handleRowClick(row)
+    ManualAwardWindow.selectedPlayer = row.data[1]
+    ManualAwardWindow.mainFrame.awardButton:Enable()
 end
 
 
