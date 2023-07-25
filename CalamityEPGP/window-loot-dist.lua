@@ -483,7 +483,7 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
     if rollType ~= nil then
         -- add gp
         local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
-        ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, 'GP', gp, reason)
+        ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
         ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
     else
         ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
