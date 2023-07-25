@@ -190,13 +190,39 @@ describe('modifyEpgp', function()
         })
     end)
 
-    test('return when LM mode is off', function()
+    test('error when LM mode is off', function()
         ns.cfg.lmMode = false
 
-        addon:modifyEpgp()
+        assert.has_error(function() addon:modifyEpgp() end, 'Cannot modify EPGP when loot master mode is off')
 
-        assert.spy(addon.Print).was.called(1)
-        assert.spy(addon.Print).was.called_with(addon, 'Cannot modify EPGP when loot master mode is off')
+        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.not_called()
+    end)
+
+    test('error when mode is wrong 1', function()
+        assert.has_error(function() addon:modifyEpgp(nil, 'EP') end, 'Mode (EP) is not one of allowed modes')
+
+        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.not_called()
+    end)
+
+    test('error when mode is wrong 2', function()
+        assert.has_error(function() addon:modifyEpgp(nil, 'GP') end, 'Mode (GP) is not one of allowed modes')
+
+        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.not_called()
+    end)
+
+    test('error when mode is wrong 3', function()
+        assert.has_error(function() addon:modifyEpgp(nil, 'BOTH') end, 'Mode (BOTH) is not one of allowed modes')
+
+        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.not_called()
+    end)
+
+    test('error when mode is wrong 4', function()
+        assert.has_error(function() addon:modifyEpgp(nil, 'derp') end, 'Mode (derp) is not one of allowed modes')
+
         assert.stub(addon._modifyEpgpSingle).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
     end)
@@ -204,9 +230,10 @@ describe('modifyEpgp', function()
     test('no players', function()
         addon:modifyEpgp({}, 'ep', 0, reason, false)
 
-        assert.spy(addon.Print).was.not_called()
+        assert.spy(addon.Print).was.called(1)
+        assert.spy(addon.Print).was.called_with(addon, 'Won\'t modify EP/GP for 0 players')
         assert.stub(addon._modifyEpgpSingle).was.not_called()
-        assert.stub(addon.syncAltEpGp).was.called_with({})
+        assert.stub(addon.syncAltEpGp).was.not_called()
     end)
 
     test('one player EP', function()

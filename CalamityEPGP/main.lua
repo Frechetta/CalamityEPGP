@@ -458,7 +458,7 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     end
 
     if mode ~= ns.consts.MODE_EP and mode ~= ns.consts.MODE_GP and mode ~= ns.consts.MODE_BOTH then
-        error(string.format('mode (%s) is not one of allowed modes', mode))
+        error(string.format('Mode (%s) is not one of allowed modes', mode))
         return
     end
 
