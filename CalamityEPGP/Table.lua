@@ -68,24 +68,20 @@ function Table:new(parent, header, highlightHoverCondition, highlightClickCondit
     mainFrame.contents.rows = List:new()
 
     -- hover highlight
-    if highlightHoverCondition ~= nil and highlightHoverCondition ~= false then
-        mainFrame.contents.rowHighlight = CreateFrame('Frame', nil, mainFrame.contents)
-        local highlightTexture = mainFrame.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
-        highlightTexture:SetAllPoints()
-        highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-        highlightTexture:SetBlendMode('ADD')
-        mainFrame.contents.rowHighlight:Hide()
-    end
+    mainFrame.contents.rowHighlight = CreateFrame('Frame', nil, mainFrame.contents)
+    local highlightTexture = mainFrame.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
+    highlightTexture:SetBlendMode('ADD')
+    mainFrame.contents.rowHighlight:Hide()
 
     -- click highlight
-    if highlightClickCondition ~= nil and highlightClickCondition ~= false then
-        mainFrame.contents.rowSelectedHighlight = CreateFrame('Frame', nil, mainFrame.contents)
-        local highlightTexture = mainFrame.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
-        highlightTexture:SetAllPoints()
-        highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-        highlightTexture:SetBlendMode('ADD')
-        mainFrame.contents.rowSelectedHighlight:Hide()
-    end
+    mainFrame.contents.rowSelectedHighlight = CreateFrame('Frame', nil, mainFrame.contents)
+    local highlightTexture = mainFrame.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
+    highlightTexture:SetAllPoints()
+    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
+    highlightTexture:SetBlendMode('ADD')
+    mainFrame.contents.rowSelectedHighlight:Hide()
 
     o._mainFrame = mainFrame
 
@@ -114,6 +110,9 @@ end
 
 ---@param data table
 function Table:setData(data)
+    self._mainFrame.contents.rowHighlight:Hide()
+    self._mainFrame.contents.rowSelectedHighlight:Hide()
+
     self.data = data
 
     self:_setHeader()
@@ -181,7 +180,7 @@ function Table:_setRows()
     local rows = contents.rows
 
     for i, rowData in ipairs(self.data.rows) do
-        local metadata
+        local metadata = {}
         if type(rowData[#rowData]) == 'table' then
             metadata = rowData[#rowData]
         end
@@ -197,7 +196,7 @@ function Table:_setRows()
             row:SetWidth(header:GetWidth())
             row:SetHeight(rowHeight)
 
-            if self._highlightHoverCondition ~= nil then
+            if self._highlightHoverCondition ~= nil and self._highlightHoverCondition ~= false then
                 row:EnableMouse()
 
                 local rowHighlight = self._mainFrame.contents.rowHighlight
@@ -215,7 +214,7 @@ function Table:_setRows()
                 end)
             end
 
-            if self._highlightClickCondition ~= nil then
+            if self._highlightClickCondition ~= nil and self._highlightClickCondition ~= false then
                 row:EnableMouse()
 
                 local rowHighlight = self._mainFrame.contents.rowSelectedHighlight
@@ -223,7 +222,7 @@ function Table:_setRows()
                 row:SetScript('OnMouseUp', function(_, button)
                     if button == 'LeftButton' and self._highlightClickCondition() then
                         rowHighlight:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-                        rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 5, 0)
+                        rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
                         rowHighlight:Show()
                     end
                 end)
@@ -236,7 +235,7 @@ function Table:_setRows()
 
                 row:SetScript('OnMouseUp', function(_, button)
                     if existingFunc ~= nil then
-                        existingFunc()
+                        existingFunc(nil, button)
                     end
 
                     self._rowClickCallback(button, row)
@@ -356,4 +355,26 @@ end
 ---@param ofsY number
 function Table:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
     self._mainFrame:SetPoint(point, relativeTo, relativePoint, ofsX, ofsY)
+end
+
+
+function Table:clear()
+    if self._mainFrame == nil then
+        return
+    end
+
+    if self.data ~= nil then
+        local header = self.data.header
+        if header == nil then
+            header = {}
+        end
+
+        self:setData({
+            header = header,
+            rows = {},
+        })
+    end
+
+    self._mainFrame.contents.rowHighlight:Hide()
+    self._mainFrame.contents.rowSelectedHighlight:Hide()
 end

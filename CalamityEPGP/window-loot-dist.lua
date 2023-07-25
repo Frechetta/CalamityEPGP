@@ -11,6 +11,7 @@ local LootDistWindow = {
             {'Roll', 'RIGHT'},
         },
         rolls = {},
+        rows = {},
     },
     itemLink = nil,
     defaultItemIcon = 'Interface\\Icons\\INV_Misc_QuestionMark',
@@ -141,7 +142,7 @@ function LootDistWindow:createWindow()
     mainFrame.closeButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -20, 20)
     mainFrame.closeButton:SetWidth(80)
 
-    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.timerLabel, 'BOTTOMLEFT', 0, -20)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'TOPRIGHT', 0, 10)
 
@@ -152,90 +153,7 @@ function LootDistWindow:createWindow()
     mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
     mainFrame.deButton:SetScript('OnClick', function() self:disenchant() end)
 
-    self:createTable()
-
-	return mainFrame;
-end
-
-
-function LootDistWindow:createTable()
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame(
-        'ScrollFrame',
-        parent:GetName() .. 'ScrollFrame',
-        parent,
-        'UIPanelScrollFrameTemplate'
-    )
-    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
-    parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
-
-    local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
-
-    parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
-
-    parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -2);
-
-    parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0);
-
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild);
-
-    -- Header
-    parent.header = CreateFrame('Frame', nil, parent)
-    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
-    parent.header:SetHeight(10)
-    parent.header:SetPoint('RIGHT', parent.scrollBar, 'LEFT', -5, 0)
-
-    parent.header.columns = {}
-
-    local columnWidth = parent.header:GetWidth() / #data.header
-
-    for i, header in ipairs(data.header) do
-        local headerText = header[1]
-        local justify = header[2]
-
-        local xOffset = (i - 1) * columnWidth
-
-        local column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        column:SetText(headerText)
-        column:SetJustifyH(justify)
-        column:SetPoint('LEFT', parent.header, 'LEFT', xOffset, 0)
-        column:SetWidth(columnWidth)
-
-        table.insert(parent.header.columns, column)
-    end
-
-    -- Initialize the content
-    parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
-    parent.contents:SetAllPoints(parent.scrollChild)
-
-    parent.contents.rowHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowHighlight:Hide()
-
-    parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
-    highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowSelectedHighlight:Hide()
-
-    parent.rows = {}
+	return mainFrame
 end
 
 
@@ -267,7 +185,6 @@ function LootDistWindow:show(itemLink)
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
 
     self.selectedRoller = nil
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
 
     self.itemLink = itemLink
@@ -311,7 +228,6 @@ function LootDistWindow:startRoll()
     countDownFrame:Show()
 
     self.selectedRoller = nil
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
 end
@@ -377,7 +293,6 @@ end
 
 function LootDistWindow:clearRolls()
     self.selectedRoller = nil
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
 end
@@ -435,10 +350,9 @@ end
 
 
 function LootDistWindow:setData()
-    local parent = self.mainFrame.tableFrame
     local data = self.data
 
-    local rows = {}
+    data.rows = {}
 
     for roller, rollData in pairs(data.rolls) do
         local type = rollData.type
@@ -446,7 +360,7 @@ function LootDistWindow:setData()
             local roll = rollData[type]
             local pr = rollData.pr
 
-            ns.Lib.bininsert(rows, {roller, type, pr, roll}, function(left, right)
+            ns.Lib.bininsert(data.rows, {roller, type, pr, roll}, function(left, right)
                 local rollTypeLeft = left[2]
                 local rollTypeRight = right[2]
                 local prLeft = left[3]
@@ -467,97 +381,15 @@ function LootDistWindow:setData()
         end
     end
 
-    for i, rowData in ipairs(rows) do
-        if i > #parent.rows then
-            self:addRow(i)
-        end
-
-        local row = parent.rows[i]
-        row:Show()
-
-        local name = rowData[1]
-        local _, classFileName = UnitClass(name)
-        local classColorData = RAID_CLASS_COLORS[classFileName]
-
-        for j, columnText in ipairs(rowData) do
-            local column = row.columns[j]
-            column:SetText(columnText)
-            column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
-        end
-    end
-
-    if #parent.rows > #rows then
-        for i = #rows + 1, #parent.rows do
-            local row = parent.rows[i]
-            row:Hide()
-        end
-    end
+    self.mainFrame.tableFrame:setData(data)
 end
 
 
-function LootDistWindow:addRow(index)
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    local rowHeight = 15
-
-    local row = CreateFrame('Frame', nil, parent.contents)
-
-    local yOffset = (rowHeight + 3) * (index - 1)
-
-    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-    row:SetWidth(parent.header:GetWidth())
-    row:SetHeight(rowHeight)
-
-    row.columns = {}
-
-    for i, header in ipairs(data.header) do
-        local headerColumn = parent.header.columns[i]
-        local justify = header[2]
-
-        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        column:SetJustifyH(justify)
-        column:SetJustifyV('MIDDLE')
-        column:SetPoint('TOP', row)
-        column:SetPoint('LEFT', headerColumn)
-        column:SetSize(headerColumn:GetWidth(), row:GetHeight())
-
-        tinsert(row.columns, column)
+function LootDistWindow.handleRowClick(button, row)
+    if button == 'LeftButton' then
+        local charName = row.data[1]
+        LootDistWindow.selectedRoller = charName
     end
-
-    -- Highlight
-    row:EnableMouse()
-
-    local highlightFrame = parent.contents.rowHighlight
-
-    row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 5, 0)
-        highlightFrame:Show()
-    end)
-
-    row:SetScript('OnLeave', function()
-        highlightFrame:Hide()
-    end)
-
-    row:SetScript('OnMouseUp', function(_, button)
-        if button == 'LeftButton' then
-            LootDistWindow:handleRowClick(row)
-        end
-    end)
-
-    table.insert(parent.rows, row)
-end
-
-
-function LootDistWindow:handleRowClick(row)
-    local charName = row.columns[1]:GetText()
-    self.selectedRoller = charName
-
-    local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
-    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 5, 0)
-    selectedHighlightFrame:Show()
 end
 
 
