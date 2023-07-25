@@ -221,7 +221,18 @@ function Config:createAltManagementMenu()
     panel.synchroniseEpCheck = CreateFrame('CheckButton', nil, panel, 'UICheckButtonTemplate')
     panel.synchroniseEpCheck:SetPoint('LEFT', panel.synchroniseEpLabel, 'RIGHT', 5, 0)
 
-    panel.tableFrame = CreateFrame('Frame', panel:GetName() .. 'TableFrame', panel)
+    local highlightHoverCondition = function()
+        local parent = panel.tableFrame
+
+        return parent.altsWindow == nil
+            or not parent.altsWindow:IsShown()
+            or not parent.altsWindow:IsMouseOver()
+            or parent.editPlayerWindow == nil
+            or not parent.editPlayerWindow:IsShown()
+            or not parent.editPlayerWindow:IsMouseOver()
+    end
+
+    panel.tableFrame = ns.Table:new(panel, true, highlightHoverCondition, nil, nil, self.handleRowClick)
     panel.tableFrame:SetPoint('TOPLEFT', panel.importAltMappingButton, 'BOTTOMLEFT', 5, -20)
     panel.tableFrame:SetPoint('BOTTOMRIGHT', panel.synchroniseEpCheck, 'TOPRIGHT', 0, 15)
 
@@ -267,73 +278,6 @@ function Config:createAltManagementMenu()
         ns.cfg.syncAltGp = panel.synchroniseGpCheck:GetChecked()
         ns.addon.modifiedLmSettings()
     end)
-
-    self:createAltManagementTable()
-end
-
-
-function Config:createAltManagementTable()
-    local parent = self.aamPanel.tableFrame
-
-    -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame(
-        'ScrollFrame',
-        parent:GetName() .. 'ScrollFrame',
-        parent,
-        'UIPanelScrollFrameTemplate'
-    )
-    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
-    parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
-
-    local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar']
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton']
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton']
-
-    parent.scrollUpButton:ClearAllPoints()
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0)
-
-    parent.scrollDownButton:ClearAllPoints()
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -2)
-
-    parent.scrollBar:ClearAllPoints()
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0)
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0)
-
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild)
-
-    -- Initialize header
-    parent.header = CreateFrame('Frame', nil, parent)
-    parent.header:SetPoint('LEFT', parent, 'LEFT', 0, 0)
-    parent.header:SetHeight(10)
-    parent.header:SetPoint('BOTTOMRIGHT', parent.scrollUpButton, 'TOPLEFT', -7, 15)
-
-    local nameColumn = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    nameColumn:SetText('Name')
-    nameColumn:SetTextColor(1, 1, 0)
-    nameColumn:SetPoint('LEFT', parent.header, 'LEFT')
-
-    local mainAltColumn = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    mainAltColumn:SetText('Main/Alt')
-    -- mainAltColumn:SetJustifyH('RIGHT')
-    mainAltColumn:SetTextColor(1, 1, 0)
-    mainAltColumn:SetPoint('RIGHT', parent.header, 'RIGHT')
-
-    -- Initialize the content
-    parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
-    parent.contents:SetAllPoints(parent.scrollChild)
-
-    parent.contents.rows = List:new()
-
-    parent.rowHighlight = CreateFrame('Frame', nil, parent)
-    local highlightTexture = parent.rowHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.rowHighlight:Hide()
 end
 
 
@@ -344,10 +288,16 @@ function Config:setAltManagementData()
         return
     end
 
-    local rows = List:new()
+    local data = {
+        header = {
+            {'Main', 'LEFT'},
+            {'Alt', 'RIGHT'},
+        },
+        rows = {}
+    }
+
     for _, playerData in pairs(ns.db.standings) do
         local player = playerData.name
-        local playerColored = ns.Lib.getColoredByClass(player)
 
         local main_alt = 'Unknown'
         if self.mains:contains(player) then
@@ -357,90 +307,29 @@ function Config:setAltManagementData()
             main_alt = 'Alt'
         end
 
-        rows:bininsert({player, playerColored, main_alt}, function(left, right)
+        local row = {
+            player,
+            main_alt,
+            {color = RAID_CLASS_COLORS[playerData.classFileName]}
+        }
+
+        ns.Lib.bininsert(data.rows, row, function(left, right)
             return left[1] < right[1]
         end)
     end
 
-    for i, rowData in rows:enumerate() do
-        local player = rowData[1]
-        local playerColored = rowData[2]
-        local main_alt = rowData[3]
+    self.data = data
 
-        local row = parent.contents.rows:get(i)
-
-        if row == nil then
-            row = self:addAltManagementRow(i)
-            parent.contents.rows:append(row)
-        end
-
-        row.nameColumn:SetText(playerColored)
-        row.mainAltColumn:SetText(main_alt)
-
-        if main_alt == 'Unknown' then
-            row.mainAltColumn:SetTextColor(1, 0, 0)
-        else
-            row.mainAltColumn:SetTextColor(0, 1, 0)
-        end
-
-        row.player = player
-
-        row:Show()
-    end
-
-    for i = rows:len() + 1, parent.contents.rows:len() do
-        local row = parent.contents.rows:get(i)
-        row:Hide()
-    end
+    parent:setData(data)
 end
 
 
-function Config:addAltManagementRow(index)
-    local parent = self.aamPanel.tableFrame
-
-    local rowHeight = 15
-    local yOffset = (rowHeight + 3) * (index - 1)
-
-    local row = CreateFrame('Frame', nil, parent.scrollChild)
-    row:SetPoint('TOPLEFT', parent.scrollChild, 'TOPLEFT', 0, -yOffset)
-    row:SetWidth(parent.header:GetWidth())
-    row:SetHeight(rowHeight)
-
-    row.nameColumn = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    row.nameColumn:SetPoint('LEFT', row, 'LEFT', 5, 0)
-
-    row.mainAltColumn = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-    row.mainAltColumn:SetPoint('RIGHT', row, 'RIGHT', -5, 0)
-    -- row.mainAltColumn:SetJustifyH('RIGHT')
-
-    row:EnableMouse()
-
-    row:SetScript('OnEnter', function()
-        if parent.altsWindow == nil
-                or not parent.altsWindow:IsShown()
-                or not parent.altsWindow:IsMouseOver()
-                or parent.editPlayerWindow == nil
-                or not parent.editPlayerWindow:IsShown()
-                or not parent.editPlayerWindow:IsMouseOver() then
-            parent.rowHighlight:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-            parent.rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-            parent.rowHighlight:Show()
-        end
-    end)
-
-    row:SetScript('OnLeave', function()
-        parent.rowHighlight:Hide()
-    end)
-
-    row:SetScript('OnMouseUp', function(_, button)
-        if button == 'LeftButton' then
-            Config:showAltsWindow(row.player)
-        elseif button == 'RightButton' then
-            Config:showEditPlayerWindow(row.player)
-        end
-    end)
-
-    return row
+function Config.handleRowClick(button, row)
+    if button == 'LeftButton' then
+        Config:showAltsWindow(row.data[1])
+    elseif button == 'RightButton' then
+        Config:showEditPlayerWindow(row.data[1])
+    end
 end
 
 
@@ -449,7 +338,7 @@ function Config:showEditPlayerWindow(player)
         return
     end
 
-    local parent = self.aamPanel.tableFrame
+    local parent = self.aamPanel.tableFrame._mainFrame
 
     local editPlayerWindow = parent.editPlayerWindow
 
@@ -528,7 +417,7 @@ end
 
 
 function Config:showAltsWindow(player)
-    local parent = self.aamPanel.tableFrame
+    local parent = self.aamPanel.tableFrame._mainFrame
 
     local altsWindow = parent.altsWindow
 
@@ -553,7 +442,7 @@ function Config:showAltsWindow(player)
 
         altsWindow:EnableMouse()
         altsWindow:SetScript('OnEnter', function()
-            Config.aamPanel.tableFrame.rowHighlight:Hide()
+            Config.aamPanel.tableFrame._mainFrame.contents.rowHighlight:Hide()
         end)
 
         altsWindow.cellsFrame = CreateFrame('Frame', nil, altsWindow)
@@ -674,7 +563,7 @@ end
 
 
 function Config:showAltEditWindow(selectedPlayer, clickedPlayer, clickedFrame)
-    local parent = self.aamPanel.tableFrame.altsWindow
+    local parent = self.aamPanel.tableFrame._mainFrame.altsWindow
 
     local altEditWindow = parent.altEditWindow
 
@@ -770,7 +659,7 @@ end
 
 
 function Config:showAltSelector(player)
-    local parent = self.aamPanel.tableFrame.altsWindow
+    local parent = self.aamPanel.tableFrame._mainFrame.altsWindow
 
     local addAltWindow = parent.addAltWindow
 
@@ -897,7 +786,7 @@ end
 
 
 function Config:handleAltEditBoxChange()
-    local parent = self.aamPanel.tableFrame.altsWindow.addAltWindow
+    local parent = self.aamPanel.tableFrame._mainFrame.altsWindow.addAltWindow
 
     local text = parent.altEditBox:GetText()
 
@@ -909,14 +798,15 @@ end
 
 
 function Config:filterPlayers(text)
-    local playerRows = self.aamPanel.tableFrame.contents.rows
+    local rows = self.data.rows
 
     local players = List:new()
 
-    for row in playerRows:iter() do
-        local player = row.player
+    for _, row in ipairs(rows) do
+        local player = row[1]
+        local mainAlt = row[2]
 
-        if row.mainAltColumn:GetText() == 'Unknown' and string.find(string.lower(player), string.lower(text)) then
+        if mainAlt == 'Unknown' and string.find(string.lower(player), string.lower(text)) then
             local playerText = ns.Lib.getColoredByClass(player)
             players:bininsert({player, playerText}, function(left, right) return left[1] < right[1] end)
         end
@@ -929,7 +819,7 @@ end
 function Config:fillPlayers(players)
     local rowHeight = 15
 
-    local parent = self.aamPanel.tableFrame.altsWindow.addAltWindow
+    local parent = self.aamPanel.tableFrame._mainFrame.altsWindow.addAltWindow
     local playerList = parent.playerList
     local rows = playerList.rows
 

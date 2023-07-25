@@ -68,7 +68,7 @@ function MainWindow:createWindow()
     mainFrame.decayEpgpButton:SetPoint('LEFT', mainFrame.addEpButton, 'RIGHT', 2, 0)
     mainFrame.decayEpgpButton:SetWidth(100)
 
-    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true, false, self.handleHeaderClick, self.handleRowClick)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true, nil, self.handleHeaderClick, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOP', mainFrame.raidOnlyLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
@@ -102,7 +102,7 @@ function MainWindow:setData()
 end
 
 function MainWindow:show()
-    if self.mainFrame == nil then
+    if self.mainFrame == nil or not self.mainFrame:IsShown() then
         return
     end
 
@@ -147,8 +147,8 @@ function MainWindow:handleHistoryClick()
     ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end
 
-function MainWindow.handleRowClick(row)
-    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+function MainWindow.handleRowClick(button, row)
+    if button ~= 'LeftButton' or not ns.addon.isOfficer or not ns.cfg.lmMode then
         return
     end
 

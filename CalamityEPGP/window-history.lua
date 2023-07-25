@@ -5,9 +5,9 @@ local Set = ns.Set
 local HistoryWindow = {
     data = {
         header = {},
-        rows = {},
+        rowsRaw = {},
         rowsRendered = {},
-        rowsFiltered = {},
+        rows = {},
     },
     epgpReasonsPretty = {
         [ns.values.epgpReasons.MANUAL_SINGLE] = 'Manual',
@@ -145,7 +145,7 @@ function HistoryWindow:createWindow()
         HistoryWindow:setTableData()
     end)
 
-    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, true, true)
     mainFrame.tableFrame:SetPoint('TOP', mainFrame.detailLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
     mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
@@ -161,66 +161,9 @@ function HistoryWindow:createWindow()
         end
     end)
 
-    self:createTable()
     self:createDropdownItemsFrame()
 
 	return mainFrame;
-end
-
-
-function HistoryWindow:createTable()
-    local parent = self.mainFrame.tableFrame
-
-    -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame(
-        'ScrollFrame',
-        parent:GetName() .. 'ScrollFrame',
-        parent,
-        'UIPanelScrollFrameTemplate'
-    )
-    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -20)
-    parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 3)
-
-    local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
-
-    parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, 0);
-
-    parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, -1);
-
-    parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, 0);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 0);
-
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth() - parent.scrollBar:GetWidth() - 7, 1)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild)
-
-    -- Initialize header
-    parent.header = CreateFrame('Frame', nil, parent)
-    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
-    parent.header:SetHeight(10)
-    parent.header:SetPoint('RIGHT', parent.scrollBar, 'LEFT', -5, 0)
-
-    parent.header.columns = {}
-
-    -- Initialize the content
-    parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
-    parent.contents:SetAllPoints(parent.scrollChild)
-
-    parent.contents.rowHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowHighlight:Hide()
-
-    parent.rows = {}
 end
 
 
@@ -273,13 +216,17 @@ end
 
 
 function HistoryWindow:show()
+    if self.mainFrame == nil or not self.mainFrame:IsShown() then
+        return
+    end
+
     self:refresh()
     self.mainFrame:Show()
 end
 
 
 function HistoryWindow:refresh()
-    if self.mainFrame == nil or not self.mainFrame:IsShown() then
+    if self.mainFrame == nil then
         return
     end
 
@@ -342,137 +289,7 @@ end
 
 
 function HistoryWindow:setTableData()
-    local parent = self.mainFrame.tableFrame
-
-    for i, header in ipairs(self.data.header) do
-        local column = parent.header.columns[i]
-        if column == nil then
-            column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-            column:SetTextColor(1, 1, 0)
-            column:SetFont('Fonts\\ARIAL.TTF', 10)
-
-            table.insert(parent.header.columns, column)
-        end
-
-        local headerText = header[1]
-        local justify = header[2]
-
-        column:SetText(headerText)
-        column:SetJustifyH(justify)
-
-        column.textWidth = column:GetWrappedWidth()
-        column.maxWidth = column.textWidth
-
-        column:Show()
-    end
-
-    for i = #self.data.header + 1, #parent.header.columns do
-        local column = parent.header.columns[i]
-        if column ~= nil then
-            column:Hide()
-        end
-    end
-
-    local data = self.data
-
-    for i, rowData in ipairs(data.rowsFiltered) do
-        if i > #parent.rows then
-            self:addRow(i)
-        end
-
-        local row = parent.rows[i]
-        row:Show()
-
-        for j, columnText in ipairs(rowData) do
-            if type(columnText) == 'table' then
-                break
-            end
-
-            local headerColumn = parent.header.columns[j]
-
-            local column = row.columns[j]
-            if column == nil then
-                column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-
-                column:SetPoint('TOP', row, 'TOP', 0, 0)
-                column:SetFont('Fonts\\ARIAL.TTF', 10)
-
-                table.insert(row.columns, column)
-            end
-
-            column:SetText(columnText)
-
-            local text_width = column:GetWrappedWidth()
-            if (text_width > headerColumn.maxWidth) then
-                headerColumn.maxWidth = text_width
-            end
-
-            column:Show()
-        end
-
-        for j = #rowData, #row.columns do
-            local column = row.columns[j]
-            if column ~= nil then
-                column:Hide()
-            end
-        end
-    end
-
-    if #parent.rows > #data.rowsFiltered then
-        for i = #data.rowsFiltered + 1, #parent.rows do
-            local row = parent.rows[i]
-            row:Hide()
-        end
-    end
-
-    -- Calculate column padding
-    local columnWidthTotal = 0
-    for _, column in ipairs(parent.header.columns) do
-        if column:IsShown() then
-            columnWidthTotal = columnWidthTotal + column.maxWidth
-        end
-    end
-
-    local leftover = parent.header:GetWidth() - columnWidthTotal
-    local columnPadding = leftover / #parent.header.columns
-
-    -- Finally set column widths
-    -- header
-    for i, column in ipairs(parent.header.columns) do
-        local relativeElement = parent.header
-        local relativePoint = 'LEFT'
-        local padding = 0
-        if (i > 1) then
-            relativeElement = parent.header.columns[i - 1]
-            relativePoint = 'RIGHT'
-            padding = relativeElement.padding
-        end
-
-        local xOffset = padding
-        column.padding = column.maxWidth + columnPadding - column.textWidth
-
-        if column:GetJustifyH() == 'RIGHT' then
-            xOffset = xOffset + column.maxWidth - column.textWidth
-            column.padding = columnPadding
-        end
-
-        column:SetPoint('LEFT', relativeElement, relativePoint, xOffset, 0)
-        column:SetWidth(column.textWidth)
-    end
-
-    -- data
-    for _, row in ipairs(parent.rows) do
-        for i, column in ipairs(row.columns) do
-            local headerColumn = parent.header.columns[i]
-
-            local textHeight = column:GetLineHeight()
-            local verticalPadding = (row:GetHeight() - textHeight) / 2
-
-            local anchorPoint = headerColumn:GetJustifyH()
-            column:SetPoint(anchorPoint, headerColumn, anchorPoint, 0, 0)
-            column:SetPoint('TOP', row, 'TOP', 0, -verticalPadding)
-        end
-    end
+    self.mainFrame.tableFrame:setData(self.data)
 end
 
 
@@ -511,56 +328,8 @@ function HistoryWindow:addDropDownItem(index)
 end
 
 
-function HistoryWindow:addRow(index)
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    local rowHeight = 15
-
-    local row = CreateFrame('Frame', nil, parent.contents)
-
-    local yOffset = (rowHeight + 1) * (index - 1)
-
-    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-    row:SetWidth(parent.header:GetWidth())
-    row:SetHeight(rowHeight)
-
-    row.columns = {}
-
-    for _ = 1, #data.header do
-        -- We will set the size later, once we've computed the column width based on the data
-        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-
-        column:SetPoint('CENTER', row)
-        column:SetFont('Fonts\\ARIAL.TTF', 10)
-
-        table.insert(row.columns, column)
-    end
-
-    -- Highlight
-    row:EnableMouse()
-
-    local highlightFrame = parent.contents.rowHighlight
-
-    row:SetScript('OnEnter', function()
-        if not HistoryWindow.mainFrame.dropDown.itemsFrame:IsShown()
-                or not HistoryWindow.mainFrame.dropDown.itemsFrame:IsMouseOver() then
-            highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-            highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-            highlightFrame:Show()
-        end
-    end)
-
-    row:SetScript('OnLeave', function()
-        highlightFrame:Hide()
-    end)
-
-    table.insert(parent.rows, row)
-end
-
-
 function HistoryWindow:filterData()
-    self.data.rowsFiltered = {}
+    self.data.rows = {}
 
     local filters = {}
     for _, reasonCheck in ipairs(self.mainFrame.reasonChecks) do
@@ -607,14 +376,14 @@ function HistoryWindow:filterData()
         end
 
         if keep then
-            tinsert(self.data.rowsFiltered, row)
+            tinsert(self.data.rows, row)
         end
     end
 end
 
 
 function HistoryWindow:getData()
-    self.data.rows = {}
+    self.data.rowsRaw = {}
 
     local playerGuidToName = {}
     local playerValsTracker = {}
@@ -653,7 +422,7 @@ function HistoryWindow:getData()
             {baseReason = prettyReason, players = players}
         }
 
-        ns.Lib.bininsert(self.data.rows, row, function(left, right)
+        ns.Lib.bininsert(self.data.rowsRaw, row, function(left, right)
             return left[1] > right[1]
         end)
     end
@@ -712,7 +481,7 @@ function HistoryWindow:getRenderedData()
             playerValsTracker[guid]['GP'] = playerData.gp
         end
 
-        for _, row in ipairs(self.data.rows) do
+        for _, row in ipairs(self.data.rowsRaw) do
             local time = row[1]
             local issuedBy = row[2]
             local mode = row[3]
@@ -821,7 +590,7 @@ function HistoryWindow:getRenderedData()
             {'Action', 'LEFT'},
         }
 
-        for _, row in ipairs(self.data.rows) do
+        for _, row in ipairs(self.data.rowsRaw) do
             local time = row[1]
             local issuedBy = row[2]
             local mode = row[3]

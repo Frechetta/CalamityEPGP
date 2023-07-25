@@ -8,20 +8,14 @@ ns.Table = Table
 
 ---@param parent Frame
 ---@param header? boolean
----@param highlightHover? boolean
----@param highlightClick? boolean
+---@param highlightHoverCondition? boolean | function
+---@param highlightClickCondition? boolean | function
 ---@param headerClickCallback? function
 ---@param rowClickCallback? function
-function Table:new(parent, header, highlightHover, highlightClick, headerClickCallback, rowClickCallback)
+function Table:new(parent, header, highlightHoverCondition, highlightClickCondition, headerClickCallback, rowClickCallback)
     local o = {}
     setmetatable(o, self)
     self.__index = self
-
-    o._header = header
-    o._highlightHover = highlightHover
-    o._highlightClick = highlightClick
-    o._headerClickCallback = headerClickCallback
-    o._rowClickCallback = rowClickCallback
 
     local mainFrame = CreateFrame('Frame', parent:GetName() .. 'TableFrame', parent)
 
@@ -74,7 +68,7 @@ function Table:new(parent, header, highlightHover, highlightClick, headerClickCa
     mainFrame.contents.rows = List:new()
 
     -- hover highlight
-    if highlightHover then
+    if highlightHoverCondition ~= nil and highlightHoverCondition ~= false then
         mainFrame.contents.rowHighlight = CreateFrame('Frame', nil, mainFrame.contents)
         local highlightTexture = mainFrame.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
         highlightTexture:SetAllPoints()
@@ -84,7 +78,7 @@ function Table:new(parent, header, highlightHover, highlightClick, headerClickCa
     end
 
     -- click highlight
-    if highlightClick then
+    if highlightClickCondition ~= nil and highlightClickCondition ~= false then
         mainFrame.contents.rowSelectedHighlight = CreateFrame('Frame', nil, mainFrame.contents)
         local highlightTexture = mainFrame.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
         highlightTexture:SetAllPoints()
@@ -94,6 +88,25 @@ function Table:new(parent, header, highlightHover, highlightClick, headerClickCa
     end
 
     o._mainFrame = mainFrame
+
+    o._header = header
+
+    if highlightHoverCondition == true then
+        highlightHoverCondition = function() return true end
+    elseif highlightHoverCondition == false or highlightHoverCondition == nil then
+        highlightHoverCondition = function() return false end
+    end
+    o._highlightHoverCondition = highlightHoverCondition
+
+    if highlightClickCondition == true then
+        highlightClickCondition = function() return true end
+    elseif highlightClickCondition == false or highlightClickCondition == nil then
+        highlightClickCondition = function() return false end
+    end
+    o._highlightClickCondition = highlightClickCondition
+
+    o._headerClickCallback = headerClickCallback
+    o._rowClickCallback = rowClickCallback
 
     return o
 end
@@ -168,10 +181,9 @@ function Table:_setRows()
     local rows = contents.rows
 
     for i, rowData in ipairs(self.data.rows) do
-        local color
+        local metadata
         if type(rowData[#rowData]) == 'table' then
-            local metadata = rowData[#rowData]
-            color = metadata.color
+            metadata = rowData[#rowData]
         end
 
         local row = rows:get(i)
@@ -185,15 +197,17 @@ function Table:_setRows()
             row:SetWidth(header:GetWidth())
             row:SetHeight(rowHeight)
 
-            if self._highlightHover then
+            if self._highlightHoverCondition ~= nil then
                 row:EnableMouse()
 
                 local rowHighlight = self._mainFrame.contents.rowHighlight
 
                 row:SetScript('OnEnter', function()
-                    rowHighlight:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
-                    rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
-                    rowHighlight:Show()
+                    if self._highlightHoverCondition() then
+                        rowHighlight:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
+                        rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 0, 0)
+                        rowHighlight:Show()
+                    end
                 end)
 
                 row:SetScript('OnLeave', function()
@@ -201,13 +215,13 @@ function Table:_setRows()
                 end)
             end
 
-            if self._highlightClick then
+            if self._highlightClickCondition ~= nil then
                 row:EnableMouse()
 
                 local rowHighlight = self._mainFrame.contents.rowSelectedHighlight
 
                 row:SetScript('OnMouseUp', function(_, button)
-                    if button == 'LeftButton' then
+                    if button == 'LeftButton' and self._highlightClickCondition() then
                         rowHighlight:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 0)
                         rowHighlight:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 5, 0)
                         rowHighlight:Show()
@@ -225,9 +239,7 @@ function Table:_setRows()
                         existingFunc()
                     end
 
-                    if button == 'LeftButton' then
-                        self._rowClickCallback(row)
-                    end
+                    self._rowClickCallback(button, row)
                 end)
             end
 
@@ -235,6 +247,8 @@ function Table:_setRows()
 
             rows:append(row)
         end
+
+        row.metadata = metadata
 
         for k, columnText in ipairs(rowData) do
             if type(columnText) ~= 'table' then
@@ -250,8 +264,8 @@ function Table:_setRows()
                 column:SetText(columnText)
                 column:SetJustifyH(headerColumn.text:GetJustifyH())
 
-                if color ~= nil then
-                    column:SetTextColor(color.r, color.g, color.b)
+                if metadata.color ~= nil then
+                    column:SetTextColor(metadata.color.r, metadata.color.g, metadata.color.b)
                 end
 
                 local text_width = column:GetWrappedWidth()
