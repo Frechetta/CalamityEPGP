@@ -338,6 +338,9 @@ describe('handleEncounterEnd', function()
                     e2 = 2,
                 },
             },
+            db = {
+                benchedPlayers = {},
+            },
         }
 
         Util:loadModule('constants', ns)
@@ -413,7 +416,7 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
-    test('encounter 1', function()
+    test('encounter no benched players', function()
         addon:handleEncounterEnd(nil, 'e1', 'E1', nil, nil, 1)
 
         assert.spy(addon.Print).was.not_called()
@@ -423,13 +426,16 @@ describe('handleEncounterEnd', function()
         assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)')
     end)
 
-    test('encounter 2', function()
+    test('encounter 2 benched players', function()
+        ns.db.benchedPlayers = {'3', '4'}
+
         addon:handleEncounterEnd(nil, 'e2', 'E2', nil, nil, 1)
 
         assert.spy(addon.Print).was.not_called()
         assert.same('Award 2 EP to raid for killing E2?', confirmWindowMsg)
         assert.spy(ns.ConfirmWindow.show).was.called(1)
-        assert.stub(addon.modifyEpgp).was.called(1)
+        assert.stub(addon.modifyEpgp).was.called(2)
         assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)')
+        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g3', 'g4'}, 'ep', 2, 'boss_kill: "E2" (e2) BENCH')
     end)
 end)

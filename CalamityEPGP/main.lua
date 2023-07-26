@@ -950,14 +950,25 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
 
     local proceedFunc = function()
         local reason = string.format('%s: "%s" (%s)', ns.values.epgpReasons.BOSS_KILL, encounterName, encounterId)
-
         local players = {}
+
         for player in self.raidRoster:iter() do
             local guid = ns.Lib.getPlayerGuid(player)
             tinsert(players, guid)
         end
 
         self:modifyEpgp(players, ns.consts.MODE_EP, ep, reason)
+
+        if #ns.db.benchedPlayers > 0 then
+            local benchedReason = reason .. ' BENCH'
+            local benchedPlayers = {}
+            for _, player in ipairs(ns.db.benchedPlayers) do
+                local guid = ns.Lib.getPlayerGuid(player)
+                tinsert(benchedPlayers, guid)
+            end
+
+            self:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, ep, benchedReason)
+        end
 
         ns.printPublic(string.format('Awarded %d EP to raid for killing %s', ep, encounterName))
     end

@@ -113,18 +113,42 @@ function AddEpWindow:confirm()
         return
     end
 
+    ns.debug(string.format('add %d EP to %s', value, ns.MainWindow.raidOnly and 'raid' or 'everyone'))
+
     local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
-    local players = {}
-    for _, charData in ipairs(ns.MainWindow.data.rows) do
-        local guid = ns.Lib.getPlayerGuid(charData[1])
-        tinsert(players, guid)
-    end
+    if ns.MainWindow.raidOnly then
+        local players = {}
 
-    ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+        for player in ns.addon.raidRoster:iter() do
+            local guid = ns.Lib.getPlayerGuid(player)
+            tinsert(players, guid)
+        end
 
-    if ns.addon.useForRaid and ns.MainWindow.mainFrame.raidOnlyButton:GetChecked() then
-        ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
+        ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+
+        if #ns.db.benchedPlayers > 0 then
+            local benchedReason = reason .. ' BENCH'
+            local benchedPlayers = {}
+            for _, player in ipairs(ns.db.benchedPlayers) do
+                local guid = ns.Lib.getPlayerGuid(player)
+                tinsert(benchedPlayers, guid)
+            end
+
+            ns.addon:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, value, benchedReason)
+        end
+
+        if ns.addon.useForRaid then
+            ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
+        end
+    else
+        local players = {}
+
+        for _, charData in pairs(ns.db.standings) do
+            tinsert(players, charData.guid)
+        end
+
+        ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
     end
 
     self:hide()

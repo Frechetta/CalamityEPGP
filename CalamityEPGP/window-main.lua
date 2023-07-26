@@ -3,6 +3,7 @@ local addonName, ns = ...  -- Namespace
 local MainWindow = {
     data = {},
     myCharHighlights = {},
+    raidOnly = false,
 }
 
 ns.MainWindow = MainWindow
@@ -83,7 +84,11 @@ function MainWindow:createWindow()
     mainFrame.historyButton:SetScript('OnClick', function() self:handleHistoryClick() end)
     mainFrame.addEpButton:SetScript('OnClick', function() self:handleAddEpClick() end)
     mainFrame.decayEpgpButton:SetScript('OnClick', function() self:handleDecayEpgpClick() end)
-    mainFrame.raidOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
+    mainFrame.raidOnlyButton:SetScript('OnClick', function()
+        self.raidOnly = mainFrame.raidOnlyButton:GetChecked()
+        self:filterData()
+        self:setData()
+    end)
     mainFrame.mainsOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
     mainFrame.benchButton:SetScript('OnClick', function() ns.BenchWindow:show() end)
 
