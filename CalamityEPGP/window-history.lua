@@ -174,7 +174,7 @@ function HistoryWindow:createDropdownItemsFrame()
     dropDown.itemsFrame:SetFrameLevel(self.mainFrame:GetFrameLevel() + 50)
     dropDown.itemsFrame:EnableMouse()
     dropDown.itemsFrame:SetScript('OnEnter', function()
-        self.mainFrame.tableFrame.contents.rowHighlight:Hide()
+        self.mainFrame.tableFrame._mainFrame.contents.rowHighlight:Hide()
     end)
 
     dropDown.itemsFrame.items = {}

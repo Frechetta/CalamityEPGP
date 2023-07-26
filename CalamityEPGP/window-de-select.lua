@@ -14,7 +14,7 @@ function DeSelectWindow:createWindow()
 
     local mainFrame = CreateFrame('Frame', addonName .. '_DeSelectWindow', UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(200, 200)
-	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
+	mainFrame:SetPoint('CENTER')
 
     mainFrame:SetFrameStrata('DIALOG')
 
