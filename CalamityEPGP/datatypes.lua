@@ -129,6 +129,12 @@ function List:bininsert(value, fcomp)
     ns.Lib.bininsert(self._list, value, fcomp)
 end
 
+---@param value any
+---@param all? boolean
+function List:remove(value, all)
+    ns.Lib.remove(self._list, value, all)
+end
+
 
 ---------------
 ---@param items? table

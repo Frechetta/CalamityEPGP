@@ -60,7 +60,7 @@ function ManualAwardWindow:createWindow()
     mainFrame.closeButton:SetWidth(70)
 
     mainFrame.tableFrame = ns.Table:new(mainFrame, nil, false, true, true, nil, self.handleRowClick)
-    mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -20)
+    mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -10)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'BOTTOMLEFT', -15, 0)
 
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
@@ -121,7 +121,11 @@ function ManualAwardWindow:setData()
 end
 
 
-function ManualAwardWindow.handleRowClick(row)
+function ManualAwardWindow.handleRowClick(button, row)
+    if button ~= 'LeftButton' then
+        return
+    end
+
     ManualAwardWindow.selectedPlayer = row.data[1]
     ManualAwardWindow.mainFrame.awardButton:Enable()
 end

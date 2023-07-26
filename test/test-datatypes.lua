@@ -515,6 +515,70 @@ describe('List', function()
             assert.spy(ns.Lib.bininsert).was.called_with(l._list, 5, 1)
         end)
     end)
+
+    describe('remove', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('empty', function()
+            local l = List:new()
+            l:remove(2)
+            assert.same({}, l._list)
+        end)
+
+        test('one element dne', function()
+            local l = List:new({1})
+            l:remove(2)
+            assert.same({1}, l._list)
+        end)
+
+        test('one element', function()
+            local l = List:new({1})
+            l:remove(1)
+            assert.same({}, l._list)
+        end)
+
+        test('multiple elements dne', function()
+            local l = List:new({1, 2, 3})
+            l:remove(5)
+            assert.same({1, 2, 3}, l._list)
+        end)
+
+        test('multiple elements 1', function()
+            local l = List:new({1, 2, 3})
+            l:remove(1)
+            assert.same({2, 3}, l._list)
+        end)
+
+        test('multiple elements dne', function()
+            local l = List:new({1, 2, 3})
+            l:remove(2)
+            assert.same({1, 3}, l._list)
+        end)
+
+        test('multiple elements dne', function()
+            local l = List:new({1, 2, 3})
+            l:remove(3)
+            assert.same({1, 2}, l._list)
+        end)
+
+        test('duplicate elements', function()
+            local l = List:new({1, 2, 3, 2})
+            l:remove(2)
+            assert.same({1, 3, 2}, l._list)
+        end)
+
+        test('duplicate elements', function()
+            local l = List:new({1, 2, 3, 2})
+            l:remove(2, true)
+            assert.same({1, 3}, l._list)
+        end)
+    end)
 end)
 
 
