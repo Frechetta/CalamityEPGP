@@ -26,24 +26,7 @@ local LootDistWindow = {
 ns.LootDistWindow = LootDistWindow
 
 local duration, seconds, onesec
-local countDownFrame = CreateFrame("Frame")
-countDownFrame:Hide()
-countDownFrame:SetScript("OnUpdate", function(self, elapsed)
-    onesec = onesec - elapsed
-    duration = duration - elapsed
-    if duration <= 0 then
-        LootDistWindow:stopRoll()
-        self:Hide()
-    elseif onesec <= 0 then
-        LootDistWindow.mainFrame.countdownLabel:SetText(seconds .. ' seconds left')
-        if seconds <= 5 then
-            ns.printPublic(seconds .. ' seconds to roll')
-            LootDistWindow.mainFrame.countdownLabel:SetTextColor(1, 0.5, 0)
-        end
-        seconds = seconds - 1
-        onesec = 1
-    end
-end)
+local countDownFrame
 
 
 function LootDistWindow:createWindow()
@@ -152,6 +135,25 @@ function LootDistWindow:createWindow()
     mainFrame.clearButton:SetScript('OnClick', function() self:clearRolls() end)
     mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
     mainFrame.deButton:SetScript('OnClick', function() self:disenchant() end)
+
+    countDownFrame = CreateFrame("Frame")
+    countDownFrame:Hide()
+    countDownFrame:SetScript("OnUpdate", function(self, elapsed)
+        onesec = onesec - elapsed
+        duration = duration - elapsed
+        if duration <= 0 then
+            LootDistWindow:stopRoll()
+            self:Hide()
+        elseif onesec <= 0 then
+            LootDistWindow.mainFrame.countdownLabel:SetText(seconds .. ' seconds left')
+            if seconds <= 5 then
+                ns.printPublic(seconds .. ' seconds to roll')
+                LootDistWindow.mainFrame.countdownLabel:SetTextColor(1, 0.5, 0)
+            end
+            seconds = seconds - 1
+            onesec = 1
+        end
+    end)
 
 	return mainFrame
 end
@@ -435,23 +437,6 @@ end
 function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
     ns.debug(itemLink .. ' awarded to ' .. awardee)
 
-    -- add item to awarded table
-    if ns.db.loot.awarded[itemLink] == nil then
-        ns.db.loot.awarded[itemLink] = {}
-    end
-
-    if ns.db.loot.awarded[itemLink][awardee] == nil then
-        ns.db.loot.awarded[itemLink][awardee] = {}
-    end
-
-    tinsert(ns.db.loot.awarded[itemLink][awardee], {
-        itemLink = itemLink,
-        awardTime = time(),
-        given = false,
-        givenTime = nil,
-        collected = false,
-    })
-
 	local itemIndex = self.currentLoot[itemLink]
 
 	if itemIndex ~= nil then
@@ -468,7 +453,8 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			ns.print(awardee .. ' is not eligible for loot')
+			ns.print('Could\'nt award ' .. itemLink .. ' to ' .. awardee .. ' as they are not eligible')
+            return
 		end
     elseif awardee == UnitName('player') then
         -- item is in inventory and was awarded to me
@@ -478,16 +464,32 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
         self.markAsToTrade(itemLink, awardee)
 	end
 
-    local itemName = ns.Lib.getItemInfo(itemLink)
-
     if rollType ~= nil then
         -- add gp
+        local itemName = ns.Lib.getItemInfo(itemLink)
         local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
         ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
         ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
     else
         ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
     end
+
+    -- add item to awarded table
+    if ns.db.loot.awarded[itemLink] == nil then
+        ns.db.loot.awarded[itemLink] = {}
+    end
+
+    if ns.db.loot.awarded[itemLink][awardee] == nil then
+        ns.db.loot.awarded[itemLink][awardee] = {}
+    end
+
+    tinsert(ns.db.loot.awarded[itemLink][awardee], {
+        itemLink = itemLink,
+        awardTime = time(),
+        given = false,
+        givenTime = nil,
+        collected = false,
+    })
 
     if self.mainFrame ~= nil and self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()

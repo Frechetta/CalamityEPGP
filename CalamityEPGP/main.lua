@@ -730,7 +730,7 @@ function addon:handleChatMsg(_, message)
     end
 
     local roller, roll, low, high = string.match(message, ns.LootDistWindow.rollPattern)
-    if roller then
+    if roller and self.raidRoster:contains(roller) then
         roll = tonumber(roll) or 0
         low = tonumber(low) or 0
         high = tonumber(high) or 0

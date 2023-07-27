@@ -19,14 +19,30 @@ end
 tinsert = table.insert
 
 time = function()
-    return 1
+    return 123
 end
 
-UnitGUID = function(_)
-    return '0'
+UnitName = function(unit)
+    if unit == 'player' then
+        return 'p1'
+    end
+
+    error('unknown unit "' .. unit .. '"')
 end
 
-C_Timer = {}
-function C_Timer.After(_, func)
-    func()
+UnitGUID = function(unit)
+    if unit == 'player' then
+        local name = UnitName(unit)
+        return name .. '_guid'
+    end
+
+    error('unknown unit "' .. unit .. '"')
 end
+
+C_Timer = mock({
+    After = function(_, func)
+        func()
+    end
+})
+
+RANDOM_ROLL_RESULT = '%s rolls %d (%d-%d)'

@@ -155,7 +155,7 @@ function ModifyEpgpWindow:confirm()
 
     if ns.addon.useForRaid and ns.addon.raidRoster:contains(self.charName) then
         ns.printPublic(
-            string.format('Awarded %d EP to %s. Reason: %s', value, self.charName, enteredReason)
+            string.format('Awarded %d %s to %s. Reason: %s', value, string.upper(self.mode), self.charName, enteredReason)
         )
     end
 
