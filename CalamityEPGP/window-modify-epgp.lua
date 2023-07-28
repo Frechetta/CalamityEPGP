@@ -114,8 +114,6 @@ function ModifyEpgpWindow:hide()
     if self.mainFrame ~= nil then
         self.mainFrame:Hide()
     end
-
-    -- tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
 end
 
 function ModifyEpgpWindow:isShown()

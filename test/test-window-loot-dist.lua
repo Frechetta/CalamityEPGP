@@ -60,8 +60,8 @@ describe('award', function()
         Util:loadModule('constants', ns)
         Util:loadModule('values', ns)
         Util:loadModule('lib', ns)
-        Util:loadModule('main', ns)
         Util:loadModule('window-loot-dist', ns)
+        Util:loadModule('main', ns)
 
         ldw = ns.LootDistWindow
 
