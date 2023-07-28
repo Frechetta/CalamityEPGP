@@ -8,7 +8,6 @@ describe('confirm', function()
     local amount
     local reason
     local validValue
-    local raidOnly
 
     before_each(function()
         ns = {
