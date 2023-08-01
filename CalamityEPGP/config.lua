@@ -355,7 +355,7 @@ function Config:showEditPlayerWindow(player)
 
         editPlayerWindow:EnableMouse()
         editPlayerWindow:SetScript('OnEnter', function()
-            Config.aamPanel.tableFrame.rowHighlight:Hide()
+            Config.aamPanel.tableFrame._mainFrame.rowHighlight:Hide()
         end)
 
         editPlayerWindow.setButton = CreateFrame('Button', nil, editPlayerWindow, 'UIPanelButtonTemplate')
