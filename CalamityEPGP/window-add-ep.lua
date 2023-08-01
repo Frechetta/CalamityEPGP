@@ -1,16 +1,16 @@
 local addonName, ns = ...  -- Namespace
 
-local DecayEpgpWindow = {}
+local AddEpWindow = {}
 
-ns.DecayEpgpWindow = DecayEpgpWindow
+ns.AddEpWindow = AddEpWindow
 
 
-function DecayEpgpWindow:createWindow()
+function AddEpWindow:createWindow()
     if self.mainFrame ~= nil then
         return
     end
 
-    local mainFrameName = addonName .. '_DecayEpgpWindow'
+    local mainFrameName = addonName .. '_AddEPWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(250, 175)
@@ -28,17 +28,16 @@ function DecayEpgpWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('Decay EPGP')
+	mainFrame.title:SetText('Add EP')
 
     mainFrame.amountLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.amountLabel:SetText('Decay %')
+    mainFrame.amountLabel:SetText('Adds/Subtracts EP for filtered roster')
 	mainFrame.amountLabel:SetPoint('TOP', mainFrame, 'TOP', 0, -mainFrame.TitleBg:GetHeight() - 20)
 
     mainFrame.amountEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
-    mainFrame.amountEditBox:SetText(tostring(ns.Config:getDefaultDecay()))
     mainFrame.amountEditBox:SetPoint('TOP', mainFrame.amountLabel, 'BOTTOM', 0, -7)
     mainFrame.amountEditBox:SetHeight(20)
-    mainFrame.amountEditBox:SetWidth(40)
+    mainFrame.amountEditBox:SetWidth(100)
     mainFrame.amountEditBox:SetAutoFocus(false)
 
     mainFrame.reasonEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
@@ -48,7 +47,7 @@ function DecayEpgpWindow:createWindow()
     mainFrame.reasonEditBox:SetAutoFocus(false)
 
     mainFrame.reasonLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.reasonLabel:SetText('Reason (optional)')
+    mainFrame.reasonLabel:SetText('Reason')
     mainFrame.reasonLabel:SetPoint('BOTTOM', mainFrame.reasonEditBox, 'TOP', 0, 7)
 
     mainFrame.confirmButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
@@ -61,9 +60,9 @@ function DecayEpgpWindow:createWindow()
     mainFrame.cancelButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 12)
     mainFrame.cancelButton:SetWidth(70)
 
-    mainFrame.cancelButton:SetScript('OnClick', self.hide)
-    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
-    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
+    mainFrame.cancelButton:SetScript('OnClick', function() self:hide() end)
+    mainFrame.confirmButton:SetScript('OnClick', function() self:confirm() end)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', function() self:confirm() end)
 
     tinsert(UISpecialFrames, mainFrameName)
 
@@ -76,53 +75,81 @@ function DecayEpgpWindow:createWindow()
     return mainFrame
 end
 
-function DecayEpgpWindow:show()
+function AddEpWindow:show()
     self:createWindow()
     self.mainFrame:Show()
 
     self.mainFrame.amountEditBox:SetFocus()
 end
 
-function DecayEpgpWindow:hide()
-    self = DecayEpgpWindow
-
+function AddEpWindow:hide()
     if self.mainFrame ~= nil then
         self.mainFrame:Hide()
     end
 end
 
-function DecayEpgpWindow:isShown()
+function AddEpWindow:isShown()
     return self.mainFrame ~= nil and self.mainFrame:IsShown()
 end
 
-function DecayEpgpWindow:confirm()
-    self = DecayEpgpWindow
-
+function AddEpWindow:confirm()
     local value = self.mainFrame.amountEditBox:GetText()
 
-    if not ns.Lib:validateEpgpValue(value) then
+    if not ns.Lib.validateEpgpValue(value) then
         return
     end
 
-    local value = tonumber(value)
+    value = tonumber(value)
 
     if value == 0
-            or value < -1000
-            or value > 100 then
+            or value < -1000000
+            or value > 1000000 then
         return
     end
 
-    local reason = string.format('%s: %s', ns.values.epgpReasons.DECAY, self.mainFrame.reasonEditBox:GetText())
+    local enteredReason = self.mainFrame.reasonEditBox:GetText()
 
-    local changes = {}
-
-    for _, charData in ipairs(ns.MainWindow.data.rows) do
-        local guid = ns.Lib:getPlayerGuid(charData[1])
-        table.insert(changes, {guid, 'EP', -value, reason})
-        table.insert(changes, {guid, 'GP', -value, reason})
+    if #enteredReason == 0 then
+        return
     end
 
-    ns.addon:modifyEpgp(changes, true)
+    ns.debug(string.format('add %d EP to %s', value, ns.MainWindow.raidOnly and 'raid' or 'everyone'))
+
+    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
+
+    if ns.MainWindow.raidOnly then
+        local players = {}
+
+        for player in ns.addon.raidRoster:iter() do
+            local guid = ns.Lib.getPlayerGuid(player)
+            tinsert(players, guid)
+        end
+
+        ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+
+        if #ns.db.benchedPlayers > 0 then
+            local benchedReason = reason .. ' BENCH'
+            local benchedPlayers = {}
+            for _, player in ipairs(ns.db.benchedPlayers) do
+                local guid = ns.Lib.getPlayerGuid(player)
+                tinsert(benchedPlayers, guid)
+            end
+
+            ns.addon:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, value, benchedReason)
+        end
+
+        if ns.addon.useForRaid then
+            ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
+        end
+    else
+        local players = {}
+
+        for _, charData in pairs(ns.db.standings) do
+            tinsert(players, charData.guid)
+        end
+
+        ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+    end
 
     self:hide()
 end

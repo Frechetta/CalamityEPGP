@@ -12,7 +12,7 @@ ns.values.epgpReasons = {
 }
 
 ns.values.gpDefaults = {
-    base = 100,
+    base = 1,
     -- https://wowpedia.fandom.com/wiki/Enum.InventoryType
     slotModifiers = {
         INVTYPE_HEAD = 1,

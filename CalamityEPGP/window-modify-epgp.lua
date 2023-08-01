@@ -71,22 +71,22 @@ function ModifyEpgpWindow:createWindow()
     mainFrame.cancelButton:SetWidth(70)
 
     if self.mode == nil then
-        self.mode = 'EP'
+        self.mode = ns.consts.MODE_EP
     end
 
     mainFrame.epButton:SetScript('OnClick', function()
-        ModifyEpgpWindow.mode = 'EP'
+        ModifyEpgpWindow.mode = ns.consts.MODE_EP
         ModifyEpgpWindow:fillIn()
     end)
 
     mainFrame.gpButton:SetScript('OnClick', function()
-        ModifyEpgpWindow.mode = 'GP'
+        ModifyEpgpWindow.mode = ns.consts.MODE_GP
         ModifyEpgpWindow:fillIn()
     end)
 
-    mainFrame.cancelButton:SetScript('OnClick', self.hide)
-    mainFrame.confirmButton:SetScript('OnClick', self.confirm)
-    mainFrame.amountEditBox:SetScript('OnEnterPressed', self.confirm)
+    mainFrame.cancelButton:SetScript('OnClick', function() ModifyEpgpWindow:hide() end)
+    mainFrame.confirmButton:SetScript('OnClick', function() ModifyEpgpWindow:confirm() end)
+    mainFrame.amountEditBox:SetScript('OnEnterPressed', function() ModifyEpgpWindow:confirm() end)
 
     tinsert(UISpecialFrames, mainFrameName)
 
@@ -111,13 +111,9 @@ function ModifyEpgpWindow:show(charName, charGuid)
 end
 
 function ModifyEpgpWindow:hide()
-    self = ModifyEpgpWindow
-
     if self.mainFrame ~= nil then
         self.mainFrame:Hide()
     end
-
-    -- tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
 end
 
 function ModifyEpgpWindow:isShown()
@@ -126,19 +122,17 @@ end
 
 function ModifyEpgpWindow:fillIn()
     self.mainFrame.topLabel:SetText('Modify EP/GP for ' .. self.charName)
-    self.mainFrame.amountLabel:SetText(self.mode .. ' Amount')
+    self.mainFrame.amountLabel:SetText(string.upper(self.mode) .. ' Amount')
 end
 
 function ModifyEpgpWindow:confirm()
-    self = ModifyEpgpWindow
-
     local value = self.mainFrame.amountEditBox:GetText()
 
-    if not ns.Lib:validateEpgpValue(value) then
+    if not ns.Lib.validateEpgpValue(value) then
         return
     end
 
-    local value = tonumber(value)
+    value = tonumber(value)
 
     if value == nil
             or value == 0
@@ -155,10 +149,12 @@ function ModifyEpgpWindow:confirm()
 
     local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, enteredReason)
 
-    ns.addon:modifyEpgp({{self.charGuid, self.mode, value, reason}})
+    ns.addon:modifyEpgp({self.charGuid}, self.mode, value, reason)
 
-    if ns.addon.useForRaid and ns.addon.raidRoster[self.charName] ~= nil then
-        ns.printPublic(string.format('Awarded %d EP to %s. Reason: %s', value, self.charName, enteredReason))
+    if ns.addon.useForRaid and ns.addon.raidRoster:contains(self.charName) then
+        ns.printPublic(
+            string.format('Awarded %d %s to %s. Reason: %s', value, string.upper(self.mode), self.charName, enteredReason)
+        )
     end
 
     self:hide()

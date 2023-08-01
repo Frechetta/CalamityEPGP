@@ -1,3 +1,110 @@
+# 0.11.1
+
+- fix players in history not existing in standings
+- passing now cancels roll
+
+# 0.11.0
+
+- change loot distribution click combo to Alt+Click
+- fix raid warning not working when group leader
+- add feature to award items from inventory without rolling
+- fix auto-filling trade window with an item that person has been given previously
+- fix adding multiple items of the same type to trade window when only one item was won
+- improve aesthetics of all scroll windows
+- fix loot timer not closing when timer ends
+- fix history window dropdown filter remaining active after turning off detail mode
+- various big fixes
+
+# 0.10.1
+
+- fix loot dist bug
+
+# 0.10.0
+
+- add alt management within CalamityEPGP
+
+# 0.9.3
+
+- fix modifying EP/GP manually
+
+# 0.9.2
+
+- fix EP/GP modification
+- fix alt EP/GP syncing
+
+# 0.9.1
+
+- fix old history not following expected format
+
+# 0.9.0
+
+- store history much more efficiently
+- view history in less detail (summary events) or more detail (events by player)
+
+# 0.8.1
+
+- fix LM settings being overwritten
+- change loot roll click combo to alt+click
+
+# 0.8.0
+
+- add free award option
+
+# 0.7.13
+
+- fix message prefixes
+
+# 0.7.12
+
+- further improved efficiency of syncing history
+
+# 0.7.11
+
+- improve efficiency of syncing
+
+# 0.7.10
+
+- fix handling of nil raid member names
+- various fixes
+
+# 0.7.9
+
+- fix history sync
+
+# 0.7.8
+
+- fix history window loading non-guildie data
+- clean up history window boss kill entries
+
+# 0.7.7
+
+- fix settings sync
+
+# 0.7.6
+
+- fix nil reference in comm.lua
+- fix Lib:getVersionNum
+
+# 0.7.5
+
+- respond to sync message with version
+
+# 0.7.4
+
+- fix Dict:toTable()
+
+# 0.7.3
+
+- fix?
+
+# 0.7.2
+
+- further fix incorrect sync data
+
+# 0.7.1
+
+- handle incorrect sync data
+
 # 0.7.0
 
 - various improvements

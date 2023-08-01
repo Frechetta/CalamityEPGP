@@ -1,8 +1,6 @@
 local addonName, ns = ...  -- Namespace
 
 local List = ns.List
-local Dict = ns.Dict
-local Set = ns.Set
 
 local LootDistWindow = {
     data = {
@@ -13,11 +11,12 @@ local LootDistWindow = {
             {'Roll', 'RIGHT'},
         },
         rolls = {},
+        rows = {},
     },
     itemLink = nil,
     defaultItemIcon = 'Interface\\Icons\\INV_Misc_QuestionMark',
     rolling = false,
-    rollPattern = ns.Lib:createPattern(RANDOM_ROLL_RESULT),
+    rollPattern = ns.Lib.createPattern(RANDOM_ROLL_RESULT),
     selectedRoller = nil,
     currentLoot = {},
     trading = {},
@@ -27,24 +26,7 @@ local LootDistWindow = {
 ns.LootDistWindow = LootDistWindow
 
 local duration, seconds, onesec
-local countDownFrame = CreateFrame("Frame")
-countDownFrame:Hide()
-countDownFrame:SetScript("OnUpdate", function(self, elapsed)
-    onesec = onesec - elapsed
-    duration = duration - elapsed
-    if duration <= 0 then
-        LootDistWindow:stopRoll()
-        self:Hide()
-    elseif onesec <= 0 then
-        LootDistWindow.mainFrame.countdownLabel:SetText(seconds .. ' seconds left')
-        if seconds <= 5 then
-            ns.printPublic(seconds .. ' seconds to roll')
-            LootDistWindow.mainFrame.countdownLabel:SetTextColor(1, 0.5, 0)
-        end
-        seconds = seconds - 1
-        onesec = 1
-    end
-end)
+local countDownFrame
 
 
 function LootDistWindow:createWindow()
@@ -143,97 +125,37 @@ function LootDistWindow:createWindow()
     mainFrame.closeButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -20, 20)
     mainFrame.closeButton:SetWidth(80)
 
-    mainFrame.tableFrame = CreateFrame('Frame', mainFrame:GetName() .. 'TableFrame', mainFrame)
+    mainFrame.tableFrame = ns.Table:new(mainFrame, nil, true, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.timerLabel, 'BOTTOMLEFT', 0, -20)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'TOPRIGHT', 0, 10)
 
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
-    mainFrame.startButton:SetScript('OnClick', self.startRoll)
+    mainFrame.startButton:SetScript('OnClick', function() self:startRoll() end)
     mainFrame.stopButton:SetScript('OnClick', function() duration = 0 end)
-    mainFrame.clearButton:SetScript('OnClick', self.clearRolls)
-    mainFrame.awardButton:SetScript('OnClick', self.checkAward)
-    mainFrame.deButton:SetScript('OnClick', self.disenchant)
+    mainFrame.clearButton:SetScript('OnClick', function() self:clearRolls() end)
+    mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
+    mainFrame.deButton:SetScript('OnClick', function() self:disenchant() end)
 
-    self:createTable()
+    countDownFrame = CreateFrame("Frame")
+    countDownFrame:Hide()
+    countDownFrame:SetScript("OnUpdate", function(self, elapsed)
+        onesec = onesec - elapsed
+        duration = duration - elapsed
+        if duration <= 0 then
+            LootDistWindow:stopRoll()
+            self:Hide()
+        elseif onesec <= 0 then
+            LootDistWindow.mainFrame.countdownLabel:SetText(seconds .. ' seconds left')
+            if seconds <= 5 then
+                ns.printPublic(seconds .. ' seconds to roll')
+                LootDistWindow.mainFrame.countdownLabel:SetTextColor(1, 0.5, 0)
+            end
+            seconds = seconds - 1
+            onesec = 1
+        end
+    end)
 
-	return mainFrame;
-end
-
-
-function LootDistWindow:createTable()
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    -- Initialize scroll frame
-    parent.scrollFrame = CreateFrame('ScrollFrame', parent:GetName() .. 'ScrollFrame', parent, 'UIPanelScrollFrameTemplate')
-    parent.scrollFrame:SetPoint('TOPLEFT', parent, 'TOPLEFT', 0, -30)
-    parent.scrollFrame:SetWidth(parent:GetWidth())
-    parent.scrollFrame:SetPoint('BOTTOM', parent, 'BOTTOM', 0, 0)
-
-    local scrollFrameName = parent.scrollFrame:GetName()
-    parent.scrollBar = _G[scrollFrameName .. 'ScrollBar'];
-    parent.scrollUpButton = _G[scrollFrameName .. 'ScrollBarScrollUpButton'];
-    parent.scrollDownButton = _G[scrollFrameName .. 'ScrollBarScrollDownButton'];
-
-    -- all of these objects will need to be re-anchored (if not, they appear outside the frame and about 30 pixels too high)
-    parent.scrollUpButton:ClearAllPoints();
-    parent.scrollUpButton:SetPoint('TOPRIGHT', parent.scrollFrame, 'TOPRIGHT', -2, -2);
-
-    parent.scrollDownButton:ClearAllPoints();
-    parent.scrollDownButton:SetPoint('BOTTOMRIGHT', parent.scrollFrame, 'BOTTOMRIGHT', -2, 2);
-
-    parent.scrollBar:ClearAllPoints();
-    parent.scrollBar:SetPoint('TOP', parent.scrollUpButton, 'BOTTOM', 0, -2);
-    parent.scrollBar:SetPoint('BOTTOM', parent.scrollDownButton, 'TOP', 0, 2);
-
-    parent.scrollChild = CreateFrame('Frame')
-    parent.scrollChild:SetSize(parent.scrollFrame:GetWidth(), parent.scrollFrame:GetHeight() * 2)
-    parent.scrollFrame:SetScrollChild(parent.scrollChild);
-
-    -- Header
-    parent.header = CreateFrame('Frame', nil, parent)
-    parent.header:SetPoint('TOPLEFT', parent, 'TOPLEFT', 2, 0)
-    parent.header:SetHeight(10)
-    parent.header:SetPoint('RIGHT', parent.scrollBar, 'LEFT', -5, 0)
-
-    parent.header.columns = {}
-
-    local columnWidth = parent.header:GetWidth() / #data.header
-
-    for i, header in ipairs(data.header) do
-        local headerText = header[1]
-        local justify = header[2]
-
-        local xOffset = (i - 1) * columnWidth
-
-        local column = parent.header:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        column:SetText(headerText)
-        column:SetJustifyH(justify)
-        column:SetPoint('LEFT', parent.header, 'LEFT', xOffset, 0)
-        column:SetWidth(columnWidth)
-
-        table.insert(parent.header.columns, column)
-    end
-
-    -- Initialize the content
-    parent.contents = CreateFrame('Frame', nil, parent.scrollChild)
-    parent.contents:SetAllPoints(parent.scrollChild)
-
-    parent.contents.rowHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowHighlight:Hide()
-
-    parent.contents.rowSelectedHighlight = CreateFrame('Frame', nil, parent.contents)
-    local highlightTexture = parent.contents.rowSelectedHighlight:CreateTexture(nil, 'OVERLAY')
-    highlightTexture:SetAllPoints()
-    highlightTexture:SetColorTexture(1, 1, 0, 0.3)
-    highlightTexture:SetBlendMode('ADD')
-    parent.contents.rowSelectedHighlight:Hide()
-
-    parent.rows = {}
+	return mainFrame
 end
 
 
@@ -243,35 +165,41 @@ function LootDistWindow:show(itemLink)
         return
     end
 
-    local _, _, _, _, _, _, _, _, _, texture, _ = GetItemInfo(itemLink)
+    local _, _, _, _, _, _, _, _, _, texture, _ = ns.Lib.getItemInfo(itemLink)
 
     self.mainFrame.itemIcon:SetTexture(texture)
-    self.mainFrame.itemIcon:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemIcon:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.itemLabel:SetText(itemLink)
-    self.mainFrame.itemLabel:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.itemLabel:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
     self.mainFrame.countdownLabel:SetText('0 seconds left')
     self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
 
-    self.mainFrame.gpLabel:SetText('GP: ' .. ns.Lib:getGp(itemLink))
-
     self.selectedRoller = nil
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
-    self:setData()
 
     self.itemLink = itemLink
+    self.itemGp = ns.Lib.getGp(itemLink)
 
+    self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
+
+    self:setData()
     self.mainFrame:Show()
 end
 
 
 function LootDistWindow:startRoll()
-    self = LootDistWindow
-
     duration = self.mainFrame.timerEditBox:GetNumber()
 
     if duration < 5 or duration > 600 then
@@ -302,15 +230,12 @@ function LootDistWindow:startRoll()
     countDownFrame:Show()
 
     self.selectedRoller = nil
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
 end
 
 
 function LootDistWindow:stopRoll()
-    self = LootDistWindow
-
     ns.RollWindow:hide()
 
     ns.printPublic('Stop your rolls!', true)
@@ -328,23 +253,48 @@ function LootDistWindow:stopRoll()
     self.mainFrame.deButton:Enable()
 
     -- announce all rolls in order
-    if ns.Lib:len(self.data.rolls) > 0 then
-        ns.printPublic('Rolls:')
-        for roller, rollData in pairs(self.data.rolls) do
-            local type = rollData.type
-            local roll = rollData[type]
-            local pr = rollData['pr']
+    local rolls = List:new()
 
-            ns.printPublic(string.format('- %s [%s]  PR: %.3f,  Roll: %d', roller, type, pr, roll))
+    for roller, rollData in pairs(self.data.rolls) do
+        local type = rollData.type
+        if type ~= nil then
+            local roll = rollData[type]
+            local pr = rollData.pr
+
+            rolls:bininsert({roller, type, pr, roll}, function(left, right)
+                local rollTypeLeft = left[2]
+                local rollTypeRight = right[2]
+                local prLeft = left[3]
+                local prRight = right[3]
+                local rollLeft = left[4]
+                local rollRight = right[4]
+
+                if rollTypeLeft ~= rollTypeRight then
+                    return rollTypeLeft < rollTypeRight
+                end
+
+                if prLeft ~= prRight then
+                    return prLeft > prRight
+                end
+
+                return rollLeft > rollRight
+            end)
+        end
+    end
+
+    if rolls:len() > 0 then
+        ns.printPublic('Rolls:')
+        for rollData in rolls:iter() do
+            ns.printPublic(
+                string.format('- %s [%s]  PR: %.3f,  Roll: %d', rollData[1], rollData[2], rollData[3], rollData[4])
+            )
         end
     end
 end
 
 
 function LootDistWindow:clearRolls()
-    self = LootDistWindow
     self.selectedRoller = nil
-    self.mainFrame.tableFrame.contents.rowSelectedHighlight:Hide()
     self.data.rolls = {}
     self:setData()
 end
@@ -355,15 +305,15 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
         return
     end
 
-    local rollerGuid = ns.Lib:getPlayerGuid(roller)
+    local rollerGuid = ns.Lib.getPlayerGuid(roller)
     local charData = ns.db.standings[rollerGuid]
     local priority = tonumber(string.format("%.3f", charData.ep / charData.gp))
 
-    local newRoll = false
+    -- local newRoll = false
 
     if self.data.rolls[roller] == nil then
         self.data.rolls[roller] = {}
-        newRoll = true
+        -- newRoll = true
     end
 
     local rollerData = self.data.rolls[roller]
@@ -374,8 +324,8 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 
     roll = rollerData[rollType]
 
-    rollerData['type'] = rollType
-    rollerData['pr'] = priority
+    rollerData.type = rollType
+    rollerData.pr = priority
 
     -- TODO: don't print if roll is already there unless response is changed
     ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
@@ -384,129 +334,64 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 end
 
 
+function LootDistWindow:handlePass(player)
+    if not self.rolling then
+        return
+    end
+
+    if self.data.rolls[player] == nil then
+        return
+    end
+
+    self.data.rolls[player].type = nil
+
+    ns.printPublic(player .. ' cancels their roll')
+
+    self:setData()
+end
+
+
 function LootDistWindow:setData()
-    local parent = self.mainFrame.tableFrame
     local data = self.data
 
-    local rows = {}
+    data.rows = {}
 
     for roller, rollData in pairs(data.rolls) do
         local type = rollData.type
-        local roll = rollData[type]
-        local pr = rollData['pr']
+        if type ~= nil then
+            local roll = rollData[type]
+            local pr = rollData.pr
 
-        tinsert(rows, {roller, type, pr, roll})
-    end
+            ns.Lib.bininsert(data.rows, {roller, type, pr, roll}, function(left, right)
+                local rollTypeLeft = left[2]
+                local rollTypeRight = right[2]
+                local prLeft = left[3]
+                local prRight = right[3]
+                local rollLeft = left[4]
+                local rollRight = right[4]
 
-    table.sort(rows, function(left, right)
-        local rollTypeLeft = left[2]
-        local rollTypeRight = right[2]
-        local prLeft = left[3]
-        local prRight = right[3]
-        local rollLeft = left[4]
-        local rollRight = right[4]
+                if rollTypeLeft ~= rollTypeRight then
+                    return rollTypeLeft < rollTypeRight
+                end
 
-        if rollTypeLeft ~= rollTypeRight then
-            return rollTypeLeft < rollTypeRight
-        end
+                if prLeft ~= prRight then
+                    return prLeft > prRight
+                end
 
-        if prLeft ~= prRight then
-            return prLeft > prRight
-        end
-
-        return rollLeft > rollRight
-    end)
-
-    for i, rowData in ipairs(rows) do
-        if i > #parent.rows then
-            self:addRow(i)
-        end
-
-        local row = parent.rows[i]
-        row:Show()
-
-        local name = rowData[1]
-        local _, classFileName = UnitClass(name)
-        local classColorData = RAID_CLASS_COLORS[classFileName]
-
-        for j, columnText in ipairs(rowData) do
-            local column = row.columns[j]
-            column:SetText(columnText)
-            column:SetTextColor(classColorData.r, classColorData.g, classColorData.b)
+                return rollLeft > rollRight
+            end)
         end
     end
 
-    if #parent.rows > #rows then
-        for i = #rows + 1, #parent.rows do
-            local row = parent.rows[i]
-            row:Hide()
-        end
-    end
+    self.mainFrame.tableFrame:setData(data)
 end
 
 
-function LootDistWindow:addRow(index)
-    local parent = self.mainFrame.tableFrame
-    local data = self.data
-
-    local rowHeight = 15
-
-    local row = CreateFrame('Frame', nil, parent.contents)
-
-    local yOffset = (rowHeight + 3) * (index - 1)
-
-    row:SetPoint('TOPLEFT', parent.contents, 'TOPLEFT', 0, -yOffset)
-    row:SetWidth(parent.header:GetWidth())
-    row:SetHeight(rowHeight)
-
-    row.columns = {}
-
-    for i, header in ipairs(data.header) do
-        local headerColumn = parent.header.columns[i]
-        local justify = header[2]
-
-        local column = row:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
-        column:SetJustifyH(justify)
-        column:SetPoint('TOP', row, 'TOP', 0, 0)
-        column:SetPoint('LEFT', headerColumn, 'LEFT', 0, 0)
-        column:SetWidth(headerColumn:GetWidth())
-
-        tinsert(row.columns, column)
+function LootDistWindow.handleRowClick(button, row)
+    if button == 'LeftButton' then
+        local charName = row.data[1]
+        LootDistWindow.selectedRoller = charName
     end
-
-    -- Highlight
-    row:EnableMouse()
-
-    local highlightFrame = parent.contents.rowHighlight
-
-    row:SetScript('OnEnter', function()
-        highlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
-        highlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
-        highlightFrame:Show()
-    end)
-
-    row:SetScript('OnLeave', function()
-        highlightFrame:Hide()
-    end)
-
-    row:SetScript('OnMouseUp', function(_, button)
-        if button == 'LeftButton' then
-            LootDistWindow:handleRowClick(row)
-        end
-    end)
-
-    table.insert(parent.rows, row)
-end
-
-
-function LootDistWindow:handleRowClick(row)
-    local charName = row.columns[1]:GetText()
-    self.selectedRoller = charName
-
-    local selectedHighlightFrame = self.mainFrame.tableFrame.contents.rowSelectedHighlight
-    selectedHighlightFrame:SetPoint('TOPLEFT', row, 'TOPLEFT', 0, 6)
-    selectedHighlightFrame:SetPoint('BOTTOMRIGHT', row, 'BOTTOMRIGHT', 3, 3)
-    selectedHighlightFrame:Show()
 end
 
 
@@ -518,7 +403,7 @@ function LootDistWindow:getLoot()
             local itemLink = GetLootSlotLink(i)
 
             if itemLink ~= nil then
-                ns.debug(i .. ': ' .. itemLink)
+                -- ns.debug(i .. ': ' .. itemLink)
                 self.currentLoot[itemLink] = i
             end
         end
@@ -532,8 +417,6 @@ end
 
 
 function LootDistWindow:checkAward()
-    self = LootDistWindow
-
     if not IsMasterLooter() then
 		ns.print('You are not the master looter!')
 		-- return
@@ -547,33 +430,14 @@ function LootDistWindow:checkAward()
 
     local rollType = self.data.rolls[awardee].type
 
-    ns.ConfirmAwardWindow:show(self.itemLink, awardee, rollType)
+    ns.ConfirmAwardWindow:show(self.itemLink, self.itemGp, awardee, rollType)
 end
 
 
-function LootDistWindow:award(awardee, rollType, perc, gp)
-    self = LootDistWindow
+function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
+    ns.debug(itemLink .. ' awarded to ' .. awardee)
 
-    ns.debug(self.itemLink .. ' awarded to ' .. awardee)
-
-    -- add item to awarded table
-    if ns.db.loot.awarded[self.itemLink] == nil then
-        ns.db.loot.awarded[self.itemLink] = {}
-    end
-
-    if ns.db.loot.awarded[self.itemLink][awardee] == nil then
-        ns.db.loot.awarded[self.itemLink][awardee] = {}
-    end
-
-    tinsert(ns.db.loot.awarded[self.itemLink][awardee], {
-        itemLink = self.itemLink,
-        awardTime = time(),
-        given = false,
-        givenTime = nil,
-        collected = false,
-    })
-
-	local itemIndex = self.currentLoot[self.itemLink]
+	local itemIndex = self.currentLoot[itemLink]
 
 	if itemIndex ~= nil then
         -- item is from loot window
@@ -589,24 +453,45 @@ function LootDistWindow:award(awardee, rollType, perc, gp)
 		if playerIndex ~= nil then
 			GiveMasterLoot(itemIndex, playerIndex)
 		else
-			ns.print(awardee .. ' is not eligible for loot')
+			ns.print('Could\'nt award ' .. itemLink .. ' to ' .. awardee .. ' as they are not eligible')
+            return
 		end
     elseif awardee == UnitName('player') then
         -- item is in inventory and was awarded to me
-        self:successfulAward(self.itemLink, awardee)
+        self:successfulAward(itemLink, awardee)
     else
         -- item is in inventory and awarded to someone else and must be traded
-        self:markAsToTrade(self.itemLink, awardee)
+        self.markAsToTrade(itemLink, awardee)
 	end
 
-    local itemName = GetItemInfo(self.itemLink)
+    if rollType ~= nil then
+        -- add gp
+        local itemName = ns.Lib.getItemInfo(itemLink)
+        local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
+        ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
+        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
+    else
+        ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
+    end
 
-    -- add gp
-    local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
-    ns.addon:modifyEpgp({{ns.Lib:getPlayerGuid(awardee), 'GP', gp, reason}})
-	ns.printPublic(string.format('Item %s awarded to %s for %s (%s GP: %d)', self.itemLink, awardee, rollType, perc, gp))
+    -- add item to awarded table
+    if ns.db.loot.awarded[itemLink] == nil then
+        ns.db.loot.awarded[itemLink] = {}
+    end
 
-    if self.mainFrame.closeOnAwardCheck:GetChecked() then
+    if ns.db.loot.awarded[itemLink][awardee] == nil then
+        ns.db.loot.awarded[itemLink][awardee] = {}
+    end
+
+    tinsert(ns.db.loot.awarded[itemLink][awardee], {
+        itemLink = itemLink,
+        awardTime = time(),
+        given = false,
+        givenTime = nil,
+        collected = false,
+    })
+
+    if self.mainFrame ~= nil and self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()
     end
 end
@@ -624,22 +509,21 @@ function LootDistWindow:handleLootReceived(itemLink, player)
     if player == 'You' then
         ns.debug('i received ' .. itemLink)
         local myName = UnitName('player')
-        ns.debug('-- my name: ' .. myName)
 
         -- iterate over awarded items for ones that haven't been collected
         for awardedPlayer, awardedItem in pairs(awardedData) do
             if not awardedItem.given and not awardedItem.collected then
                 awardedItem.collected = true
 
-                ns.debug(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, awardedItem))
+                ns.debug(string.format('---- awardedPlayer: %s, awardedItem: %s', awardedPlayer, tostring(awardedItem)))
 
                 -- TODO: fix
-                -- if this item was awarded to me, mark it as successful
                 if awardedPlayer == myName then
+                    -- if this item was awarded to me, mark it as successful
                     self:successfulAward(itemLink, myName)
-                -- else, mark it as to trade
                 else
-                    self:markAsToTrade(itemLink, awardedPlayer)
+                    -- else, mark it as to trade
+                    self.markAsToTrade(itemLink, awardedPlayer)
                 end
 
                 return
@@ -652,7 +536,7 @@ function LootDistWindow:handleLootReceived(itemLink, player)
 end
 
 
-function LootDistWindow:markAsToTrade(itemLink, player)
+function LootDistWindow.markAsToTrade(itemLink, player)
     ns.debug('marked as to trade: ' .. itemLink .. ' - ' .. player)
 
     local toTrade = ns.db.loot.toTrade
@@ -661,16 +545,16 @@ function LootDistWindow:markAsToTrade(itemLink, player)
 		toTrade[player] = {}
 	end
 
-	tinsert(toTrade[player], itemLink)
+	tinsert(toTrade[player], {itemLink, time()})
 end
 
 
-function LootDistWindow:handleTradeRequest(player)
+function LootDistWindow.handleTradeRequest(player)
 	if ns.db.loot.toTrade[player] == nil then
 		return
 	end
 
-    ns.debug('trade request with to trade player')
+    ns.debug('trade request with to-trade player')
 
 	InitiateTrade(player)
 end
@@ -687,12 +571,14 @@ function LootDistWindow:handleTradeShow()
 		return
 	end
 
-    ns.debug(player)
+    local items = List:new()
 
+    ns.debug(player)
     ns.debug('-- items to trade')
 
     for _, item in ipairs(itemsToTrade) do
-        ns.debug('---- ' .. item)
+        ns.debug('---- ' .. item[1])
+        items:append(item[1])
     end
 
     local i = 1
@@ -702,10 +588,15 @@ function LootDistWindow:handleTradeShow()
         local numSlots = C_Container.GetContainerNumSlots(container)
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
-            if ns.Lib:contains(itemsToTrade, containerItemLink) then
+
+            if items:contains(containerItemLink) then
                 ns.debug('-- trade ' .. container .. ' ' .. slot .. ' ' .. containerItemLink)
 
-                C_Timer.After(i * 0.1, function() self:addItemToTrade(container, slot) end)
+                C_Timer.After(i * 0.1, function()
+                    self.addItemToTrade(container, slot)
+                    items:remove(containerItemLink)
+                end)
+
                 i = i + 1
             end
         end
@@ -713,17 +604,27 @@ function LootDistWindow:handleTradeShow()
 end
 
 
-function LootDistWindow:addItemToTrade(container, slot)
+function LootDistWindow.getToTradeItem(player, itemLink)
+    local items = ns.db.loot.toTrade[player]
+
+    if items == nil then
+        return
+    end
+
+    for _, item in ipairs(items) do
+        if item[1] == itemLink then
+            return item
+        end
+    end
+end
+
+
+function LootDistWindow.addItemToTrade(container, slot)
     if (UseContainerItem) then
         UseContainerItem(container, slot)
     else
         C_Container.UseContainerItem(container, slot);
     end
-end
-
-
-function LootDistWindow:handleTradeClosed()
-	-- no need?
 end
 
 
@@ -751,7 +652,7 @@ function LootDistWindow:handleTradeComplete()
         return
     end
 
-    ns.debug('-- ' .. player .. ' ' .. itemsToTrade)
+    ns.debug('-- ' .. player .. ' ' .. tostring(itemsToTrade))
 
     for _, itemLink in ipairs(items) do
         self:successfulAward(itemLink, player)
@@ -762,27 +663,37 @@ end
 function LootDistWindow:successfulAward(itemLink, player)
     ns.debug(itemLink .. ' successfully given to ' .. player)
 
-    ns.Lib:remove(ns.db.loot.toTrade[player], itemLink)
+    local itemToTrade = self.getToTradeItem(player, itemLink)
+    if itemToTrade ~= nil then
+        local items = ns.db.loot.toTrade[player]
+        if items ~= nil then
+            ns.Lib.remove(items, itemToTrade)
+        end
+    end
 
-    local awardedItems = ns.db.loot.awarded[itemLink][player]
+    local awardedPlayers = ns.db.loot.awarded[itemLink]
+    if awardedPlayers == nil then
+        return
+    end
 
-    if awardedItems ~= nil then
-        for _, awardedItem in ipairs(awardedItems) do
-            ns.debug(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
-            if not awardedItem.given then
-                ns.debug('---- set given')
-                awardedItem.given = true
-                awardedItem.givenTime = time()
-                return
-            end
+    local awardedItems = awardedPlayers[player]
+    if awardedItems == nil then
+        return
+    end
+
+    for _, awardedItem in ipairs(awardedItems) do
+        ns.debug(string.format('-- awardedItem: %s (given: %s)', awardedItem.itemLink, tostring(awardedItem.given)))
+        if not awardedItem.given then
+            ns.debug('---- set given')
+            awardedItem.given = true
+            awardedItem.givenTime = time()
+            return
         end
     end
 end
 
 
 function LootDistWindow:disenchant()
-    self = LootDistWindow
-
     if self.disenchanter == nil then
         ns.DeSelectWindow:show()
         return

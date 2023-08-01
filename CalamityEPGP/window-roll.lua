@@ -40,6 +40,9 @@ function RollWindow:createWindow()
     mainFrame.title:SetPoint('LEFT', mainFrame.titleBar, 'LEFT', 5, 0)
     mainFrame.title:SetText(addonName .. ' - Now Rolling:')
 
+    mainFrame.closeButton = CreateFrame('Button', nil, mainFrame, 'UIPanelCloseButton')
+    mainFrame.closeButton:SetPoint('RIGHT', mainFrame.titleBar, 'RIGHT', 5, 0)
+
     mainFrame.msButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.msButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 3, 3)
     mainFrame.msButton:SetWidth(110)
@@ -53,9 +56,27 @@ function RollWindow:createWindow()
     mainFrame.passButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -3, 3)
     mainFrame.passButton:SetWidth(50)
 
-    mainFrame.passButton:SetScript('OnClick', function() RollWindow:hide() end)
+    mainFrame.closeButton:SetScript('OnClick', function() RollWindow:hide() end)
 
-    tinsert(UISpecialFrames, mainFrameName)
+    self.mainFrame.msButton:SetScript('OnClick', function()
+        RandomRoll(1, 100)
+        RollWindow.mainFrame.msButton:Disable()
+        RollWindow.mainFrame.osButton:Enable()
+    end)
+
+    self.mainFrame.osButton:SetScript('OnClick', function()
+        RandomRoll(1, 99)
+        RollWindow.mainFrame.msButton:Enable()
+        RollWindow.mainFrame.osButton:Disable()
+    end)
+
+    mainFrame.passButton:SetScript('OnClick', function()
+        RollWindow:hide()
+
+        ns.LootDistWindow:handlePass(UnitName('player'))
+
+        ns.Comm:sendRollPass()
+    end)
 
     return mainFrame
 end
@@ -63,7 +84,7 @@ end
 function RollWindow:show(itemLink, duration)
     self:createWindow()
 
-    local usable = ns.Lib:canPlayerUseItem(itemLink)
+    local usable = ns.Lib.canPlayerUseItem(itemLink)
 
     local label
     if usable then
@@ -76,9 +97,13 @@ function RollWindow:show(itemLink, duration)
         RollWindow.mainFrame.osButton:Disable()
     end
 
-    local _, _, _, _, _, _, _, _, _, itemTexture, _ = GetItemInfo(itemLink)
+    local _, _, _, _, _, _, _, _, _, itemTexture, _ = ns.Lib.getItemInfo(itemLink)
 
-    self.mainFrame.timerBar = ns.addon.candy:New('Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar', self.mainFrame:GetWidth(), 24)
+    self.mainFrame.timerBar = ns.addon.candy:New(
+        'Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar',
+        self.mainFrame:GetWidth(),
+        24
+    )
     self.mainFrame.timerBar:SetParent(self.mainFrame)
     self.mainFrame.timerBar:SetPoint('TOPLEFT', self.mainFrame.titleBar, 'BOTTOMLEFT')
     self.mainFrame.timerBar.candyBarLabel:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE");
@@ -87,31 +112,23 @@ function RollWindow:show(itemLink, duration)
     self.mainFrame.timerBar:SetIcon(itemTexture)
     self.mainFrame.timerBar:SetLabel(label)
 
-    self.mainFrame.timerBar:SetScript('OnEnter', function() GameTooltip:SetOwner(self.mainFrame.timerBar, "ANCHOR_TOPLEFT") GameTooltip:SetHyperlink(itemLink) GameTooltip:Show() end)
+    self.mainFrame.timerBar:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(self.mainFrame.timerBar, "ANCHOR_TOPLEFT")
+        GameTooltip:SetHyperlink(itemLink)
+        GameTooltip:Show()
+    end)
     self.mainFrame.timerBar:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-    local msGp = ns.Lib:getGp(itemLink)
+    local msGp = ns.Lib.getGp(itemLink)
     local osGp = math.floor(msGp * .1)
 
     self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))
     self.mainFrame.osButton:SetText(string.format('OS (10%% GP: %d)', osGp))
 
-    self.mainFrame.msButton:SetScript('OnClick', function()
-        RandomRoll(1, 100)
-        RollWindow.mainFrame.msButton:Disable()
-        RollWindow.mainFrame.osButton:Enable()
-        -- RollWindow:hide()
-    end)
-
-    self.mainFrame.osButton:SetScript('OnClick', function()
-        RandomRoll(1, 99)
-        RollWindow.mainFrame.msButton:Enable()
-        RollWindow.mainFrame.osButton:Disable()
-        -- RollWindow:hide()
-    end)
-
     self.mainFrame:Show()
     self.mainFrame.timerBar:Start()
+
+    C_Timer.After(duration, function() RollWindow:hide() end)
 end
 
 function RollWindow:hide()

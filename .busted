@@ -1,0 +1,7 @@
+return {
+    default = {
+        ROOT = {'test'},
+        pattern = 'test-',
+        coverage = true,
+    }
+}
