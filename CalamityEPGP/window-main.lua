@@ -207,7 +207,7 @@ function MainWindow:filterData()
         local keep = true
         if (self.mainFrame.raidOnlyButton:GetChecked() and not ns.addon.raidRoster:contains(row[1]))
                 or (self.mainFrame.mainsOnlyButton:GetChecked()
-                    and not ns.Lib.dictContains(ns.db.altData.mainAltMapping, row[1])) then
+                    and not ns.Lib.contains(ns.db.altData.mainAltMapping, row[1])) then
             keep = false
         end
 

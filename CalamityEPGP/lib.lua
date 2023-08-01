@@ -8,39 +8,60 @@ local Lib = {
 ns.Lib = Lib
 
 
-function Lib.find(array, value)
-    if type(array) == 'table' then
-        for i, v in ipairs(array) do
+---@param container table | string
+---@param value any
+---@return number
+function Lib.find(container, value)
+    if container == nil then
+        error('container argument must not be nil')
+    end
+
+    if value == nil then
+        error('value argument must not be nil')
+    end
+
+    if type(container) == 'table' then
+        if #container == 0 then
+            -- dict or empty list
+
+        end
+
+        for i, v in ipairs(container) do
             if v == value then
                 return i
             end
         end
-    elseif type(array) == 'string' then
-        for i = 1, #array do
-            local c = array:sub(i, i)
+    elseif type(container) == 'string' then
+        for i = 1, #container do
+            local c = container:sub(i, i)
             if c == value then
                 return i
             end
         end
+    else
+        error('container argument type is unsupported')
     end
 
     return -1
 end
 
 
-function Lib.contains(array, value)
-    return Lib.find(array, value) ~= -1
-end
-
-
-function Lib.dictContains(array, value)
-    for k in pairs(array) do
-        if k == value then
-            return true
+---@param container table | string
+---@param value any
+---@return boolean
+function Lib.contains(container, value)
+    if type(container) == 'table' and #container == 0 then
+        -- dict or empty list
+        for k in pairs(container) do
+            if k == value then
+                return true
+            end
         end
-    end
 
-    return false
+        return false
+    else
+        return Lib.find(container, value) ~= -1
+    end
 end
 
 
@@ -212,35 +233,35 @@ end
 
 
 function Lib.itemExists(itemId)
-	if not itemId or not tonumber(itemId) then return false; end
+	if not itemId or not tonumber(itemId) then return false end
 
 	if C_Item.DoesItemExistByID(tonumber(itemId)) then
-		return true;
+		return true
 	else
-		return false;
+		return false
 	end
 end
 
 
 function Lib.getItemString(itemLink)
 	if not itemLink then
-		return nil;
+		return nil
 	end
 
-	local i = string.find(itemLink, "item[%-?%d:]+");
-	if not i then return nil; end
-	local itemString = strsub(itemLink, i, string.len(itemLink) - (string.len(itemLink) - 2) - 6);
-	return itemString;
+	local i = string.find(itemLink, "item[%-?%d:]+")
+	if not i then return nil end
+	local itemString = strsub(itemLink, i, string.len(itemLink) - (string.len(itemLink) - 2) - 6)
+	return itemString
 end
 
 
 function Lib.getItemID(itemString)
 	if not itemString or not string.find(itemString, "item:") then
-		return nil;
+		return nil
 	end
 
 	itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
-	return string.sub(itemString, 1, string.find(itemString, ":") - 1);
+	return string.sub(itemString, 1, string.find(itemString, ":") - 1)
 end
 
 
