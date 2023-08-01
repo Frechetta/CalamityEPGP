@@ -58,7 +58,7 @@ jobs:
           minimum_coverage: 0
 
   release:
-    if: env.GITHUB_BASE_REF == 'main'
+    if: ${{ github.base_ref == 'main' }}
     runs-on: ubuntu-latest
 
     steps:
