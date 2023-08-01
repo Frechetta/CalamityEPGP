@@ -67,7 +67,7 @@ metadata=$(jq -n \
                 '{changelog: $changelog, changelogType: "markdown", gameVersions: [$gameVersion | tonumber], releaseType: "beta"}')
 
 curl --http1.1 \
-    -H "X-Api-Token: $CURSE_API_TOKEN" \
+    -H "X-Api-Token: $CURSEFORGE_API_TOKEN" \
     -F "metadata=$metadata" \
     -F "file=@$zip_file" \
     "https://wow.curseforge.com/api/projects/883687/upload-file"
