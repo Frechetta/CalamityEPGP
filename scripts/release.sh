@@ -25,7 +25,7 @@ if ! grep -q "$version" "$root_dir/CHANGELOG.md"; then
 fi
 
 api_version=$(grep '## Interface:' "$toc_file" | grep -oP '\d+')
-game_version=$(curl -H "X-Api-Token: $CURSE_API_TOKEN" "$base_url_curse/api/game/versions" 2>/dev/null | jq -r ".[] | select(.apiVersion == \"$api_version\").id")
+game_version=$(curl -H "X-Api-Token: $CURSEFORGE_API_TOKEN" "$base_url_curse/api/game/versions" 2>/dev/null | jq -r ".[] | select(.apiVersion == \"$api_version\").id")
 
 zip_file="$build_dir/$addon_name-$version.zip"
 
