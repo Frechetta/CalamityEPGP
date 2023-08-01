@@ -1,3 +1,9 @@
+# 0.12.0
+
+- fix several issues
+- lots of under-the-hood improvements
+- add bench feature
+
 # 0.11.1
 
 - fix players in history not existing in standings
