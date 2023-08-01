@@ -59,6 +59,7 @@ jobs:
 
   release:
     if: ${{ github.base_ref == 'main' }}
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
