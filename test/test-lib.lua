@@ -283,4 +283,84 @@ describe('lib', function()
             assert.is_false(present)
         end)
     end)
+
+    describe('remove', function()
+        test('container valid; value nil', function()
+            assert.has_error(function() Lib.remove({1, 2}, nil) end, 'value argument must not be nil')
+        end)
+
+        test('container nil; value valid', function()
+            assert.has_error(function() Lib.remove(nil, 5) end, 'container argument must not be nil')
+        end)
+
+        test('container nil; value nil', function()
+            assert.has_error(function() Lib.remove(nil, nil) end, 'container argument must not be nil')
+        end)
+
+        test('container empty; all false', function()
+            local container = {}
+            Lib.remove(container, 5)
+            assert.same({}, container)
+        end)
+
+        test('container empty; all true', function()
+            local container = {}
+            Lib.remove(container, 5, true)
+            assert.same({}, container)
+        end)
+
+        test('single element; value not in container; all false', function()
+            local container = {5}
+            Lib.remove(container, 4)
+            assert.same({5}, container)
+        end)
+
+        test('single element; value not in container; all true', function()
+            local container = {5}
+            Lib.remove(container, 4, true)
+            assert.same({5}, container)
+        end)
+
+        test('multiple elements 1; value in container; all false', function()
+            local container = {5, 6, 7}
+            Lib.remove(container, 5)
+            assert.same({6, 7}, container)
+        end)
+
+        test('multiple elements 2; value in container; all false', function()
+            local container = {5, 6, 7}
+            Lib.remove(container, 6)
+            assert.same({5, 7}, container)
+        end)
+
+        test('multiple elements 3; value in container; all false', function()
+            local container = {5, 6, 7}
+            Lib.remove(container, 7)
+            assert.same({5, 6}, container)
+        end)
+
+        test('multiple elements; value not in container; all false', function()
+            local container = {5, 6, 7}
+            Lib.remove(container, 9)
+            assert.same({5, 6, 7}, container)
+        end)
+
+        test('multiple elements; value in container; all true', function()
+            local container = {5, 6, 7}
+            Lib.remove(container, 5, true)
+            assert.same({6, 7}, container)
+        end)
+
+        test('multiple elements; duplicates; value in container; all false', function()
+            local container = {5, 6, 5, 7}
+            Lib.remove(container, 5)
+            assert.same({6, 5, 7}, container)
+        end)
+
+        test('multiple elements; duplicates; value in container; all true', function()
+            local container = {5, 6, 5, 7}
+            Lib.remove(container, 5, true)
+            assert.same({6, 7}, container)
+        end)
+    end)
 end)

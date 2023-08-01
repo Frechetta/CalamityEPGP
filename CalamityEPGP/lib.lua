@@ -21,11 +21,6 @@ function Lib.find(container, value)
     end
 
     if type(container) == 'table' then
-        if #container == 0 then
-            -- dict or empty list
-
-        end
-
         for i, v in ipairs(container) do
             if v == value then
                 return i
@@ -87,30 +82,26 @@ function Lib.deepcopy(orig, copies)
 end
 
 
-function Lib.remove(array, value, all)
-    if array == nil then
-        return
+---@param container table
+---@param value any
+---@param all boolean
+function Lib.remove(container, value, all)
+    if container == nil then
+        error('container argument must not be nil')
+    end
+
+    if value == nil then
+        error('value argument must not be nil')
     end
 
     while true do
-        local i = Lib.find(array, value)
-        table.remove(array, i)
+        local i = Lib.find(container, value)
+        table.remove(container, i)
 
         if i == -1 or not all then
             break
         end
     end
-end
-
-
-function Lib.keys(dict)
-    local keys = {}
-
-    for k in pairs(dict) do
-        tinsert(keys, k)
-    end
-
-    return keys
 end
 
 
