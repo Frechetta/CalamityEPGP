@@ -9,8 +9,6 @@ mkdir -p "$build_dir"
 
 . "$root_dir/.env"
 
-base_url_curse="https://wow.curseforge.com"
-
 toc_file=$(find "$root_dir" -maxdepth 2 -name "*.toc")
 
 # get addon name from toc file basename
@@ -72,7 +70,7 @@ curl --http1.1 \
     -H "X-Api-Token: $CURSE_API_TOKEN" \
     -F "metadata=$metadata" \
     -F "file=@$zip_file" \
-    "$base_url_curse/api/projects/883687/upload-file"
+    "https://wow.curseforge.com/api/projects/883687/upload-file"
 
 # WOWINTERFACE
 curl --http1.1 \
