@@ -7,8 +7,6 @@ build_dir="$root_dir/build"
 
 mkdir -p "$build_dir"
 
-# . "$root_dir/.env"
-
 toc_file=$(find "$root_dir" -maxdepth 2 -name "*.toc")
 
 # get addon name from toc file basename
@@ -81,6 +79,3 @@ curl --http1.1 \
     -F "compatible=$game_version" \
     -F "updatefile=@$zip_file" \
     https://api.wowinterface.com/addons/update
-
-git tag -a "$version" -m "Version $version"
-git push --tags
