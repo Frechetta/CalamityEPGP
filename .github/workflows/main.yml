@@ -59,7 +59,7 @@ jobs:
           minimum_coverage: 0
 
   release:
-    if: github.base_ref == 'main'  # && github.event.pull_request.merged == true
+    if: github.ref_name == 'main'  # && github.event.pull_request.merged == true
     needs: test
     runs-on: ubuntu-latest
 
