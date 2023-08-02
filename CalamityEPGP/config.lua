@@ -263,6 +263,8 @@ function Config:createAltManagementMenu()
             end
         end
 
+        ns.addon.modifiedLmSettings()
+
         self:setAltMainMapping()
         self:setAltManagementData()
     end)
@@ -282,6 +284,10 @@ end
 
 
 function Config:setAltManagementData()
+    if self.aamPanel == nil then
+        return
+    end
+
     local parent = self.aamPanel.tableFrame
 
     if parent == nil then
@@ -407,6 +413,7 @@ function Config:showEditPlayerWindow(player)
     editPlayerWindow.setButton:SetText(setButtonText)
     editPlayerWindow.setButton:SetScript('OnClick', function()
         setButtonFunc()
+        ns.addon.modifiedLmSettings()
         editPlayerWindow:Hide()
         Config:setAltMainMapping()
         Config:setAltManagementData()
@@ -613,6 +620,8 @@ function Config:showAltEditWindow(selectedPlayer, clickedPlayer, clickedFrame)
             ns.db.altData.mainAltMapping[clickedPlayer] = alts
         end
 
+        ns.addon.modifiedLmSettings()
+
         altEditWindow:Hide()
         self:setAltMainMapping()
         self:setAltManagementData()
@@ -627,6 +636,8 @@ function Config:showAltEditWindow(selectedPlayer, clickedPlayer, clickedFrame)
             local main = ns.db.altData.altMainMapping[clickedPlayer]
             ns.Lib.remove(ns.db.altData.mainAltMapping[main], clickedPlayer)
         end
+
+        ns.addon.modifiedLmSettings()
 
         altEditWindow:Hide()
         self:setAltMainMapping()
@@ -773,6 +784,8 @@ function Config:showAltSelector(player)
             tinsert(alts, alt)
             tinsert(alts, player)
         end
+
+        ns.addon.modifiedLmSettings()
 
         self:setAltMainMapping()
         self:setAltManagementData()
