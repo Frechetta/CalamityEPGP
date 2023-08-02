@@ -62,6 +62,8 @@ jobs:
     if: github.ref_name == 'main'  # && github.event.pull_request.merged == true
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v3
