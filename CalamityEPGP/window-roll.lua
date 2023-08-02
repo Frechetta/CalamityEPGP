@@ -84,51 +84,51 @@ end
 function RollWindow:show(itemLink, duration)
     self:createWindow()
 
-    local usable = ns.Lib.canPlayerUseItem(itemLink)
+    ns.Lib.canPlayerUseItem(itemLink, function(usable)
+        local label
+        if usable then
+            label = itemLink
+            RollWindow.mainFrame.msButton:Enable()
+            RollWindow.mainFrame.osButton:Enable()
+        else
+            label = 'You can\'t use this item!'
+            RollWindow.mainFrame.msButton:Disable()
+            RollWindow.mainFrame.osButton:Disable()
+        end
 
-    local label
-    if usable then
-        label = itemLink
-        RollWindow.mainFrame.msButton:Enable()
-        RollWindow.mainFrame.osButton:Enable()
-    else
-        label = 'You can\'t use this item!'
-        RollWindow.mainFrame.msButton:Disable()
-        RollWindow.mainFrame.osButton:Disable()
-    end
+        ns.Lib.getItemInfo(itemLink, function(itemInfo)
+            self.mainFrame.timerBar = ns.addon.candy:New(
+                'Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar',
+                self.mainFrame:GetWidth(),
+                24
+            )
+            self.mainFrame.timerBar:SetParent(self.mainFrame)
+            self.mainFrame.timerBar:SetPoint('TOPLEFT', self.mainFrame.titleBar, 'BOTTOMLEFT')
+            self.mainFrame.timerBar.candyBarLabel:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE");
+            self.mainFrame.timerBar.candyBarDuration:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE");
+            self.mainFrame.timerBar:SetDuration(duration)
+            self.mainFrame.timerBar:SetIcon(itemInfo.icon)
+            self.mainFrame.timerBar:SetLabel(label)
 
-    local _, _, _, _, _, _, _, _, _, itemTexture, _ = ns.Lib.getItemInfo(itemLink)
+            self.mainFrame.timerBar:SetScript('OnEnter', function()
+                GameTooltip:SetOwner(self.mainFrame.timerBar, "ANCHOR_TOPLEFT")
+                GameTooltip:SetHyperlink(itemLink)
+                GameTooltip:Show()
+            end)
+            self.mainFrame.timerBar:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-    self.mainFrame.timerBar = ns.addon.candy:New(
-        'Interface\\AddOns\\' .. addonName .. '\\Assets\\timer-bar',
-        self.mainFrame:GetWidth(),
-        24
-    )
-    self.mainFrame.timerBar:SetParent(self.mainFrame)
-    self.mainFrame.timerBar:SetPoint('TOPLEFT', self.mainFrame.titleBar, 'BOTTOMLEFT')
-    self.mainFrame.timerBar.candyBarLabel:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE");
-    self.mainFrame.timerBar.candyBarDuration:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE");
-    self.mainFrame.timerBar:SetDuration(duration)
-    self.mainFrame.timerBar:SetIcon(itemTexture)
-    self.mainFrame.timerBar:SetLabel(label)
+            local msGp = itemInfo.gp
+            local osGp = math.floor(msGp * .1)
 
-    self.mainFrame.timerBar:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(self.mainFrame.timerBar, "ANCHOR_TOPLEFT")
-        GameTooltip:SetHyperlink(itemLink)
-        GameTooltip:Show()
+            self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))
+            self.mainFrame.osButton:SetText(string.format('OS (10%% GP: %d)', osGp))
+
+            self.mainFrame:Show()
+            self.mainFrame.timerBar:Start()
+
+            C_Timer.After(duration, function() RollWindow:hide() end)
+        end)
     end)
-    self.mainFrame.timerBar:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-    local msGp = ns.Lib.getGp(itemLink)
-    local osGp = math.floor(msGp * .1)
-
-    self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))
-    self.mainFrame.osButton:SetText(string.format('OS (10%% GP: %d)', osGp))
-
-    self.mainFrame:Show()
-    self.mainFrame.timerBar:Start()
-
-    C_Timer.After(duration, function() RollWindow:hide() end)
 end
 
 function RollWindow:hide()

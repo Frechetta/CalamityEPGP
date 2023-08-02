@@ -1,17 +1,20 @@
 local _, ns = ...  -- Namespace
 
+---@class List
 local List = {}
 ns.List = List
 
+---@class Dict
 local Dict = {}
 ns.Dict = Dict
 
+---@class Set
 local Set = {}
 ns.Set = Set
 
 ---------------
 ---@param items? table
----@return table
+---@return List
 function List:new(items)
     local o = {}
     setmetatable(o, self)
@@ -88,6 +91,7 @@ function List:clear()
     self._list = {}
 end
 
+---@param item any
 function List:append(item)
     table.insert(self._list, item)
 end
@@ -138,7 +142,7 @@ end
 
 ---------------
 ---@param items? table
----@return table
+---@return Set
 function Set:new(items)
     local o = {}
     setmetatable(o, self)
@@ -207,6 +211,7 @@ function Set:toTable()
     return t
 end
 
+---@return Set
 function Set:difference(...)
     local newSet = ns.Lib.deepcopy(self)
     for _, other in ipairs({...}) do
@@ -220,7 +225,7 @@ end
 
 ---------------
 ---@param table? table
----@return table
+---@return Dict
 function Dict:new(table)
     local o = {}
     setmetatable(o, self)
