@@ -206,6 +206,10 @@ function Comm.handleLmSettings(message)
     ns.cfg.gpBase = lmSettings.gpBase
     ns.cfg.gpSlotMods = lmSettings.gpSlotMods
     ns.cfg.encounterEp = lmSettings.encounterEp
+    ns.db.altData.mainAltMapping = lmSettings.mainAltMapping
+
+    -- ns.Config:setAltMainMapping()
+    -- ns.Config:setAltManagementData()
 
     if lmSettings.lmSettingsLastChange ~= nil then
         ns.db.lmSettingsLastChange = lmSettings.lmSettingsLastChange
@@ -290,6 +294,7 @@ function Comm:sendLmSettings(target)
             gpBase = ns.cfg.gpBase,
             gpSlotMods = ns.cfg.gpSlotMods,
             encounterEp = ns.cfg.encounterEp,
+            mainAltMapping = ns.db.altData.mainAltMapping,
             lmSettingsLastChange = ns.db.lmSettingsLastChange,
         },
     }
