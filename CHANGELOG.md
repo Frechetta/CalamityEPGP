@@ -1,3 +1,7 @@
+# 0.12.1
+
+- hopefully fix loading item data
+
 # 0.12.0
 
 - fix several issues
