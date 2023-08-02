@@ -74,9 +74,8 @@ jobs:
         run: echo "version=$(scripts/release.sh)" >> $GITHUB_ENV
 
       - name: Create tag
-        id: tag
         uses: anothrNick/github-tag-action@1.64.0
-        with:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUSTOM_TAG: ${{ env.version }}
           WITH_V: false
