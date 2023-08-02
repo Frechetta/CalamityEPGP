@@ -33,13 +33,15 @@ fi
 
 cd "$root_dir"
 cp CHANGELOG.md LICENSE.txt README.md "$addon_dir"
-zip -r "$zip_file" "$addon_name"
+zip -r "$zip_file" "$addon_name" 1>&2
 
 cd "$addon_dir"
 rm CHANGELOG.md LICENSE.txt README.md
 cd "$root_dir"
 
-changelog=""
+changelog_file="$build_dir/changelog.md"
+echo > "$changelog_file"
+
 in_version=false
 while IFS="" read -r line || [ -n "$line" ]; do
     if echo "$line" | grep -q "# $version"; then
@@ -52,11 +54,13 @@ while IFS="" read -r line || [ -n "$line" ]; do
     fi
 
     if $in_version; then
-        changelog="$changelog"$'\n'"$line"
+        echo "$line" >> "$changelog_file"
     fi
 done < CHANGELOG.md
 
-changelog=$(echo "$changelog" | xargs)
+# remove empty lines from beginning and end of changelog
+changelog=$(sed -e '/[^[:space:]]/,$!d' -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' "$changelog_file")
+echo "$changelog" > "$changelog_file"
 
 # CURSEFORGE
 metadata=$(jq -n \
@@ -68,7 +72,7 @@ curl --http1.1 \
     -H "X-Api-Token: $CURSEFORGE_API_TOKEN" \
     -F "metadata=$metadata" \
     -F "file=@$zip_file" \
-    "https://wow.curseforge.com/api/projects/883687/upload-file"
+    "https://wow.curseforge.com/api/projects/883687/upload-file" 1>&2
 
 # WOWINTERFACE
 curl --http1.1 \
@@ -78,4 +82,6 @@ curl --http1.1 \
     -F "changelog=$changelog" \
     -F "compatible=$game_version" \
     -F "updatefile=@$zip_file" \
-    https://api.wowinterface.com/addons/update
+    https://api.wowinterface.com/addons/update 1>&2
+
+echo "$version"
