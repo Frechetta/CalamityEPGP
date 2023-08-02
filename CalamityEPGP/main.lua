@@ -179,7 +179,7 @@ function addon:handleItemClick(itemLink, mouseButton)
     if not itemLink
             or type(itemLink) ~= "string"
             or (mouseButton and mouseButton ~= "LeftButton")
-            or not ns.Lib.getItemIDFromLink(itemLink) then
+            or not ns.Lib.getItemIdFromLink(itemLink) then
         return;
     end
 
@@ -730,7 +730,7 @@ function addon:handleChatMsg(_, message)
     end
 
     local roller, roll, low, high = string.match(message, ns.LootDistWindow.rollPattern)
-    if roller and self.raidRoster:contains(roller) then
+    if roller and (self.raidRoster:contains(roller) or roller == UnitName('player')) then
         roll = tonumber(roll) or 0
         low = tonumber(low) or 0
         high = tonumber(high) or 0
@@ -745,6 +745,7 @@ function addon:handleChatMsg(_, message)
         end
 
         if rollType ~= nil then
+            ns.debug('got roll')
             ns.LootDistWindow:handleRoll(roller, roll, rollType)
             return
         end
@@ -990,49 +991,50 @@ function addon:handleTooltipUpdate(frame)
         return
     end
 
-    local itemId = ns.Lib.getItemID(ns.Lib.getItemString(itemLink))
+    local itemId = ns.Lib.getItemIdFromLink(itemLink)
     if not ns.Lib.itemExists(itemId) then
         return
     end
 
     -- add GP to tooltip
-    local gp = ns.Lib.getGp(itemLink)
-    if gp == nil then
-        gp = '?'
-    end
+    ns.Lib.getGp(itemLink, function(gp)
+        if gp == nil then
+            gp = '?'
+        end
 
-    frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
+        frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
 
-    -- add awarded list to tooltip
-    local awardedList = List:new()
+        -- add awarded list to tooltip
+        local awardedList = List:new()
 
-    local itemAwardedData = ns.db.loot.awarded[itemLink]
-    if itemAwardedData ~= nil then
-        for player, items in pairs(itemAwardedData) do
-            for _, item in ipairs(items) do
-                local given = item.given
+        local itemAwardedData = ns.db.loot.awarded[itemLink]
+        if itemAwardedData ~= nil then
+            for player, items in pairs(itemAwardedData) do
+                for _, item in ipairs(items) do
+                    local given = item.given
 
-                awardedList:bininsert({player, given}, function(left, right)
-                    return left[1] < right[1]
-                end)
+                    awardedList:bininsert({player, given}, function(left, right)
+                        return left[1] < right[1]
+                    end)
+                end
             end
         end
-    end
 
-    if awardedList:len() > 0 then
-        frame:AddLine('Awarded To')
+        if awardedList:len() > 0 then
+            frame:AddLine('Awarded To')
 
-        for awardedItem in awardedList:iter() do
-            local player = awardedItem[1]
-            local given = awardedItem[2] and 'yes' or 'no'
+            for awardedItem in awardedList:iter() do
+                local player = awardedItem[1]
+                local given = awardedItem[2] and 'yes' or 'no'
 
-            local _, classFileName = UnitClass(player)
-            local classColor = RAID_CLASS_COLORS[classFileName]
+                local _, classFileName = UnitClass(player)
+                local classColor = RAID_CLASS_COLORS[classFileName]
 
-            if classColor ~= nil then
-                local playerColored = classColor:WrapTextInColorCode(player)
-                frame:AddLine(string.format('  %s | Given: %s', playerColored, given))
+                if classColor ~= nil then
+                    local playerColored = classColor:WrapTextInColorCode(player)
+                    frame:AddLine(string.format('  %s | Given: %s', playerColored, given))
+                end
             end
         end
-    end
+    end)
 end

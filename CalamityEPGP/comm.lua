@@ -22,14 +22,6 @@ ns.Comm = Comm
 
 
 function Comm:init()
-    -- ns.addon:RegisterComm(self.prefixes.SYNC_PROBE, self.handleSyncProbe)
-    -- ns.addon:RegisterComm(self.prefixes.STANDINGS, self.handleStandings)
-    -- ns.addon:RegisterComm(self.prefixes.HISTORY, self.handleHistory)
-    -- ns.addon:RegisterComm(self.prefixes.LM_SETTINGS, self.handleLmSettings)
-    -- ns.addon:RegisterComm(self.prefixes.UPDATE, self.handleUpdate)
-    -- ns.addon:RegisterComm(self.prefixes.ROLL_PASS, self.handleRollPass)
-    -- ns.addon:RegisterComm('CE_sync', self.handleSyncOld)
-
     for _, prefix in pairs(self.prefixes) do
         ns.addon:RegisterComm(prefix, self.handleMessage)
     end

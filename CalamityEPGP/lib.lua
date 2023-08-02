@@ -157,19 +157,21 @@ function Lib.getClickCombination(mouseButton)
 end
 
 
-function Lib.getItemIDFromLink(itemLink)
+---@param itemLink string
+---@return number?
+function Lib.getItemIdFromLink(itemLink)
     if not itemLink or type(itemLink) ~= 'string' or itemLink == '' then
-        return false;
+        return nil
     end
 
-    local _, itemID = strsplit(':', itemLink);
-    itemID = tonumber(itemID);
+    local _, itemID = strsplit(':', itemLink)
+    itemID = tonumber(itemID)
 
     if not itemID then
-        return false;
+        return nil
     end
 
-    return itemID;
+    return itemID
 end
 
 
@@ -194,30 +196,39 @@ function Lib.createPattern(pattern, maximize)
 end
 
 
-function Lib.getGp(itemLink)
+---@param itemLink string
+---@param callback function
+function Lib.getGp(itemLink, callback)
     if ns.cfg == nil then
         return
     end
 
-    local _, _, rarity, ilvl, _, _, _, _, slot, _, _ = ns.Lib.getItemInfo(itemLink)
+    Lib.getItemInfo(itemLink, function(itemInfo)
+        local gp = Lib.getGpWithInfo(itemInfo)
+        callback(gp)
+    end)
+end
+
+
+function Lib.getGpWithInfo(itemInfo)
+    local rarity = itemInfo.quality
+    local ilvl = itemInfo.level
+    local slot = itemInfo.slot
 
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
 
     local slotMod = ns.cfg.gpSlotMods[slot]
     if slotMod == nil then
-        local itemId = itemLink:match("item:(%d+):")
-        if itemId ~= nil then
-            itemId = tonumber(itemId)
-        end
-        ilvl = ns.values.tokenGp[itemId]
+        ilvl = ns.values.tokenGp[itemInfo.id]
         slotMod = 0.75
     end
 
+    local gp
     if ilvl == nil or rarity == nil then
-        return 0
+        gp = 0
+    else
+        gp = math.floor(4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * slotMod) * 0.1)
     end
-
-    local gp = math.floor(4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * slotMod) * 0.1)
 
     return gp
 end
@@ -231,28 +242,6 @@ function Lib.itemExists(itemId)
 	else
 		return false
 	end
-end
-
-
-function Lib.getItemString(itemLink)
-	if not itemLink then
-		return nil
-	end
-
-	local i = string.find(itemLink, "item[%-?%d:]+")
-	if not i then return nil end
-	local itemString = strsub(itemLink, i, string.len(itemLink) - (string.len(itemLink) - 2) - 6)
-	return itemString
-end
-
-
-function Lib.getItemID(itemString)
-	if not itemString or not string.find(itemString, "item:") then
-		return nil
-	end
-
-	itemString = string.sub(itemString, string.find(itemString, "item:") + 5, string.len(itemString) - 1)
-	return string.sub(itemString, 1, string.find(itemString, ":") - 1)
 end
 
 
@@ -285,38 +274,6 @@ function Lib.validateEpgpValue(value)
     end
 
     return true
-end
-
-
-function Lib.canPlayerUseItem(itemLink)
-    -- GameTooltip:ClearLines()
-    GameTooltip:SetOwner(WorldFrame, 'ANCHOR_NONE')
-    GameTooltip:SetHyperlink(itemLink)
-
-    local isTooltipTextRed = function(text)
-        if (text and text:GetText()) then
-            local r, g, b = text:GetTextColor()
-            return math.floor(r * 256) >= 255 and math.floor(g * 256) == 32 and math.floor(b * 256) == 32
-        end
-
-        return false
-    end
-
-    local canUse = true
-
-    for i = 1, GameTooltip:NumLines() do
-        local left = _G['GameTooltipTextLeft' .. i]
-        local right = _G['GameTooltipTextRight' .. i]
-
-        if isTooltipTextRed(left) or isTooltipTextRed(right) then
-            canUse = false
-            break
-        end
-    end
-
-    GameTooltip:Hide()
-
-    return canUse
 end
 
 
@@ -400,24 +357,24 @@ function Lib.bininsert(t, value, fcomp)
  end
 
 
- function Lib.getPlayerClassColor(player)
+function Lib.getPlayerClassColor(player)
     local playerGuid = Lib.getPlayerGuid(player)
     local playerData = ns.db.standings[playerGuid]
 
     return RAID_CLASS_COLORS[playerData.classFileName]
- end
+end
 
 
- function Lib.getColoredText(text, color)
+function Lib.getColoredText(text, color)
     if color == nil then
         return text
     end
 
     return color:WrapTextInColorCode(text)
- end
+end
 
 
- function Lib.getColoredByClass(player, text)
+function Lib.getColoredByClass(player, text)
     local coloredText
     if text ~= nil then
         coloredText = text
@@ -427,10 +384,10 @@ function Lib.bininsert(t, value, fcomp)
 
     local classColor = Lib.getPlayerClassColor(player)
     return Lib.getColoredText(coloredText, classColor)
- end
+end
 
 
- function Lib.getMl()
+function Lib.getMl()
     for name, playerData in ns.addon.raidRoster:iter() do
         if playerData.ml then
             return name
@@ -438,21 +395,107 @@ function Lib.bininsert(t, value, fcomp)
     end
 
     return nil
- end
+end
 
 
- function Lib.getItemInfo(itemLink)
-    local info = {GetItemInfo(itemLink)}
+---@param itemLink string
+---@param callback function
+function Lib.canPlayerUseItem(itemLink, callback)
+    Lib.getItemInfo(itemLink, function(_)
+        -- GameTooltip:ClearLines()
+        GameTooltip:SetOwner(WorldFrame, 'ANCHOR_NONE')
+        GameTooltip:SetHyperlink(itemLink)
 
-    local attempts = 0
-    while #info == 0 do
-        attempts = attempts + 1
-        if attempts >= 10 then
-            break
+        local isTooltipTextRed = function(text)
+            if (text and text:GetText()) then
+                local r, g, b = text:GetTextColor()
+                return math.floor(r * 256) >= 255 and math.floor(g * 256) == 32 and math.floor(b * 256) == 32
+            end
+
+            return false
         end
 
-        info = {GetItemInfo(itemLink)}
+        local canUse = true
+
+        for i = 1, GameTooltip:NumLines() do
+            local left = _G['GameTooltipTextLeft' .. i]
+            local right = _G['GameTooltipTextRight' .. i]
+
+            if isTooltipTextRed(left) or isTooltipTextRed(right) then
+                canUse = false
+                break
+            end
+        end
+
+        GameTooltip:Hide()
+
+        callback(canUse)
+    end)
+end
+
+
+---@param itemId number
+---@return table?
+function Lib.getCachedItemInfo(itemId)
+    local itemName, itemLink, itemQuality, itemLevel, _, _, _, _, itemEquipLoc,
+            itemTexture, _, classID, subclassID, bindType, _, _, _ = GetItemInfo(itemId)
+
+    if itemName == nil or itemLink == nil or type(bindType) ~= 'number' then
+        ns.debug('GetItemInfo data was not yet available for item with ID: ' .. itemId)
+        return nil
     end
 
-    return unpack(info)
- end
+    local itemInfo = {
+        id = itemId,
+        link = itemLink,
+        name = itemName,
+        quality = itemQuality,
+        level = itemLevel,
+        slot = itemEquipLoc,
+        icon = itemTexture,
+        classID = classID,
+        subclassID = subclassID,
+        bindType = bindType,
+    }
+
+    local gp = Lib.getGpWithInfo(itemInfo)
+    itemInfo.gp = gp
+
+    return itemInfo
+end
+
+
+---@param itemLink string
+---@param callback? function
+function Lib.getItemInfo(itemLink, callback)
+    callback = callback or function(_) end
+
+    local itemId = Lib.getItemIdFromLink(itemLink)
+    if itemId == nil then
+        error('Invalid item link "' .. itemLink .. '"')
+    end
+
+    local item = Item:CreateFromItemID(itemId)
+    if item:IsItemEmpty() then
+        error('No item found with link "' .. itemLink .. '"')
+    end
+
+    if item:IsItemDataCached() then
+        local itemInfo = Lib.getCachedItemInfo(itemId)
+
+        if itemInfo then
+            callback(itemInfo)
+            return
+        end
+    end
+
+    item:ContinueOnItemLoad(function()
+        local itemInfo = Lib.getCachedItemInfo(itemId)
+
+        if itemInfo == nil then
+            return
+        end
+
+        callback(itemInfo)
+    end)
+end

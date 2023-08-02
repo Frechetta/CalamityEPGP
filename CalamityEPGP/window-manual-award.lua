@@ -73,34 +73,34 @@ end
 function ManualAwardWindow:show(itemLink)
     self:createWindow()
 
-    local _, _, _, _, _, _, _, _, _, texture, _ = ns.Lib.getItemInfo(itemLink)
+    ns.Lib.getItemInfo(itemLink, function(itemInfo)
+        self.mainFrame.itemIcon:SetTexture(itemInfo.icon)
+        self.mainFrame.itemIcon:SetScript('OnEnter', function()
+            GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
+            GameTooltip:SetHyperlink(itemLink)
+            GameTooltip:Show()
+        end)
+        self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-    self.mainFrame.itemIcon:SetTexture(texture)
-    self.mainFrame.itemIcon:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
-        GameTooltip:SetHyperlink(itemLink)
-        GameTooltip:Show()
+        self.mainFrame.itemLabel:SetText(itemLink)
+        self.mainFrame.itemLabel:SetScript('OnEnter', function()
+            GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
+            GameTooltip:SetHyperlink(itemLink)
+            GameTooltip:Show()
+        end)
+        self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
+
+        self.mainFrame.awardButton:Disable()
+
+        self.itemLink = itemLink
+        self.itemGp = itemInfo.gp
+        self.selectedPlayer = nil
+
+        self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
+
+        self:setData()
+        self.mainFrame:Show()
     end)
-    self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-    self.mainFrame.itemLabel:SetText(itemLink)
-    self.mainFrame.itemLabel:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
-        GameTooltip:SetHyperlink(itemLink)
-        GameTooltip:Show()
-    end)
-    self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-    self.mainFrame.awardButton:Disable()
-
-    self.itemLink = itemLink
-    self.itemGp = ns.Lib.getGp(itemLink)
-    self.selectedPlayer = nil
-
-    self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
-
-    self:setData()
-    self.mainFrame:Show()
 end
 
 

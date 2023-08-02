@@ -165,37 +165,37 @@ function LootDistWindow:show(itemLink)
         return
     end
 
-    local _, _, _, _, _, _, _, _, _, texture, _ = ns.Lib.getItemInfo(itemLink)
+    ns.Lib.getItemInfo(itemLink, function(itemInfo)
+        self.mainFrame.itemIcon:SetTexture(itemInfo.icon)
+        self.mainFrame.itemIcon:SetScript('OnEnter', function()
+            GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
+            GameTooltip:SetHyperlink(itemLink)
+            GameTooltip:Show()
+        end)
+        self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-    self.mainFrame.itemIcon:SetTexture(texture)
-    self.mainFrame.itemIcon:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(self.mainFrame.itemIcon, "ANCHOR_TOPLEFT")
-        GameTooltip:SetHyperlink(itemLink)
-        GameTooltip:Show()
+        self.mainFrame.itemLabel:SetText(itemLink)
+        self.mainFrame.itemLabel:SetScript('OnEnter', function()
+            GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
+            GameTooltip:SetHyperlink(itemLink)
+            GameTooltip:Show()
+        end)
+        self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
+
+        self.mainFrame.countdownLabel:SetText('0 seconds left')
+        self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
+
+        self.selectedRoller = nil
+        self.data.rolls = {}
+
+        self.itemLink = itemLink
+        self.itemGp = itemInfo.gp
+
+        self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
+
+        self:setData()
+        self.mainFrame:Show()
     end)
-    self.mainFrame.itemIcon:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-    self.mainFrame.itemLabel:SetText(itemLink)
-    self.mainFrame.itemLabel:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(self.mainFrame.itemLabel, "ANCHOR_TOPLEFT")
-        GameTooltip:SetHyperlink(itemLink)
-        GameTooltip:Show()
-    end)
-    self.mainFrame.itemLabel:SetScript('OnLeave', function() GameTooltip:Hide() end)
-
-    self.mainFrame.countdownLabel:SetText('0 seconds left')
-    self.mainFrame.countdownLabel:SetTextColor(1, 0, 0)
-
-    self.selectedRoller = nil
-    self.data.rolls = {}
-
-    self.itemLink = itemLink
-    self.itemGp = ns.Lib.getGp(itemLink)
-
-    self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
-
-    self:setData()
-    self.mainFrame:Show()
 end
 
 
@@ -466,10 +466,11 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
 
     if rollType ~= nil then
         -- add gp
-        local itemName = ns.Lib.getItemInfo(itemLink)
-        local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemName, rollType, gp)
-        ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
-        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
+        ns.Lib.getItemInfo(itemLink, function(itemInfo)
+            local reason = string.format('%s: %s - %s - %.2f', ns.values.epgpReasons.AWARD, itemInfo.name, rollType, gp)
+            ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
+            ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
+        end)
     else
         ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
     end
