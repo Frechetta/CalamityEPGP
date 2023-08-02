@@ -1,4 +1,4 @@
-*.zip
-.env
+/build/
+/.env
 settings.json
 luacov*
