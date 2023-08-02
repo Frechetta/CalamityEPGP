@@ -80,9 +80,9 @@ describe('award', function()
         stub(ldw, 'successfulAward')
         stub(ldw, 'markAsToTrade')
 
-        ns.Lib.getItemInfo = function(itemLink)
+        ns.Lib.getItemInfo = function(itemLink, callback)
             if itemInfo[itemLink] ~= nil then
-                return itemInfo[itemLink].name
+                callback({name = itemInfo[itemLink].name})
             end
         end
 
