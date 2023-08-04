@@ -37,15 +37,14 @@ function LootDistWindow:createWindow()
     local mainFrame = CreateFrame('Frame', addonName .. '_LootDistWindow', UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(500, 375)
 	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
+    mainFrame:SetFrameStrata('HIGH')
+    mainFrame:SetToplevel(true)
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
     mainFrame:RegisterForDrag('LeftButton')
     mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
-
-    mainFrame:SetFrameStrata('HIGH')
-    mainFrame:SetFrameLevel(5000)
 
     self.mainFrame = mainFrame
 
@@ -164,6 +163,8 @@ function LootDistWindow:show(itemLink)
     if self.rolling then
         return
     end
+
+    self.mainFrame:Raise()
 
     ns.Lib.getItemInfo(itemLink, function(itemInfo)
         self.mainFrame.itemIcon:SetTexture(itemInfo.icon)

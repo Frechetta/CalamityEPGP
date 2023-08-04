@@ -36,7 +36,7 @@ function HistoryWindow:createWindow()
     local mainFrame = CreateFrame('Frame', addonName .. '_HistoryWindow', UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(900, 500)
 	mainFrame:SetPoint('CENTER')
-    mainFrame:SetFrameStrata('HIGH')
+    mainFrame:SetToplevel(true)
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
@@ -218,6 +218,8 @@ function HistoryWindow:show()
     if self.mainFrame == nil then
         return
     end
+
+    self.mainFrame:Raise()
 
     self:refresh()
     self.mainFrame:Show()

@@ -15,8 +15,14 @@ function ConfirmAwardWindow:createWindow()
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(350, 165)
 	mainFrame:SetPoint('CENTER')
-
     mainFrame:SetFrameStrata('DIALOG')
+    mainFrame:SetToplevel(true)
+
+    mainFrame:SetMovable(true)
+    mainFrame:EnableMouse(true)
+    mainFrame:RegisterForDrag('LeftButton')
+    mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
+    mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
     self.mainFrame = mainFrame
 
@@ -65,6 +71,8 @@ end
 
 function ConfirmAwardWindow:show(itemLink, itemGp, player, rollType)
     self:createWindow()
+
+    self.mainFrame:Raise()
 
     self.mainFrame.messageLabel:SetText(string.format('Award %s to %s?', itemLink, player))
 

@@ -18,13 +18,14 @@ function BenchWindow:createWindow()
     local mainFrame = CreateFrame('Frame', addonName .. '_BenchWindow', UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(500, 375)
 	mainFrame:SetPoint('CENTER')
-    mainFrame:SetFrameStrata('HIGH')
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
     mainFrame:RegisterForDrag('LeftButton')
     mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
+
+    mainFrame:SetToplevel(true)
 
     self.mainFrame = mainFrame
 
@@ -97,6 +98,7 @@ end
 
 function BenchWindow:show()
     self:createWindow()
+    self.mainFrame:Raise()
     self:setData()
     self.mainFrame:Show()
 end

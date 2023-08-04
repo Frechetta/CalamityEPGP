@@ -17,6 +17,7 @@ function DeSelectWindow:createWindow()
 	mainFrame:SetPoint('CENTER')
 
     mainFrame:SetFrameStrata('DIALOG')
+    mainFrame:SetToplevel(true)
 
     self.mainFrame = mainFrame
 
@@ -54,6 +55,8 @@ end
 
 function DeSelectWindow:show()
     self:createWindow()
+
+    self.mainFrame:Raise()
 
     local data = {
         rows = {}
