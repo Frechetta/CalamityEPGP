@@ -23,6 +23,7 @@ function AddEpWindow:createWindow()
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
     mainFrame:SetFrameStrata('DIALOG')
+    mainFrame:SetToplevel(true)
 
     self.mainFrame = mainFrame
 
@@ -117,6 +118,9 @@ function AddEpWindow:confirm()
 
     local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
+    local proceedFunc
+    local numPlayers
+
     if ns.MainWindow.raidOnly then
         local players = {}
 
@@ -125,21 +129,28 @@ function AddEpWindow:confirm()
             tinsert(players, guid)
         end
 
-        ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+        local benchedPlayers = {}
 
         if #ns.db.benchedPlayers > 0 then
-            local benchedReason = reason .. ' BENCH'
-            local benchedPlayers = {}
             for _, player in ipairs(ns.db.benchedPlayers) do
                 local guid = ns.Lib.getPlayerGuid(player)
                 tinsert(benchedPlayers, guid)
             end
-
-            ns.addon:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, value, benchedReason)
         end
 
-        if ns.addon.useForRaid then
-            ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
+        numPlayers = #players + #benchedPlayers
+
+        proceedFunc = function()
+            ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+
+            if #benchedPlayers > 0 then
+                local benchedReason = reason .. ' BENCH'
+                ns.addon:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, value, benchedReason)
+            end
+
+            if ns.addon.useForRaid then
+                ns.printPublic(string.format('Awarded %d EP to raid. Reason: %s', value, enteredReason))
+            end
         end
     else
         local players = {}
@@ -148,8 +159,13 @@ function AddEpWindow:confirm()
             tinsert(players, charData.guid)
         end
 
-        ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+        numPlayers = #players
+
+        proceedFunc = function()
+            ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
+        end
     end
 
-    self:hide()
+    ns.ConfirmWindow:show(string.format('Award %s EP to %d players?', value, numPlayers),
+                          function() proceedFunc(); self:hide() end)
 end

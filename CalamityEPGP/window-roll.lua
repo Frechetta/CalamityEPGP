@@ -18,14 +18,13 @@ function RollWindow:createWindow()
     mainFrame.texture:SetColorTexture(0, 0, 0, 0.5)
 	mainFrame:SetSize(350, 72)
 	mainFrame:SetPoint('CENTER')
+    mainFrame:SetFrameStrata('FULLSCREEN_DIALOG')
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
     mainFrame:RegisterForDrag('LeftButton')
     mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
-
-    mainFrame:SetFrameStrata('FULLSCREEN_DIALOG')
 
     self.mainFrame = mainFrame
 
@@ -83,6 +82,8 @@ end
 
 function RollWindow:show(itemLink, duration)
     self:createWindow()
+
+    self.mainFrame:Raise()
 
     ns.Lib.canPlayerUseItem(itemLink, function(usable)
         local label

@@ -15,14 +15,14 @@ function ModifyEpgpWindow:createWindow()
     local mainFrame = CreateFrame('Frame', mainFrameName, ns.MainWindow.mainFrame, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(250, 200)
 	mainFrame:SetPoint('CENTER')
+    mainFrame:SetFrameStrata('DIALOG')
+    mainFrame:SetToplevel(true)
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
     mainFrame:RegisterForDrag('LeftButton')
     mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
-
-    mainFrame:SetFrameStrata('DIALOG')
 
     self.mainFrame = mainFrame
 
@@ -104,6 +104,7 @@ function ModifyEpgpWindow:show(charName, charGuid)
     self.charGuid = charGuid
 
     self:createWindow()
+    self.mainFrame:Raise()
     self:fillIn()
     self.mainFrame:Show()
 

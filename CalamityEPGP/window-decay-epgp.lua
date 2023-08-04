@@ -23,6 +23,7 @@ function DecayEpgpWindow:createWindow()
     mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
     mainFrame:SetFrameStrata('DIALOG')
+    mainFrame:SetToplevel(true)
 
     self.mainFrame = mainFrame
 
@@ -78,8 +79,8 @@ end
 
 function DecayEpgpWindow:show()
     self:createWindow()
+    self.mainFrame:Raise()
     self.mainFrame:Show()
-
     self.mainFrame.amountEditBox:SetFocus()
 end
 

@@ -17,6 +17,7 @@ function MainWindow:createWindow()
     local mainFrame = CreateFrame('Frame', addonName .. '_MainWindow', UIParent, 'BasicFrameTemplateWithInset');
 	mainFrame:SetSize(600, 450);
 	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
+    mainFrame:SetToplevel(true)
 
     mainFrame:SetMovable(true)
     mainFrame:EnableMouse(true)
@@ -116,6 +117,8 @@ function MainWindow:show()
     if self.mainFrame == nil then
         return
     end
+
+    self.mainFrame:Raise()
 
     if not ns.addon.isOfficer or not ns.cfg.lmMode then
         self.mainFrame.addEpButton:Disable()

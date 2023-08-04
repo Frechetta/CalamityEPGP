@@ -15,8 +15,14 @@ function ConfirmWindow:createWindow()
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(250, 120)
 	mainFrame:SetPoint('CENTER')
-
     mainFrame:SetFrameStrata('DIALOG')
+    mainFrame:SetToplevel(true)
+
+    mainFrame:SetMovable(true)
+    mainFrame:EnableMouse(true)
+    mainFrame:RegisterForDrag('LeftButton')
+    mainFrame:SetScript('OnDragStart', mainFrame.StartMoving)
+    mainFrame:SetScript('OnDragStop', mainFrame.StopMovingOrSizing)
 
     self.mainFrame = mainFrame
 
@@ -46,6 +52,8 @@ end
 
 function ConfirmWindow:show(message, callbackYes, callbackNo)
     self:createWindow()
+
+    self.mainFrame:Raise()
 
     self.mainFrame.messageLabel:SetText(message)
 
