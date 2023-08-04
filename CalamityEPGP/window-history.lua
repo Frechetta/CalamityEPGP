@@ -605,7 +605,7 @@ function HistoryWindow:getRenderedData()
 
             local player
             if #players > 1 then
-                player = 'Multiple'
+                player = string.format('Multiple (%d)', #players)
             else
                 local guid = players[1]
                 player = ns.db.standings[guid].name
