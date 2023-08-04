@@ -493,13 +493,16 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
 
     local event = {createTime, eventTime, UnitGUID('player'), players, mode, value, reason, percent}
     local hash = ns.Lib.hash(event)
+    local eventAndHash = {event, hash}
 
-    tinsert(ns.db.history, {event, hash})
+    tinsert(ns.db.history, eventAndHash)
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
-    ns.Comm:sendUpdate()
+    -- ns.Comm:sendUpdate()
+    ns.Comm:sendStandingsToGuild()
+    ns.Comm:sendEventToGuild(eventAndHash)
 end
 
 
