@@ -28,6 +28,10 @@ function Comm:init()
 end
 
 
+---@param prefix string
+---@param message table?
+---@param distribution string
+---@param target string?
 function Comm:send(prefix, message, distribution, target)
     ns.debug(string.format('sending %s msg to %s via %s', prefix, tostring(target), distribution))
 
@@ -37,8 +41,8 @@ function Comm:send(prefix, message, distribution, target)
 
     message.version = ns.addon.versionNum
 
-    message = self.packMessage(message)
-    ns.addon:SendCommMessage(prefix, message, distribution, target)
+    local messageStr = self.packMessage(message)
+    ns.addon:SendCommMessage(prefix, messageStr, distribution, target)
 end
 
 
@@ -184,6 +188,8 @@ function Comm.handleHistory(message)
         return left[1][1] < right[1][1]
     end
 
+    Comm:getEventHashes()
+
     for _, eventAndHash in ipairs(events) do
         local hash = eventAndHash[2]
 
@@ -253,6 +259,15 @@ function Comm:sendStandings(target)
 end
 
 
+function Comm:sendStandingsToGuild()
+    local toSend = {
+        standings = ns.db.standings,
+    }
+
+    self:send(self.prefixes.STANDINGS, toSend, 'GUILD')
+end
+
+
 function Comm:sendHistory(target, theirLatestEventTime)
     local toSend = {}
 
@@ -282,6 +297,15 @@ function Comm:sendHistory(target, theirLatestEventTime)
         ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
         self:send(self.prefixes.HISTORY, toSend, 'WHISPER', target)
     end
+end
+
+
+function Comm:sendEventToGuild(eventAndHash)
+    local toSend = {
+        events = {eventAndHash}
+    }
+
+    self:send(self.prefixes.HISTORY, toSend, 'GUILD')
 end
 
 
