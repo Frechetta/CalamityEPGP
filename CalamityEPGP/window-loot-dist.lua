@@ -36,7 +36,7 @@ function LootDistWindow:createWindow()
 
     local mainFrame = CreateFrame('Frame', addonName .. '_LootDistWindow', UIParent, 'BasicFrameTemplateWithInset')
 	mainFrame:SetSize(500, 375)
-	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
+	mainFrame:SetPoint('CENTER')
     mainFrame:SetFrameStrata('HIGH')
     mainFrame:SetToplevel(true)
 
@@ -164,7 +164,7 @@ function LootDistWindow:show(itemLink)
         return
     end
 
-    self.mainFrame:Raise()
+    self:createWindow()
 
     ns.Lib.getItemInfo(itemLink, function(itemInfo)
         self.mainFrame.itemIcon:SetTexture(itemInfo.icon)
@@ -195,6 +195,7 @@ function LootDistWindow:show(itemLink)
         self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
 
         self:setData()
+        self.mainFrame:Raise()
         self.mainFrame:Show()
     end)
 end
