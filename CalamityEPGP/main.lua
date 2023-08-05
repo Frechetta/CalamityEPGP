@@ -163,7 +163,7 @@ function addon:handleSlashCommand(input)
 end
 
 function addon:handleGuildRosterUpdate()
-    C_Timer.After(1, function() self:init(); ns.MainWindow:refresh() end)
+    C_Timer.After(0.5, function() self:init(); ns.MainWindow:refresh() end)
 end
 
 function addon.showMainWindow()
@@ -201,7 +201,6 @@ function addon.showLootDistWindow(itemLink)
         return
     end
 
-    ns.LootDistWindow:createWindow()
     ns.LootDistWindow:show(itemLink)
 end
 
@@ -215,10 +214,6 @@ end
 
 
 function addon:init()
-    if self == nil then
-        return
-    end
-
     if not self.initialized then
         -- Get guild name
         local guildName = GetGuildInfo('player')
