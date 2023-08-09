@@ -1,3 +1,8 @@
+# 0.12.2
+
+- fix important things
+- improve window management
+
 # 0.12.1
 
 - hopefully fix loading item data
