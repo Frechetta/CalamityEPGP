@@ -40,6 +40,7 @@ function MainWindow:createWindow()
 
     if IsInRaid() then
         mainFrame.raidOnlyButton:SetChecked(true)
+        self.raidOnly = true
     end
 
     mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
