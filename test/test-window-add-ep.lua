@@ -56,6 +56,12 @@ describe('confirm', function()
             return playerName .. '_guid'
         end
 
+        ns.ConfirmWindow = mock({
+            show = function(_, msg, callback)
+                callback()
+            end
+        })
+
         stub(ns.addon, 'modifyEpgp')
         stub(ns, 'printPublic')
         stub(aew, 'hide')

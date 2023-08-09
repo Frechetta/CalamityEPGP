@@ -186,7 +186,8 @@ describe('modifyEpgp', function()
         })
 
         ns.Comm = mock({
-            sendUpdate = function() end
+            sendStandingsToGuild = function() end,
+            sendEventToGuild = function(eventAndHash) end
         })
     end)
 
