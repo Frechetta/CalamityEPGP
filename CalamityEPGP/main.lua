@@ -212,8 +212,12 @@ function addon.showManualAwardWindow(itemLink)
     ns.ManualAwardWindow:show(itemLink)
 end
 
-
 function addon:init()
+    if self == nil then
+        C_Timer.After(0.5, addon.init)
+        return
+    end
+
     if not self.initialized then
         -- Get guild name
         local guildName = GetGuildInfo('player')

@@ -603,31 +603,33 @@ function HistoryWindow:getRenderedData()
             local baseReason = metadata.baseReason
             local players = metadata.players
 
-            local player
-            if #players > 1 then
-                player = string.format('Multiple (%d)', #players)
-            else
-                local guid = players[1]
-                player = ns.db.standings[guid].name
+            if #players >= 1 then
+                local player
+                if #players > 1 then
+                    player = string.format('Multiple (%d)', #players)
+                else
+                    local guid = players[1]
+                    player = ns.db.standings[guid].name
+                end
+
+                local valueStr = tostring(value)
+                valueStr = percent and valueStr .. '%' or valueStr
+                valueStr = value > 0 and '+' .. valueStr or valueStr
+
+                local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
+                local action = string.format('%s %s', actionMode, valueStr)
+
+                local newRow = {
+                    time,
+                    issuedBy,
+                    player,
+                    reason,
+                    action,
+                    {baseReason = baseReason, players = players}
+                }
+
+                tinsert(self.data.rowsRendered, newRow)
             end
-
-            local valueStr = tostring(value)
-            valueStr = percent and valueStr .. '%' or valueStr
-            valueStr = value > 0 and '+' .. valueStr or valueStr
-
-            local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
-            local action = string.format('%s %s', actionMode, valueStr)
-
-            local newRow = {
-                time,
-                issuedBy,
-                player,
-                reason,
-                action,
-                {baseReason = baseReason, players = players}
-            }
-
-            tinsert(self.data.rowsRendered, newRow)
         end
     end
 
