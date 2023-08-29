@@ -46,7 +46,17 @@ describe('confirm', function()
             }),
         })
 
-        ns.MainWindow = {}
+        ns.MainWindow = {
+            raidOnly = false,
+
+            getRaidOnly = function(self)
+                return self.raidOnly
+            end,
+
+            setRaidOnly = function(self, raidOnly)
+                self.raidOnly = raidOnly
+            end
+        }
 
         ns.Lib.validateEpgpValue = function(_)
             return validValue
@@ -71,7 +81,6 @@ describe('confirm', function()
         amount = 'hi'
         reason = 'because'
         validValue = false
-        ns.MainWindow.raidOnly = false
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -86,7 +95,6 @@ describe('confirm', function()
         amount = 'hi'
         reason = ''
         validValue = false
-        ns.MainWindow.raidOnly = false
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -101,7 +109,7 @@ describe('confirm', function()
         amount = 'hi'
         reason = 'because'
         validValue = false
-        ns.MainWindow.raidOnly = true
+        ns.MainWindow:setRaidOnly(true)
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -116,7 +124,6 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow.raidOnly = false
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -133,7 +140,6 @@ describe('confirm', function()
         amount = '45'
         reason = ''
         validValue = true
-        ns.MainWindow.raidOnly = false
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -148,7 +154,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow.raidOnly = true
+        ns.MainWindow:setRaidOnly(true)
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -165,7 +171,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow.raidOnly = true
+        ns.MainWindow:setRaidOnly(true)
         ns.addon.useForRaid = true
         ns.db.benchedPlayers = {}
 
@@ -184,7 +190,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow.raidOnly = true
+        ns.MainWindow:setRaidOnly(true)
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {'p3'}
 
@@ -202,7 +208,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow.raidOnly = true
+        ns.MainWindow:setRaidOnly(true)
         ns.addon.useForRaid = true
         ns.db.benchedPlayers = {'p3'}
 

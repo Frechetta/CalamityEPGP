@@ -114,14 +114,14 @@ function AddEpWindow:confirm()
         return
     end
 
-    ns.debug(string.format('add %d EP to %s', value, ns.MainWindow.raidOnly and 'raid' or 'everyone'))
+    ns.debug(string.format('add %d EP to %s', value, ns.MainWindow:getRaidOnly() and 'raid' or 'everyone'))
 
     local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
     local proceedFunc
     local numPlayers
 
-    if ns.MainWindow.raidOnly then
+    if ns.MainWindow:getRaidOnly() then
         local players = {}
 
         for player in ns.addon.raidRoster:iter() do

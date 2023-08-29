@@ -212,8 +212,12 @@ function addon.showManualAwardWindow(itemLink)
     ns.ManualAwardWindow:show(itemLink)
 end
 
-
 function addon:init()
+    if self == nil then
+        C_Timer.After(0.5, addon.init)
+        return
+    end
+
     if not self.initialized then
         -- Get guild name
         local guildName = GetGuildInfo('player')
@@ -568,12 +572,14 @@ function addon.syncAltEpGp(players)
                         local altGuid = ns.Lib.getPlayerGuid(alt)
                         local altData = ns.db.standings[altGuid]
 
-                        if ns.cfg.syncAltEp then
-                            altData.ep = playerData.ep
-                        end
+                        if altData ~= nil then
+                            if ns.cfg.syncAltEp then
+                                altData.ep = playerData.ep
+                            end
 
-                        if ns.cfg.syncAltGp then
-                            altData.gp = playerData.gp
+                            if ns.cfg.syncAltGp then
+                                altData.gp = playerData.gp
+                            end
                         end
                     end
                 end

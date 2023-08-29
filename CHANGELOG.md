@@ -1,3 +1,9 @@
+# 0.12.3
+
+- fix bug in history window
+- fix bug in addon loading
+- fix bug in alt ep/gp syncing
+
 # 0.12.2
 
 - fix important things
