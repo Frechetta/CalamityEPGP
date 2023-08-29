@@ -3,7 +3,6 @@ local addonName, ns = ...  -- Namespace
 local MainWindow = {
     data = {},
     myCharHighlights = {},
-    raidOnly = false,
 }
 
 ns.MainWindow = MainWindow
@@ -39,8 +38,7 @@ function MainWindow:createWindow()
     mainFrame.raidOnlyButton:SetPoint('LEFT', mainFrame.raidOnlyLabel, 'RIGHT', 3, 0)
 
     if IsInRaid() then
-        mainFrame.raidOnlyButton:SetChecked(true)
-        self.raidOnly = true
+        self:setRaidOnly(true)
     end
 
     mainFrame.mainsOnlyLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
@@ -87,7 +85,6 @@ function MainWindow:createWindow()
     mainFrame.addEpButton:SetScript('OnClick', function() self:handleAddEpClick() end)
     mainFrame.decayEpgpButton:SetScript('OnClick', function() self:handleDecayEpgpClick() end)
     mainFrame.raidOnlyButton:SetScript('OnClick', function()
-        self.raidOnly = mainFrame.raidOnlyButton:GetChecked()
         self:filterData()
         self:setData()
     end)
@@ -136,6 +133,16 @@ function MainWindow:show()
     end
 
     self.mainFrame:Show()
+end
+
+---@return boolean
+function MainWindow:getRaidOnly()
+    return self.mainFrame.raidOnlyButton:GetChecked()
+end
+
+---@param raidOnly boolean
+function MainWindow:setRaidOnly(raidOnly)
+    self.mainFrame.raidOnlyButton:SetChecked(raidOnly)
 end
 
 function MainWindow.handleHeaderClick(headerIndex)
@@ -209,7 +216,7 @@ function MainWindow:filterData()
 
     for _, row in ipairs(self.data.rowsRaw) do
         local keep = true
-        if (self.raidOnly and not ns.addon.raidRoster:contains(row[1]))
+        if (self:getRaidOnly() and not ns.addon.raidRoster:contains(row[1]))
                 or (self.mainFrame.mainsOnlyButton:GetChecked()
                     and not ns.Lib.contains(ns.db.altData.mainAltMapping, row[1])) then
             keep = false
