@@ -1,3 +1,7 @@
+# WIP
+
+- fix bug in automatic trading of awarded items
+
 # 0.12.3
 
 - fix bug in history window
