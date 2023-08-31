@@ -1,4 +1,4 @@
-# WIP
+# 0.12.4
 
 - fix bug in automatic trading of awarded items
 
