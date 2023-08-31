@@ -592,7 +592,7 @@ function LootDistWindow:handleTradeShow()
         for slot = 0, numSlots do
             local containerItemLink = C_Container.GetContainerItemLink(container, slot)
 
-            if items:contains(containerItemLink) then
+            if containerItemLink ~= nil and items:contains(containerItemLink) then
                 ns.debug('-- trade ' .. container .. ' ' .. slot .. ' ' .. containerItemLink)
 
                 C_Timer.After(i * 0.1, function()
