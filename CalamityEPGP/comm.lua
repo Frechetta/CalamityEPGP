@@ -40,6 +40,7 @@ function Comm:send(prefix, message, distribution, target)
     end
 
     message.version = ns.addon.versionNum
+    message.officer = ns.Lib.isOfficer()
 
     local messageStr = self.packMessage(message)
     ns.addon:SendCommMessage(prefix, messageStr, distribution, target)
