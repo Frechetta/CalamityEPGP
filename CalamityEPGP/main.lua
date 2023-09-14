@@ -320,10 +320,14 @@ end
 
 
 function addon.migrateData()
+    ns.debug('migrating data...')
+
     for guid, charData in pairs(ns.db.standings) do
         -- we now use rankIndex instead of rank
         charData.rank = nil
     end
+
+    ns.debug('done migrating data')
 end
 
 
