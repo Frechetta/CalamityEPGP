@@ -499,3 +499,9 @@ function Lib.getItemInfo(itemLink, callback)
         callback(itemInfo)
     end)
 end
+
+
+---@return boolean
+function Lib.isOfficer()
+    return C_GuildInfo.CanEditOfficerNote()
+end

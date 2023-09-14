@@ -50,7 +50,6 @@ function addon:OnInitialize()
 
     self.initialized = false
     self.minimapButtonInitialized = false
-    self.isOfficer = nil
     self.useForRaidPrompted = false
     self.useForRaid = false
     self.raidRoster = Dict:new()
@@ -253,8 +252,6 @@ function addon:init()
 
         self.clearAwarded()
     end
-
-    self.isOfficer = C_GuildInfo.CanEditOfficerNote()
 
     -- Load guild data
     local guildMembers = {}
