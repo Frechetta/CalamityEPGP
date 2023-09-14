@@ -18,6 +18,7 @@ local List = ns.List
 local Dict = ns.Dict
 local Set = ns.Set
 
+---@class AceAddon
 local addon = LibStub('AceAddon-3.0'):NewAddon(
     addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceComm-3.0', 'AceSerializer-3.0'
 )
@@ -248,6 +249,8 @@ function addon:init()
         self.libc = LibStub('LibCompress')
         self.libcEncodeTable = self.libc:GetAddonEncodeTable()
 
+        self.migrateData()
+
         ns.Comm:init()
 
         self.clearAwarded()
@@ -257,7 +260,7 @@ function addon:init()
     local guildMembers = {}
 
     for i = 1, GetNumGuildMembers() do
-        local fullName, rank, _, level, class, _, _, _, _, _, classFileName, _, _, _, _, _, guid = GetGuildRosterInfo(i)
+        local fullName, _, rankIndex, level, class, _, _, _, _, _, classFileName, _, _, _, _, _, guid = GetGuildRosterInfo(i)
         if fullName ~= nil then
             local name = self.getCharName(fullName)
 
@@ -269,10 +272,10 @@ function addon:init()
                 charData.class = class
                 charData.classFileName = classFileName
                 charData.inGuild = true
-                charData.rank = rank
+                charData.rankIndex = rankIndex
             else
                 ns.db.standings[guid] = self.createStandingsEntry(
-                    guid, fullName, name, level, class, classFileName, true, rank
+                    guid, fullName, name, level, class, classFileName, true, rankIndex
                 )
             end
 
@@ -283,7 +286,7 @@ function addon:init()
     for guid, charData in pairs(ns.db.standings) do
         if charData.inGuild and not ns.Lib.contains(guildMembers, guid) then
             charData.inGuild = false
-            charData.rank = nil
+            charData.rankIndex = nil
         end
     end
 
@@ -312,6 +315,14 @@ function addon:init()
         ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
 
         ns.Comm:syncInit()
+    end
+end
+
+
+function addon.migrateData()
+    for guid, charData in pairs(ns.db.standings) do
+        -- we now use rankIndex instead of rank
+        charData.rank = nil
     end
 end
 
@@ -414,7 +425,16 @@ function addon.getCharName(fullName)
 end
 
 
-function addon.createStandingsEntry(guid, fullName, name, level, class, classFileName, inGuild, rank)
+---@param guid string
+---@param fullName string
+---@param name string
+---@param level integer
+---@param class string
+---@param classFileName string
+---@param inGuild boolean
+---@param rankIndex? integer
+---@return table
+function addon.createStandingsEntry(guid, fullName, name, level, class, classFileName, inGuild, rankIndex)
     return {
         guid = guid,
         fullName = fullName,
@@ -423,7 +443,7 @@ function addon.createStandingsEntry(guid, fullName, name, level, class, classFil
         class = class,
         classFileName = classFileName,
         inGuild = inGuild,
-        rank = rank,
+        rankIndex = rankIndex,
         ep = 0,
         gp = ns.cfg.gpBase,
     }

@@ -505,3 +505,10 @@ end
 function Lib.isOfficer()
     return C_GuildInfo.CanEditOfficerNote()
 end
+
+
+---@param rankIndex integer
+---@return string?
+function Lib.getRankName(rankIndex)
+    return GuildControlGetRankName(rankIndex)
+end

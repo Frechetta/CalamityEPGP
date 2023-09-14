@@ -279,7 +279,7 @@ function MainWindow:getData()
             charData.name,
             charData.class,
             charData.inGuild and 'Yes' or 'No',
-            charData.rank and charData.rank or 'N/A',
+            charData.rankIndex and ns.Lib.getRankName(charData.rankIndex) or 'N/A',
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
             tonumber(string.format("%.3f", charData.ep / charData.gp)),
