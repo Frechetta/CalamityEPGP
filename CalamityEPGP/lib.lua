@@ -499,3 +499,46 @@ function Lib.getItemInfo(itemLink, callback)
         callback(itemInfo)
     end)
 end
+
+
+---@param player? string
+---@return boolean
+function Lib.isOfficer(player)
+    if player == nil then
+        player = UnitName('player')
+    end
+
+    local playerGuid = Lib.getPlayerGuid(player)
+    if playerGuid == nil then
+        return false
+    end
+
+    local charData = ns.db.standings[playerGuid]
+    if charData == nil then
+        return false
+    end
+
+    local rankIndex = charData.rankIndex
+    if rankIndex == nil then
+        return false
+    end
+
+    local rankOrder = rankIndex + 1  -- the function below accepts "rankOrder", which starts at 1 instead of 0
+
+    -- https://wowpedia.fandom.com/wiki/API_C_GuildInfo.GuildControlGetRankFlags
+    local perms = C_GuildInfo.GuildControlGetRankFlags(rankOrder)
+    if perms == nil then
+        return false
+    end
+
+    local isOfficer = perms[12]
+
+    return isOfficer
+end
+
+
+---@param rankIndex integer
+---@return string?
+function Lib.getRankName(rankIndex)
+    return GuildControlGetRankName(rankIndex + 1)
+end

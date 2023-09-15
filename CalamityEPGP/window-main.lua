@@ -118,7 +118,7 @@ function MainWindow:show()
 
     self.mainFrame:Raise()
 
-    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
         self.mainFrame.addEpButton:Disable()
         self.mainFrame.addEpButton:Hide()
 
@@ -170,7 +170,7 @@ function MainWindow:handleHistoryClick()
 end
 
 function MainWindow.handleRowClick(button, row)
-    if button ~= 'LeftButton' or not ns.addon.isOfficer or not ns.cfg.lmMode then
+    if button ~= 'LeftButton' or not ns.Lib.isOfficer() or not ns.cfg.lmMode then
         return
     end
 
@@ -186,7 +186,7 @@ function MainWindow.handleRowClick(button, row)
 end
 
 function MainWindow:handleAddEpClick()
-    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
         return
     end
 
@@ -199,7 +199,7 @@ function MainWindow:handleAddEpClick()
 end
 
 function MainWindow:handleDecayEpgpClick()
-    if not ns.addon.isOfficer or not ns.cfg.lmMode then
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
         return
     end
 
@@ -279,7 +279,7 @@ function MainWindow:getData()
             charData.name,
             charData.class,
             charData.inGuild and 'Yes' or 'No',
-            charData.rank and charData.rank or 'N/A',
+            charData.rankIndex and ns.Lib.getRankName(charData.rankIndex) or 'N/A',
             tonumber(string.format("%.2f", charData.ep)),
             tonumber(string.format("%.2f", charData.gp)),
             tonumber(string.format("%.3f", charData.ep / charData.gp)),
