@@ -361,7 +361,7 @@ function Config:showEditPlayerWindow(player)
 
         editPlayerWindow:EnableMouse()
         editPlayerWindow:SetScript('OnEnter', function()
-            Config.aamPanel.tableFrame._mainFrame.rowHighlight:Hide()
+            parent.contents.rowHighlight:Hide()
         end)
 
         editPlayerWindow.setButton = CreateFrame('Button', nil, editPlayerWindow, 'UIPanelButtonTemplate')
@@ -919,7 +919,7 @@ end
 -- OPTION GETTERS/SETTERS
 -------------------------
 function Config:getLmMode(_)
-    if not ns.addon.isOfficer then
+    if not ns.Lib.isOfficer() then
         ns.cfg.lmMode = false
     end
 
@@ -927,7 +927,7 @@ function Config:getLmMode(_)
 end
 
 function Config:setLmMode(_, input)
-    if not ns.addon.isOfficer then
+    if not ns.Lib.isOfficer() then
         ns.cfg.lmMode = false
         return
     end
@@ -996,7 +996,7 @@ end
 
 
 function Config:getLmModeDisabled()
-    return not ns.addon.isOfficer
+    return not ns.Lib.isOfficer()
 end
 
 function Config:getDefaultDecayDisabled()

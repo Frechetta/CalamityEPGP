@@ -141,7 +141,7 @@ function BenchWindow:setData()
 end
 
 function BenchWindow.handleRowClickAvailable(button, row)
-    if button ~= 'LeftButton' or not ns.addon.isOfficer or not ns.cfg.lmMode then
+    if button ~= 'LeftButton' or not ns.Lib.isOfficer() or not ns.cfg.lmMode then
         return
     end
 
@@ -153,7 +153,7 @@ function BenchWindow.handleRowClickAvailable(button, row)
 end
 
 function BenchWindow.handleRowClickBenched(button, row)
-    if button ~= 'LeftButton' or not ns.addon.isOfficer or not ns.cfg.lmMode then
+    if button ~= 'LeftButton' or not ns.Lib.isOfficer() or not ns.cfg.lmMode then
         return
     end
 
