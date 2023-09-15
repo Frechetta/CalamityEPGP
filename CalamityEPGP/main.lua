@@ -520,7 +520,6 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
-    -- ns.Comm:sendUpdate()
     ns.Comm:sendStandingsToGuild()
     ns.Comm:sendEventToGuild(eventAndHash)
 end
@@ -732,7 +731,7 @@ end
 
 function addon.modifiedLmSettings()
     ns.db.lmSettingsLastChange = time()
-    ns.Comm:sendUpdate()
+    ns.Comm:sendLmSettingsToGuild()
 end
 
 

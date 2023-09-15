@@ -14,11 +14,21 @@ local Comm = {
         SYNC_OLD = 'CE_sync',
     },
     eventHashes = Set:new(),
-    guildiesMessaged = Set:new(),
     otherClientVersions = Dict:new(),
 }
 
 ns.Comm = Comm
+
+
+local officerReq = {
+    [Comm.prefixes.SYNC_PROBE] = false,
+    [Comm.prefixes.STANDINGS] = true,
+    [Comm.prefixes.HISTORY] = true,
+    [Comm.prefixes.LM_SETTINGS] = true,
+    [Comm.prefixes.UPDATE] = true,
+    [Comm.prefixes.ROLL_PASS] = false,
+    [Comm.prefixes.SYNC_OLD] = false,
+}
 
 
 function Comm:init()
@@ -29,11 +39,22 @@ end
 
 
 ---@param prefix string
----@param message table?
+---@param message? table
 ---@param distribution string
----@param target string?
+---@param target? string
 function Comm:send(prefix, message, distribution, target)
-    ns.debug(string.format('sending %s msg to %s via %s', prefix, tostring(target), distribution))
+    local debugMsg = string.format('sending %s msg to ', prefix)
+    if distribution == 'WHISPER' then
+        debugMsg = debugMsg .. target
+    else
+        debugMsg = debugMsg .. distribution
+    end
+    ns.debug(debugMsg)
+
+    if officerReq[prefix] and not ns.Lib.isOfficer() then
+        ns.debug('-- you are not an officer; not sending message')
+        return
+    end
 
     if message == nil then
         message = {}
@@ -81,6 +102,8 @@ function Comm.handleMessage(prefix, message, _, sender)
         return
     end
 
+    ns.debug(string.format('got message %s from %s', prefix, sender))
+
     message = Comm.unpackMessage(message)
 
     local theirAddonVersion = message.version
@@ -101,7 +124,10 @@ function Comm.handleMessage(prefix, message, _, sender)
         return
     end
 
-    ns.debug(string.format('got message %s from %s', prefix, sender))
+    if officerReq[prefix] and not ns.Lib.isOfficer(sender) then
+        ns.debug('-- they are not an officer; rejecting message')
+        return
+    end
 
     local prefixes = Comm.prefixes
 
@@ -142,7 +168,7 @@ function Comm:handleSyncProbe(message, sender)
                 myLatestEventTime
             ))
 
-            self:sendStandings(sender)
+            self:sendStandingsToTarget(sender)
             self:sendHistory(sender, theirLatestEventTime)
         elseif theirLatestEventTime > myLatestEventTime then
             -- they are ahead of me
@@ -164,7 +190,7 @@ function Comm:handleSyncProbe(message, sender)
                 theirLmSettingsLastChange,
                 ns.db.lmSettingsLastChange
             ))
-            self:sendLmSettings(sender)
+            self:sendLmSettingsToTarget(sender)
         elseif theirLmSettingsLastChange > ns.db.lmSettingsLastChange then
             -- their LM settings are ahead of mine
             self:sendSyncProbe('WHISPER', sender, false, true)
@@ -214,9 +240,6 @@ function Comm.handleLmSettings(message)
     ns.cfg.encounterEp = lmSettings.encounterEp
     ns.db.altData.mainAltMapping = lmSettings.mainAltMapping
 
-    -- ns.Config:setAltMainMapping()
-    -- ns.Config:setAltManagementData()
-
     if lmSettings.lmSettingsLastChange ~= nil then
         ns.db.lmSettingsLastChange = lmSettings.lmSettingsLastChange
     end
@@ -250,21 +273,22 @@ function Comm:sendSyncProbe(distribution, target, latestEventTime, lmSettingsLas
 end
 
 
-function Comm:sendStandings(target)
+function Comm:sendStandings(distribution, target)
     local toSend = {
         standings = ns.db.standings,
     }
 
-    self:send(self.prefixes.STANDINGS, toSend, 'WHISPER', target)
+    self:send(self.prefixes.STANDINGS, toSend, distribution, target)
+end
+
+
+function Comm:sendStandingsToTarget(target)
+    self:sendStandings('WHISPER', target)
 end
 
 
 function Comm:sendStandingsToGuild()
-    local toSend = {
-        standings = ns.db.standings,
-    }
-
-    self:send(self.prefixes.STANDINGS, toSend, 'GUILD')
+    self:sendStandings('GUILD')
 end
 
 
@@ -309,7 +333,7 @@ function Comm:sendEventToGuild(eventAndHash)
 end
 
 
-function Comm:sendLmSettings(target)
+function Comm:sendLmSettings(distribution, target)
     local toSend = {
         settings = {
             defaultDecay = ns.cfg.defaultDecay,
@@ -323,7 +347,17 @@ function Comm:sendLmSettings(target)
         },
     }
 
-    self:send(self.prefixes.LM_SETTINGS, toSend, 'WHISPER', target)
+    self:send(self.prefixes.LM_SETTINGS, toSend, distribution, target)
+end
+
+
+function Comm:sendLmSettingsToTarget(target)
+    self:sendLmSettings('WHISPER', target)
+end
+
+
+function Comm:sendLmSettingsToGuild()
+    self:sendLmSettings('GUILD')
 end
 
 
