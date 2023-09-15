@@ -177,7 +177,7 @@ function Comm:handleSyncProbe(message, sender)
                 theirLatestEventTime,
                 myLatestEventTime
             ))
-            ns.debug('---- they are ahead of me; sending my latest event time')
+
             self:sendSyncProbe('WHISPER', sender, true, false)
         end
     end
@@ -190,6 +190,7 @@ function Comm:handleSyncProbe(message, sender)
                 theirLmSettingsLastChange,
                 ns.db.lmSettingsLastChange
             ))
+
             self:sendLmSettingsToTarget(sender)
         elseif theirLmSettingsLastChange > ns.db.lmSettingsLastChange then
             -- their LM settings are ahead of mine
