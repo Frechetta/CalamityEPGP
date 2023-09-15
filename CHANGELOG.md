@@ -1,3 +1,8 @@
+# 0.13.0
+
+- only send sync data if officer
+- only receive sync data if sender is an officer
+
 # 0.12.4
 
 - fix bug in automatic trading of awarded items
