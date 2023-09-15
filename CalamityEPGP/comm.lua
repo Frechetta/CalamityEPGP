@@ -115,7 +115,7 @@ function Comm.handleMessage(prefix, message, _, sender)
         return
     end
 
-    if theirAddonVersion < ns.minSyncVersion then
+    if theirAddonVersion < ns.minSyncVersion and prefix ~= Comm.prefixes.ROLL_PASS then
         ns.debug(string.format(
             '-- client version (%s) less than minimum (%s)',
             ns.Lib.getVersionStr(theirAddonVersion),
