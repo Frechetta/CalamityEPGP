@@ -1,3 +1,8 @@
+# 0.14.3
+
+- reduce debug messages for heartbeat
+- improve officerReq
+
 # 0.14.2
 
 - fix bug in Comm

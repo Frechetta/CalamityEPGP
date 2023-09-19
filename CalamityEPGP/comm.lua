@@ -24,15 +24,12 @@ local Comm = {
 
 ns.Comm = Comm
 
-local officerReq = {
-    [Comm.msgTypes.SYNC_PROBE] = false,
-    [Comm.msgTypes.STANDINGS] = true,
-    [Comm.msgTypes.HISTORY] = true,
-    [Comm.msgTypes.LM_SETTINGS] = true,
-    [Comm.msgTypes.UPDATE] = true,
-    [Comm.msgTypes.ROLL_PASS] = false,
-    [Comm.msgTypes.SYNC_OLD] = false,
-}
+local officerReq = Set:new({
+    Comm.msgTypes.HISTORY,
+    Comm.msgTypes.LM_SETTINGS,
+    Comm.msgTypes.UPDATE,
+    Comm.msgTypes.STANDINGS,
+})
 
 for name, num in pairs(Comm.msgTypes) do
     Comm.msgTypeNames[num] = name
@@ -92,19 +89,21 @@ end
 ---@param distribution string
 ---@param target? string
 function Comm:send(msgType, message, distribution, target)
-    local dest
-    if distribution == 'WHISPER' then
-        dest = target
-    else
-        dest = distribution
+    if msgType ~= self.msgTypes.HEARTBEAT then
+        local dest
+        if distribution == 'WHISPER' then
+            dest = target
+        else
+            dest = distribution
+        end
+        ns.debug(('sending %s msg to %s'):format(self.msgTypeNames[msgType], dest))
     end
-    ns.debug(('sending %s msg to %s'):format(self.msgTypeNames[msgType], dest))
 
     if self.msgTypeNames[msgType] == nil then
         error(('invalid message type %d'):format(msgType))
     end
 
-    if officerReq[msgType] and not ns.Lib.isOfficer() then
+    if officerReq:contains(msgType) and not ns.Lib.isOfficer() then
         ns.debug('-- you are not an officer; not sending message')
         return
     end
@@ -133,25 +132,27 @@ function Comm.handleMessage(prefix, message, _, sender)
         return
     end
 
-    ns.debug(('got message %s from %s'):format(Comm.msgTypeNames[msgType], sender))
+    local theirVersion = message.v
 
-    local theirAddonVersion = message.v
+    if msgType ~= Comm.msgTypes.HEARTBEAT then
+        ns.debug(('got message %s from %s'):format(Comm.msgTypeNames[msgType], sender))
 
-    if theirAddonVersion == nil then
-        ns.debug('-- client version unknown (probably out of date)')
-        return
+        if theirVersion == nil then
+            ns.debug('-- client version unknown (probably out of date)')
+            return
+        end
+
+        if theirVersion < ns.minSyncVersion and msgType ~= Comm.msgTypes.ROLL_PASS then
+            ns.debug(string.format(
+                '-- client version (%s) less than minimum (%s)',
+                ns.Lib.getVersionStr(theirVersion),
+                ns.Lib.getVersionStr(ns.minSyncVersion)
+            ))
+            return
+        end
     end
 
-    if theirAddonVersion < ns.minSyncVersion and msgType ~= Comm.msgTypes.ROLL_PASS then
-        ns.debug(string.format(
-            '-- client version (%s) less than minimum (%s)',
-            ns.Lib.getVersionStr(theirAddonVersion),
-            ns.Lib.getVersionStr(ns.minSyncVersion)
-        ))
-        return
-    end
-
-    if officerReq[msgType] and not ns.Lib.isOfficer(sender) then
+    if officerReq:contains(msgType) and not ns.Lib.isOfficer(sender) then
         ns.debug('-- they are not an officer; rejecting message')
         return
     end
