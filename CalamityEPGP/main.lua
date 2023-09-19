@@ -20,9 +20,11 @@ local Set = ns.Set
 
 ---@class AceAddon
 local addon = LibStub('AceAddon-3.0'):NewAddon(
-    addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceComm-3.0', 'AceSerializer-3.0'
+    addonName, 'AceConsole-3.0', 'AceEvent-3.0', 'AceComm-3.0', 'AceSerializer-3.0', 'AceTimer-3.0'
 )
 ns.addon = addon
+
+ns.peers = Dict:new()
 
 local dbDefaults = {
     profile = {
@@ -60,35 +62,7 @@ function addon:OnInitialize()
 
     ns.minSyncVersion = ns.Lib.getVersionNum('0.14.0')
 
-    self:RegisterChatCommand('ce', 'handleSlashCommand')
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
-    self:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
-    self:RegisterEvent('CHAT_MSG_PARTY', 'handleChatMsg')
-    self:RegisterEvent('CHAT_MSG_PARTY_LEADER', 'handleChatMsg')
-    self:RegisterEvent('CHAT_MSG_RAID', 'handleChatMsg')
-    self:RegisterEvent('CHAT_MSG_RAID_LEADER', 'handleChatMsg')
-    self:RegisterEvent('CHAT_MSG_RAID_WARNING', 'handleChatMsg')
-    self:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
-    self:RegisterEvent('CHAT_MSG_WHISPER', 'handleChatMsgWhisper')
-    self:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
-    self:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
-    self:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
-    self:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
-    self:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
-    self:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
-    self:RegisterEvent('LOOT_READY', 'handleLootReady')
-    self:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
-    self:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
-    self:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
-    self:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
-
-    hooksecurefunc("HandleModifiedItemClick", function(itemLink)
-        self:handleItemClick(itemLink, GetMouseButtonClicked())
-    end);
-
-    hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
-        self:handleTooltipUpdate(frame)
-    end)
 
     if IsInGuild() then
         -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
@@ -254,6 +228,36 @@ function addon:init()
         ns.Comm:init()
 
         self.clearAwarded()
+        self.clearAwardedTimer = self:ScheduleRepeatingTimer(function() self.clearAwarded() end, 60)
+
+        self:RegisterChatCommand('ce', 'handleSlashCommand')
+        self:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
+        self:RegisterEvent('CHAT_MSG_PARTY', 'handleChatMsg')
+        self:RegisterEvent('CHAT_MSG_PARTY_LEADER', 'handleChatMsg')
+        self:RegisterEvent('CHAT_MSG_RAID', 'handleChatMsg')
+        self:RegisterEvent('CHAT_MSG_RAID_LEADER', 'handleChatMsg')
+        self:RegisterEvent('CHAT_MSG_RAID_WARNING', 'handleChatMsg')
+        self:RegisterEvent('CHAT_MSG_LOOT', 'handleChatMsgLoot')
+        self:RegisterEvent('CHAT_MSG_WHISPER', 'handleChatMsgWhisper')
+        self:RegisterEvent('TRADE_REQUEST', 'handleTradeRequest')
+        self:RegisterEvent('TRADE_SHOW', 'handleTradeShow')
+        self:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
+        self:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
+        self:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
+        self:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
+        self:RegisterEvent('LOOT_READY', 'handleLootReady')
+        self:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
+        self:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
+        self:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
+        self:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
+
+        hooksecurefunc("HandleModifiedItemClick", function(itemLink)
+            self:handleItemClick(itemLink, GetMouseButtonClicked())
+        end);
+
+        hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
+            self:handleTooltipUpdate(frame)
+        end)
     end
 
     -- Load guild data
@@ -311,8 +315,15 @@ function addon:init()
         ns.HistoryWindow.fixHistory()
         self.syncAltEpGp()
 
+        ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
+
+        self.housekeepPeersTimer = self:ScheduleRepeatingTimer(function() self:housekeepPeers() end, 25)
+
         self.initialized = true
         ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
+
+        self:sendHeartbeat()
+        self.heartbeatTimer = self:ScheduleRepeatingTimer(function() self:sendHeartbeat() end, 60)
 
         ns.Comm:syncInit()
     end
@@ -328,6 +339,19 @@ function addon.migrateData()
     end
 
     ns.debug('done migrating data')
+end
+
+
+function addon.fixGp()
+    for _, charData in pairs(ns.db.standings) do
+        local min = 1
+        if ns.cfg.lmMode then
+            min = ns.cfg.gpBase
+        end
+        if charData.gp == nil or charData.gp < min then
+            charData.gp = min
+        end
+    end
 end
 
 
@@ -377,8 +401,6 @@ function addon.clearAwarded()
     end
 
     ns.db.loot.toTrade = newToTrade
-
-    C_Timer.After(60, addon.clearAwarded)
 end
 
 
@@ -424,6 +446,11 @@ end
 
 function addon.getCharName(fullName)
     local nameDash = string.find(fullName, '-')
+
+    if nameDash == nil then
+        return fullName
+    end
+
     local name = string.sub(fullName, 0, nameDash - 1)
     return name
 end
@@ -454,15 +481,33 @@ function addon.createStandingsEntry(guid, fullName, name, level, class, classFil
 end
 
 
-function addon.fixGp()
-    for _, charData in pairs(ns.db.standings) do
-        local min = 1
-        if ns.cfg.lmMode then
-            min = ns.cfg.gpBase
+function addon.handleHeartbeat(message, sender)
+    local ts = time()
+    local senderVersion = message.v
+    local senderGuid = ns.Lib.getPlayerGuid(sender)
+
+    ns.peers:set(senderGuid, {ts = ts, version = senderVersion})
+end
+
+
+function addon:sendHeartbeat()
+    ns.Comm:send(ns.Comm.msgTypes.HEARTBEAT, nil, 'GUILD')
+end
+
+
+function addon:housekeepPeers()
+    local now = time()
+
+    local toRemove = Set:new()
+
+    for guid, peerData in ns.peers:iter() do
+        if now - peerData.ts >= 180 then
+            toRemove:add(guid)
         end
-        if charData.gp == nil or charData.gp < min then
-            charData.gp = min
-        end
+    end
+
+    for guid in toRemove:iter() do
+        ns.peers:remove(guid)
     end
 end
 
@@ -748,6 +793,15 @@ function addon:handleChatMsg(_, message)
 
     if message == addonName .. ': Stop your rolls!' then
         ns.RollWindow:hide()
+        return
+    end
+
+    local playerName = string.match(message, '(%S+) has gone offline.')
+    if playerName then
+        ns.debug('caught ' .. playerName .. ' going offline!')
+        playerName = self.getCharName(playerName)
+        local guid = ns.Lib.getPlayerGuid(playerName)
+        ns.peers:remove(guid)
         return
     end
 

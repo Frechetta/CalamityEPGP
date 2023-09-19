@@ -1,6 +1,7 @@
 local spy, stub, mock = ...
 
 Util = require('test.util')
+Json = require('test.json')
 
 -- MOCK --
 SlashCmdList = {}
@@ -8,11 +9,13 @@ NUM_CHAT_WINDOWS = 0
 
 LibStub = function(_, _)
     local Lib = {}
+
     function Lib:NewAddon(...)
         return mock({
             Print = spy.new(function(_) end)
         })
     end
+
     return Lib
 end
 
