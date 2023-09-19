@@ -17,6 +17,8 @@ local Comm = {
         UPDATE = 52,
         SYNC_OLD = 53,
     },
+    msgTypeNames = {},
+    funcs = {},
     eventHashes = Set:new(),
 }
 
@@ -32,14 +34,56 @@ local officerReq = {
     [Comm.msgTypes.SYNC_OLD] = false,
 }
 
-Comm.msgTypeNames = {}
 for name, num in pairs(Comm.msgTypes) do
     Comm.msgTypeNames[num] = name
 end
 
 
 function Comm:init()
+    local msgTypes = Comm.msgTypes
+
+    self:registerHandler(msgTypes.UPDATE, self.handleUpdate)
+    self:registerHandler(msgTypes.SYNC_PROBE, self.handleSyncProbe)
+    self:registerHandler(msgTypes.STANDINGS, self.handleStandings)
+    self:registerHandler(msgTypes.HISTORY, self.handleHistory)
+    self:registerHandler(msgTypes.LM_SETTINGS, self.handleLmSettings)
+    self:registerHandler(msgTypes.ROLL_PASS, self.handleRollPass)
+    self:registerHandler(msgTypes.SYNC_OLD, self.handleSyncOld)
+
     ns.addon:RegisterComm(self.prefix, self.handleMessage)
+end
+
+
+---@param msgType integer
+---@param func function
+function Comm:registerHandler(msgType, func)
+    if self.msgTypeNames[msgType] == nil then
+        error(('invalid message type %d'):format(msgType))
+    end
+
+    if func == nil then
+        error('func cannot be nil')
+    end
+
+    if type(func) ~= 'function' then
+        error('func must be a function')
+    end
+
+    if self.funcs[msgType] ~= nil then
+        error(('message type %s already has a registered function'):format(self.msgTypeNames[msgType]))
+    end
+
+    self.funcs[msgType] = func
+end
+
+
+---@param msgType integer
+function Comm:unregisterHandler(msgType)
+    if self.msgTypeNames[msgType] == nil then
+        error(('invalid message type %d'):format(msgType))
+    end
+
+    self.funcs[msgType] = nil
 end
 
 
@@ -56,7 +100,7 @@ function Comm:send(msgType, message, distribution, target)
     end
     ns.debug(('sending %s msg to %s'):format(self.msgTypeNames[msgType], dest))
 
-    if self.msgTypes[msgType] == nil then
+    if self.msgTypeNames[msgType] == nil then
         error(('invalid message type %d'):format(msgType))
     end
 
@@ -74,6 +118,50 @@ function Comm:send(msgType, message, distribution, target)
 
     local messageStr = self.packMessage(message)
     ns.addon:SendCommMessage(self.prefix, messageStr, distribution, target)
+end
+
+
+function Comm.handleMessage(prefix, message, _, sender)
+    if prefix ~= Comm.prefix or sender == UnitName('player') then
+        return
+    end
+
+    message = Comm.unpackMessage(message)
+
+    local msgType = message.t
+    if msgType == nil or Comm.msgTypeNames[msgType] == nil then
+        return
+    end
+
+    ns.debug(('got message %s from %s'):format(Comm.msgTypeNames[msgType], sender))
+
+    local theirAddonVersion = message.v
+
+    if theirAddonVersion == nil then
+        ns.debug('-- client version unknown (probably out of date)')
+        return
+    end
+
+    if theirAddonVersion < ns.minSyncVersion and msgType ~= Comm.msgTypes.ROLL_PASS then
+        ns.debug(string.format(
+            '-- client version (%s) less than minimum (%s)',
+            ns.Lib.getVersionStr(theirAddonVersion),
+            ns.Lib.getVersionStr(ns.minSyncVersion)
+        ))
+        return
+    end
+
+    if officerReq[msgType] and not ns.Lib.isOfficer(sender) then
+        ns.debug('-- they are not an officer; rejecting message')
+        return
+    end
+
+    local func = Comm.funcs[msgType]
+    if func == nil then
+        return
+    end
+
+    func(message, sender)
 end
 
 
@@ -107,62 +195,7 @@ function Comm.getLatestEventTime()
 end
 
 
-function Comm.handleMessage(prefix, message, _, sender)
-    if prefix ~= Comm.prefix or sender == UnitName('player') then
-        return
-    end
-
-    message = Comm.unpackMessage(message)
-
-    local msgType = message.t
-    if msgType == nil or Comm.msgTypes[msgType] == nil then
-        return
-    end
-
-    ns.debug(('got message %s from %s'):format(Comm.msgTypeNames[msgType], sender))
-
-    local theirAddonVersion = message.v
-
-    if theirAddonVersion == nil then
-        ns.debug('-- client version unknown (probably out of date)')
-        return
-    end
-
-    if theirAddonVersion < ns.minSyncVersion and msgType ~= Comm.msgTypes.ROLL_PASS then
-        ns.debug(string.format(
-            '-- client version (%s) less than minimum (%s)',
-            ns.Lib.getVersionStr(theirAddonVersion),
-            ns.Lib.getVersionStr(ns.minSyncVersion)
-        ))
-        return
-    end
-
-    if officerReq[msgType] and not ns.Lib.isOfficer(sender) then
-        ns.debug('-- they are not an officer; rejecting message')
-        return
-    end
-
-    local msgTypes = Comm.msgTypes
-
-    if msgType == msgTypes.UPDATE then
-        Comm:handleUpdate(sender)
-    elseif msgType == msgTypes.SYNC_PROBE then
-        Comm:handleSyncProbe(message, sender)
-    elseif msgType == msgTypes.STANDINGS then
-        Comm.handleStandings(message)
-    elseif msgType == msgTypes.HISTORY then
-        Comm.handleHistory(message)
-    elseif msgType == msgTypes.LM_SETTINGS then
-        Comm.handleLmSettings(message)
-    elseif msgType == msgTypes.ROLL_PASS then
-        Comm.handleRollPass(sender)
-    elseif msgType == msgTypes.SYNC_OLD then
-        Comm.handleSyncOld(theirAddonVersion)
-    end
-end
-
-
-function Comm:handleUpdate(sender)
+function Comm:handleUpdate(_, sender)
     self:sendSyncProbe('WHISPER', sender, true, true)
 end
 
@@ -262,7 +295,7 @@ function Comm.handleLmSettings(message)
 end
 
 
-function Comm.handleRollPass(sender)
+function Comm.handleRollPass(_, sender)
     ns.LootDistWindow:handlePass(sender)
 end
 

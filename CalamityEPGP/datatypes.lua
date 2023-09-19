@@ -303,6 +303,18 @@ function Dict:clear()
     self._keyToValueIndex = {}
 end
 
+---@param key any
+function Dict:remove(key)
+    local value = self._dict[key]
+    if value ~= nil then
+        self._values:remove(value)
+    end
+
+    self._keys:remove(key)
+    self._dict[key] = nil
+    self._keyToValueIndex[key] = nil
+end
+
 ---@return table
 function Dict:toTable()
     return ns.Lib.deepcopy(self._dict)

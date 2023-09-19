@@ -1,3 +1,8 @@
+# 0.14.2
+
+- fix bug in Comm
+- add heartbeat
+
 # 0.14.1
 
 - fix bug :)
