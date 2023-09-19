@@ -1,3 +1,8 @@
+# 0.14.0
+
+- fix Comm by using a single prefix for addon messages and encoding the message
+  type in the message
+
 # 0.13.0
 
 - only send sync data if officer
