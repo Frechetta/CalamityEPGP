@@ -24,8 +24,6 @@ local addon = LibStub('AceAddon-3.0'):NewAddon(
 )
 ns.addon = addon
 
-ns.peers = Dict:new()
-
 local dbDefaults = {
     profile = {
         standings = {},
@@ -61,6 +59,8 @@ function addon:OnInitialize()
     }
 
     ns.minSyncVersion = ns.Lib.getVersionNum('0.14.0')
+
+    ns.peers = Dict:new()
 
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 
