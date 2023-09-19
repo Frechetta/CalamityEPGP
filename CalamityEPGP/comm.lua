@@ -4,54 +4,63 @@ local Set = ns.Set
 local Dict = ns.Dict
 
 local Comm = {
-    prefixes = {
-        SYNC_PROBE = 'CE_sync-probe',
-        STANDINGS = 'CE_standings',
-        HISTORY = 'CE_history',
-        LM_SETTINGS = 'CE_lm-settings',
-        UPDATE = 'CE_update',
-        ROLL_PASS = 'CE_pass',
-        SYNC_OLD = 'CE_sync',
+    prefix = 'calepgp',
+    msgTypes = {
+        HEARTBEAT = 0,
+        ROLL_PASS = 1,
+        LM_SETTINGS = 2,
+        SYNC_PROBE = 3,
+
+        -- DEPRECATED
+        STANDINGS = 50,
+        HISTORY = 51,
+        UPDATE = 52,
+        SYNC_OLD = 53,
     },
     eventHashes = Set:new(),
-    otherClientVersions = Dict:new(),
 }
 
 ns.Comm = Comm
 
-
 local officerReq = {
-    [Comm.prefixes.SYNC_PROBE] = false,
-    [Comm.prefixes.STANDINGS] = true,
-    [Comm.prefixes.HISTORY] = true,
-    [Comm.prefixes.LM_SETTINGS] = true,
-    [Comm.prefixes.UPDATE] = true,
-    [Comm.prefixes.ROLL_PASS] = false,
-    [Comm.prefixes.SYNC_OLD] = false,
+    [Comm.msgTypes.SYNC_PROBE] = false,
+    [Comm.msgTypes.STANDINGS] = true,
+    [Comm.msgTypes.HISTORY] = true,
+    [Comm.msgTypes.LM_SETTINGS] = true,
+    [Comm.msgTypes.UPDATE] = true,
+    [Comm.msgTypes.ROLL_PASS] = false,
+    [Comm.msgTypes.SYNC_OLD] = false,
 }
 
-
-function Comm:init()
-    for _, prefix in pairs(self.prefixes) do
-        ns.addon:RegisterComm(prefix, self.handleMessage)
-    end
+Comm.msgTypeNames = {}
+for name, num in pairs(Comm.msgTypes) do
+    Comm.msgTypeNames[num] = name
 end
 
 
----@param prefix string
+function Comm:init()
+    ns.addon:RegisterComm(self.prefix, self.handleMessage)
+end
+
+
+---@param msgType integer
 ---@param message? table
 ---@param distribution string
 ---@param target? string
-function Comm:send(prefix, message, distribution, target)
-    local debugMsg = string.format('sending %s msg to ', prefix)
+function Comm:send(msgType, message, distribution, target)
+    local dest
     if distribution == 'WHISPER' then
-        debugMsg = debugMsg .. target
+        dest = target
     else
-        debugMsg = debugMsg .. distribution
+        dest = distribution
     end
-    ns.debug(debugMsg)
+    ns.debug(('sending %s msg to %s'):format(self.msgTypeNames[msgType], dest))
 
-    if officerReq[prefix] and not ns.Lib.isOfficer() then
+    if self.msgTypes[msgType] == nil then
+        error(('invalid message type %d'):format(msgType))
+    end
+
+    if officerReq[msgType] and not ns.Lib.isOfficer() then
         ns.debug('-- you are not an officer; not sending message')
         return
     end
@@ -60,10 +69,11 @@ function Comm:send(prefix, message, distribution, target)
         message = {}
     end
 
-    message.version = ns.addon.versionNum
+    message.t = msgType
+    message.v = ns.addon.versionNum
 
     local messageStr = self.packMessage(message)
-    ns.addon:SendCommMessage(prefix, messageStr, distribution, target)
+    ns.addon:SendCommMessage(self.prefix, messageStr, distribution, target)
 end
 
 
@@ -98,24 +108,27 @@ end
 
 
 function Comm.handleMessage(prefix, message, _, sender)
-    if sender == UnitName('player') then
+    if prefix ~= Comm.prefix or sender == UnitName('player') then
         return
     end
 
-    ns.debug(string.format('got message %s from %s', prefix, sender))
-
     message = Comm.unpackMessage(message)
 
-    local theirAddonVersion = message.version
+    local msgType = message.t
+    if msgType == nil or Comm.msgTypes[msgType] == nil then
+        return
+    end
 
-    Comm.otherClientVersions:set(sender, theirAddonVersion)
+    ns.debug(('got message %s from %s'):format(Comm.msgTypeNames[msgType], sender))
+
+    local theirAddonVersion = message.v
 
     if theirAddonVersion == nil then
         ns.debug('-- client version unknown (probably out of date)')
         return
     end
 
-    if theirAddonVersion < ns.minSyncVersion and prefix ~= Comm.prefixes.ROLL_PASS then
+    if theirAddonVersion < ns.minSyncVersion and msgType ~= Comm.msgTypes.ROLL_PASS then
         ns.debug(string.format(
             '-- client version (%s) less than minimum (%s)',
             ns.Lib.getVersionStr(theirAddonVersion),
@@ -124,26 +137,26 @@ function Comm.handleMessage(prefix, message, _, sender)
         return
     end
 
-    if officerReq[prefix] and not ns.Lib.isOfficer(sender) then
+    if officerReq[msgType] and not ns.Lib.isOfficer(sender) then
         ns.debug('-- they are not an officer; rejecting message')
         return
     end
 
-    local prefixes = Comm.prefixes
+    local msgTypes = Comm.msgTypes
 
-    if prefix == prefixes.UPDATE then
+    if msgType == msgTypes.UPDATE then
         Comm:handleUpdate(sender)
-    elseif prefix == prefixes.SYNC_PROBE then
+    elseif msgType == msgTypes.SYNC_PROBE then
         Comm:handleSyncProbe(message, sender)
-    elseif prefix == prefixes.STANDINGS then
+    elseif msgType == msgTypes.STANDINGS then
         Comm.handleStandings(message)
-    elseif prefix == prefixes.HISTORY then
+    elseif msgType == msgTypes.HISTORY then
         Comm.handleHistory(message)
-    elseif prefix == prefixes.LM_SETTINGS then
+    elseif msgType == msgTypes.LM_SETTINGS then
         Comm.handleLmSettings(message)
-    elseif prefix == prefixes.ROLL_PASS then
+    elseif msgType == msgTypes.ROLL_PASS then
         Comm.handleRollPass(sender)
-    elseif prefix == prefixes.SYNC_OLD then
+    elseif msgType == msgTypes.SYNC_OLD then
         Comm.handleSyncOld(theirAddonVersion)
     end
 end
