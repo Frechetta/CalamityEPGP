@@ -1,3 +1,7 @@
+# 0.14.1
+
+- fix bug :)
+
 # 0.14.0
 
 - fix Comm by using a single prefix for addon messages and encoding the message

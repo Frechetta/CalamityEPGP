@@ -268,7 +268,7 @@ end
 
 
 function Comm:sendUpdate()
-    self:send(self.prefixes.UPDATE, nil, 'GUILD')
+    self:send(self.msgTypes.UPDATE, nil, 'GUILD')
 end
 
 
@@ -283,7 +283,7 @@ function Comm:sendSyncProbe(distribution, target, latestEventTime, lmSettingsLas
         toSend.lmSettingsLastChange = ns.db.lmSettingsLastChange
     end
 
-    self:send(self.prefixes.SYNC_PROBE, toSend, distribution, target)
+    self:send(self.msgTypes.SYNC_PROBE, toSend, distribution, target)
 end
 
 
@@ -292,7 +292,7 @@ function Comm:sendStandings(distribution, target)
         standings = ns.db.standings,
     }
 
-    self:send(self.prefixes.STANDINGS, toSend, distribution, target)
+    self:send(self.msgTypes.STANDINGS, toSend, distribution, target)
 end
 
 
@@ -324,7 +324,7 @@ function Comm:sendHistory(target, theirLatestEventTime)
             toSend.events = newEvents
 
             ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
-            self:send(self.prefixes.HISTORY, toSend, 'WHISPER', target)
+            self:send(self.msgTypes.HISTORY, toSend, 'WHISPER', target)
             newEvents = {}
         end
     end
@@ -333,7 +333,7 @@ function Comm:sendHistory(target, theirLatestEventTime)
         toSend.events = newEvents
 
         ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
-        self:send(self.prefixes.HISTORY, toSend, 'WHISPER', target)
+        self:send(self.msgTypes.HISTORY, toSend, 'WHISPER', target)
     end
 end
 
@@ -343,7 +343,7 @@ function Comm:sendEventToGuild(eventAndHash)
         events = {eventAndHash}
     }
 
-    self:send(self.prefixes.HISTORY, toSend, 'GUILD')
+    self:send(self.msgTypes.HISTORY, toSend, 'GUILD')
 end
 
 
@@ -361,7 +361,7 @@ function Comm:sendLmSettings(distribution, target)
         },
     }
 
-    self:send(self.prefixes.LM_SETTINGS, toSend, distribution, target)
+    self:send(self.msgTypes.LM_SETTINGS, toSend, distribution, target)
 end
 
 
@@ -377,7 +377,7 @@ end
 
 function Comm:sendRollPass()
     local ml = ns.Lib.getMl()
-    self:send(self.prefixes.ROLL_PASS, nil, 'WHISPER', ml)
+    self:send(self.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
 end
 
 
