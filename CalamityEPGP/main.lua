@@ -58,7 +58,7 @@ function addon:OnInitialize()
         INFO = '!ceinfo',
     }
 
-    ns.minSyncVersion = ns.Lib.getVersionNum('0.13.0')
+    ns.minSyncVersion = ns.Lib.getVersionNum('0.14.0')
 
     self:RegisterChatCommand('ce', 'handleSlashCommand')
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
