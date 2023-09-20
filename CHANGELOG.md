@@ -1,3 +1,7 @@
+# 0.14.4
+
+- added AceGUI back in for AceConfigDialog
+
 # 0.14.3
 
 - reduce debug messages for heartbeat
