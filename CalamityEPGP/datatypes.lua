@@ -139,6 +139,16 @@ function List:remove(value, all)
     ns.Lib.remove(self._list, value, all)
 end
 
+---@param index integer
+---@return any
+function List:removeIndex(index)
+    if index < 0 then
+        index = self:len() + index + 1
+    end
+
+    return table.remove(self._list, index)
+end
+
 
 ---------------
 ---@param items? table
@@ -234,14 +244,12 @@ function Dict:new(table)
     o._dict = {}
     o._keys = Set:new()
     o._values = List:new()
-    o._keyToValueIndex = {}
 
     if table == nil then table = {} end
     for k, v in pairs(table) do
         o._dict[k] = v
         o._keys:add(k)
         o._values:append(v)
-        o._keyToValueIndex[k] = o._values:len()
     end
 
     return o
@@ -280,16 +288,14 @@ end
 ---@param key any
 ---@param value any
 function Dict:set(key, value)
+    local oldValue = self._dict[key]
+    if oldValue ~= nil then
+        self._values:remove(oldValue)
+    end
+
     self._dict[key] = value
     self._keys:add(key)
-
-    local index = self._keyToValueIndex[key]
-    if index ~= nil then
-        self._values:set(index, value)
-    else
-        self._values:append(value)
-        self._keyToValueIndex[key] = self._values:len()
-    end
+    self._values:append(value)
 end
 
 function Dict:iter()
@@ -300,19 +306,21 @@ function Dict:clear()
     self._dict = {}
     self._keys:clear()
     self._values:clear()
-    self._keyToValueIndex = {}
 end
 
 ---@param key any
 function Dict:remove(key)
-    local value = self._dict[key]
-    if value ~= nil then
-        self._values:remove(value)
+    if key == nil then
+        return
     end
 
-    self._keys:remove(key)
+    local oldValue = self._dict[key]
+    if oldValue ~= nil then
+        self._values:remove(oldValue)
+    end
+
     self._dict[key] = nil
-    self._keyToValueIndex[key] = nil
+    self._keys:remove(key)
 end
 
 ---@return table
