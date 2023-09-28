@@ -542,3 +542,56 @@ end
 function Lib.getRankName(rankIndex)
     return GuildControlGetRankName(rankIndex + 1)
 end
+
+
+local b64EncMap = {
+     [0] = 'A',  [1] = 'B',  [2] = 'C',  [3] = 'D',  [4] = 'E',  [5] = 'F',  [6] = 'G',  [7] = 'H',
+     [8] = 'I',  [9] = 'J', [10] = 'K', [11] = 'L', [12] = 'M', [13] = 'N', [14] = 'O', [15] = 'P',
+    [16] = 'Q', [17] = 'R', [18] = 'S', [19] = 'T', [20] = 'U', [21] = 'V', [22] = 'W', [23] = 'X',
+    [24] = 'Y', [25] = 'Z', [26] = 'a', [27] = 'b', [28] = 'c', [29] = 'd', [30] = 'e', [31] = 'f',
+    [32] = 'g', [33] = 'h', [34] = 'i', [35] = 'j', [36] = 'k', [37] = 'l', [38] = 'm', [39] = 'n',
+    [40] = 'o', [41] = 'p', [42] = 'q', [43] = 'r', [44] = 's', [45] = 't', [46] = 'u', [47] = 'v',
+    [48] = 'w', [49] = 'x', [50] = 'y', [51] = 'z', [52] = '0', [53] = '1', [54] = '2', [55] = '3',
+    [56] = '4', [57] = '5', [58] = '6', [59] = '7', [60] = '8', [61] = '9', [62] = '+', [63] = '/',
+}
+
+local b64DecMap = {}
+for i, c in pairs(b64EncMap) do
+    b64DecMap[c] = i
+end
+
+---@param x number
+---@return string
+function Lib.b64Encode(x)
+    if x == 0 then
+        return b64EncMap[x]
+    end
+
+    local s = ''
+    local part
+    while x ~= 0 do
+        part = bit.band(x, 63)
+        s = b64EncMap[part] .. s
+        x = bit.rshift(x, 6)
+    end
+
+    return s
+end
+
+---@param s string
+---@return number
+function Lib.b64Decode(s)
+    local sLen = #s
+    local num = 0
+    local c
+    local cNum
+    local shift
+    for i = 1, sLen do
+        c = s:sub(i, i)
+        cNum = b64DecMap[c]
+        shift = (sLen - i) * 6
+        num = bit.bor(num, bit.lshift(cNum, shift))
+    end
+
+    return num
+end

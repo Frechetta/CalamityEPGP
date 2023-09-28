@@ -60,8 +60,6 @@ function addon:OnInitialize()
 
     ns.minSyncVersion = ns.Lib.getVersionNum('0.14.0')
 
-    ns.peers = Dict:new()
-
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 
     if IsInGuild() then
@@ -188,7 +186,7 @@ end
 
 function addon:init()
     if self == nil then
-        C_Timer.After(0.5, addon.init)
+        C_Timer.After(0.5, function() addon:init() end)
         return
     end
 
@@ -198,7 +196,7 @@ function addon:init()
 
         -- haven't actually received guild data yet. wait 1 second and run this function again
         if guildName == nil then
-            C_Timer.After(1, addon.init)
+            C_Timer.After(1, function() addon:init() end)
             return
         end
 
@@ -214,6 +212,8 @@ function addon:init()
         ns.cfg = ns.db.cfg
 
         ns.guild = guildFullName
+
+        ns.peers = Dict:new()
 
         self.ldb = LibStub('LibDataBroker-1.1', true)
         self.ldbi = LibStub('LibDBIcon-1.0', true)
@@ -482,6 +482,10 @@ end
 
 
 function addon.handleHeartbeat(message, sender)
+    if ns.peers == nil then
+        return
+    end
+
     local ts = time()
     local senderVersion = message.v
     local senderGuid = ns.Lib.getPlayerGuid(sender)
@@ -798,7 +802,6 @@ function addon:handleChatMsg(_, message)
 
     local playerName = string.match(message, '(%S+) has gone offline.')
     if playerName then
-        ns.debug('caught ' .. playerName .. ' going offline!')
         playerName = self.getCharName(playerName)
         local guid = ns.Lib.getPlayerGuid(playerName)
         ns.peers:remove(guid)
