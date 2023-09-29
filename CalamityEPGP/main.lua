@@ -7,9 +7,9 @@ SlashCmdList.FRAMESTK = function()
     FrameStackTooltip_Toggle()
 end
 
-for i = 1, NUM_CHAT_WINDOWS do
-    _G['ChatFrame' .. i .. 'EditBox']:SetAltArrowKeyMode(false)
-end
+-- for i = 1, NUM_CHAT_WINDOWS do
+--     _G['ChatFrame' .. i .. 'EditBox']:SetAltArrowKeyMode(false)
+-- end
 ---------------------------------------------------------------
 
 local addonName, ns = ...  -- Namespace
@@ -58,7 +58,7 @@ function addon:OnInitialize()
         INFO = '!ceinfo',
     }
 
-    ns.minSyncVersion = ns.Lib.getVersionNum('0.14.0')
+    ns.minSyncVersion = ns.Lib.getVersionNum('0.15.0')
 
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 
@@ -211,6 +211,8 @@ function addon:init()
         ns.standings = ns.db.standings
         ns.cfg = ns.db.cfg
 
+        ns.db.realmId = GetRealmID()
+
         ns.guild = guildFullName
 
         ns.peers = Dict:new()
@@ -312,7 +314,6 @@ function addon:init()
 
         self:initMinimapButton()
 
-        ns.HistoryWindow.fixHistory()
         self.syncAltEpGp()
 
         ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
@@ -333,9 +334,84 @@ end
 function addon.migrateData()
     ns.debug('migrating data...')
 
-    for guid, charData in pairs(ns.db.standings) do
-        -- we now use rankIndex instead of rank
-        charData.rank = nil
+    -- STANDINGS
+    if not ns.db.standingsVersion or ns.db.standingsVersion == 1 then
+        ns.debug('migrating standings to v2')
+
+        for _, charData in pairs(ns.db.standings) do
+            -- we now use rankIndex instead of rank
+            charData.rank = nil
+        end
+
+        ns.db.standingsVersion = 2
+    end
+
+    -- HISTORY
+    if not ns.db.historyVersion then
+        ns.debug('migrating history to v1')
+        ns.HistoryWindow.fixHistory()
+        ns.db.historyVersion = 1
+    end
+
+    if ns.db.historyVersion == 1 then
+        ns.debug('migrating history to v2')
+
+        local newHistory = {}
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local event = eventAndHash[1]
+
+            local ts = event[1]
+            local issuer = event[3]
+            local players = event[4]
+            local type = event[5]
+            local value = event[6]
+            local reason = event[7]
+            local perc = event[8]
+
+            issuer = ns.Lib.getShortPlayerGuid(issuer)
+
+            local newPlayers = {}
+            for _, guid in ipairs(players) do
+                tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
+            end
+
+            local newEvent = {ts, issuer, newPlayers, type, value, reason, perc}
+            local newHash = ns.Lib.hash(newEvent)
+            local newEventAndHash = {newEvent, newHash}
+            tinsert(newHistory, newEventAndHash)
+        end
+
+        ns.db.history = newHistory
+
+        ns.db.historyVersion = 2
+    end
+
+    if ns.db.historyVersion == 2 then
+        ns.debug('migrating history to v3')
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local event = eventAndHash[1]
+
+            local reason = event[6]
+
+            local itemName, type = string.match(reason, '^award: (.+) %- (%u%u) %- .+$')
+            if itemName ~= nil and type ~= nil then
+                local newReason = ('award: ? (%s) [%s]'):format(itemName, strlower(type))
+                event[6] = newReason
+            end
+
+            local bossName, bossId = string.match(reason, '^boss_kill: "(.+)" %((%d+)%)')
+            if bossName ~= nil and bossId ~= nil then
+                local newReason = ('boss_kill: %d (%s)'):format(bossId, bossName)
+                event[6] = newReason
+            end
+
+            local newHash = ns.Lib.hash(event)
+            eventAndHash[2] = newHash
+        end
+
+        ns.db.historyVersion = 3
     end
 
     ns.debug('done migrating data')
@@ -344,10 +420,7 @@ end
 
 function addon.fixGp()
     for _, charData in pairs(ns.db.standings) do
-        local min = 1
-        if ns.cfg.lmMode then
-            min = ns.cfg.gpBase
-        end
+        local min = ns.cfg.gpBase
         if charData.gp == nil or charData.gp < min then
             charData.gp = min
         end
@@ -516,6 +589,24 @@ function addon:housekeepPeers()
 end
 
 
+function addon.createHistoryEvent(players, mode, value, reason, percent)
+    local ts = time()
+
+    local issuer = ns.Lib.getShortPlayerGuid(UnitGUID('player'))
+
+    local newPlayers = {}
+    for _, guid in ipairs(players) do
+        tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
+    end
+
+    local event = {ts, issuer, newPlayers, mode, value, reason, percent}
+    local hash = ns.Lib.hash(event)
+    local eventAndHash = {event, hash}
+
+    return eventAndHash
+end
+
+
 ---@param players table
 ---@param mode 'ep' | 'gp' | 'both'
 ---@param value number
@@ -557,20 +648,14 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
 
     self.syncAltEpGp(players)
 
-    local createTime = time()
-    local eventTime = createTime
-
-    local event = {createTime, eventTime, UnitGUID('player'), players, mode, value, reason, percent}
-    local hash = ns.Lib.hash(event)
-    local eventAndHash = {event, hash}
-
-    tinsert(ns.db.history, eventAndHash)
+    local event = self.createHistoryEvent(players, mode, value, reason, percent)
+    tinsert(ns.db.history, event)
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
     ns.Comm:sendStandingsToGuild()
-    ns.Comm:sendEventToGuild(eventAndHash)
+    ns.Comm:sendEventToGuild(event)
 end
 
 
@@ -659,7 +744,7 @@ function addon.syncAltEpGp(players)
 
         for _, eventAndHash in ipairs(ns.db.history) do
             local event = eventAndHash[1]
-            players = event[4]
+            players = event[3]
 
             for _, playerGuid in ipairs(players) do
                 local playerData = ns.db.standings[playerGuid]
@@ -1028,12 +1113,12 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
     local ep = ns.cfg.encounterEp[encounterId]
 
     if ep == nil then
-        ns.print(string.format('Encounter "%s" (%s) not in encounters table!', encounterName, encounterId))
+        ns.print(string.format('Encounter %d (%s) not in encounters table!', encounterId, encounterName))
         return
     end
 
     local proceedFunc = function()
-        local reason = string.format('%s: "%s" (%s)', ns.values.epgpReasons.BOSS_KILL, encounterName, encounterId)
+        local reason = string.format('%s: %d (%s)', ns.values.epgpReasons.BOSS_KILL, encounterId, encounterName)
         local players = {}
 
         for player in self.raidRoster:iter() do

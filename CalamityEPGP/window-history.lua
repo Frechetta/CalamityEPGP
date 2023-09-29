@@ -402,16 +402,21 @@ function HistoryWindow:getData()
     for _, eventAndHash in ipairs(ns.db.history) do
         local event = eventAndHash[1]
 
-        local time = date('%Y-%m-%d %H:%M:%S', event[2])
-        local issuedBy = playerGuidToName[event[3]]
-        local players = event[4]
-        local mode = event[5]
-        local value = event[6]
-        local reason = event[7]
-        local percent = event[8]
+        local time = date('%Y-%m-%d %H:%M:%S', event[1])
+        local issuedBy = playerGuidToName[ns.Lib.getFullPlayerGuid(event[2])]
+        local players = event[3]
+        local mode = event[4]
+        local value = event[5]
+        local reason = event[6]
+        local percent = event[7]
 
         local prettyReason
         reason, prettyReason = self:getFormattedReason(reason)
+
+        local newPlayers = {}
+        for _, guidShort in ipairs(players) do
+            tinsert(newPlayers, ns.Lib.getFullPlayerGuid(guidShort))
+        end
 
         local row = {
             time,
@@ -420,7 +425,7 @@ function HistoryWindow:getData()
             value,
             reason,
             percent,
-            {baseReason = prettyReason, players = players}
+            {baseReason = prettyReason, players = newPlayers}
         }
 
         ns.Lib.bininsert(self.data.rowsRaw, row, function(left, right)
@@ -440,11 +445,10 @@ function HistoryWindow:getFormattedReason(reason)
     local details = strtrim(reasonSplit[2])
 
     if baseReason == ns.values.epgpReasons.AWARD then
-        local detailsSplit = ns.Lib.split(details, '-')
-        details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
+        local itemName, rollType = string.match(details, '^.+ %((.+)%) %[(.+)%]$')
+        details = string.format('%s - %s', itemName, strupper(rollType))
     elseif baseReason == ns.values.epgpReasons.BOSS_KILL then
-        local i = string.find(details, '%(')
-        details = string.sub(details, 2, i - 3)
+        details = string.match(details, '^%d+ %((.+)%)$')
     end
 
     local prettyReason = self.epgpReasonsPretty[baseReason]
