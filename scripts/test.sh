@@ -8,6 +8,6 @@ cd "$root_dir"
 
 rm -rf luacov.stats.out luacov.report.out luacov-html/
 
-busted --lua /usr/local/bin/lua --shuffle $@
+busted --shuffle $@
 luacov -r html luacov.stats.out
 luacov-cobertura luacov.stats.out
