@@ -96,9 +96,14 @@ function Lib.remove(container, value, all)
 
     while true do
         local i = Lib.find(container, value)
+
+        if i == -1 then
+            break
+        end
+
         table.remove(container, i)
 
-        if i == -1 or not all then
+        if not all then
             break
         end
     end
@@ -465,22 +470,27 @@ function Lib.getCachedItemInfo(itemId)
 end
 
 
----@param itemLink string
+---@param item string | number
 ---@param callback? function
-function Lib.getItemInfo(itemLink, callback)
+function Lib.getItemInfo(item, callback)
     callback = callback or function(_) end
 
-    local itemId = Lib.getItemIdFromLink(itemLink)
-    if itemId == nil then
-        error('Invalid item link "' .. itemLink .. '"')
+    local itemId
+    if type(item) == 'number' then
+        itemId = item
+    elseif type(item) == 'string' then
+        itemId = Lib.getItemIdFromLink(item)
+        if itemId == nil then
+            error('Invalid item link "' .. item .. '"')
+        end
     end
 
-    local item = Item:CreateFromItemID(itemId)
-    if item:IsItemEmpty() then
-        error('No item found with link "' .. itemLink .. '"')
+    local theItem = Item:CreateFromItemID(itemId)
+    if theItem:IsItemEmpty() then
+        error('No item found with ID "' .. itemId .. '"')
     end
 
-    if item:IsItemDataCached() then
+    if theItem:IsItemDataCached() then
         local itemInfo = Lib.getCachedItemInfo(itemId)
 
         if itemInfo then
@@ -489,12 +499,12 @@ function Lib.getItemInfo(itemLink, callback)
         end
     end
 
-    item:ContinueOnItemLoad(function()
+    theItem:ContinueOnItemLoad(function()
         local itemInfo = Lib.getCachedItemInfo(itemId)
 
-        if itemInfo == nil then
-            return
-        end
+        -- if itemInfo == nil then
+        --     return
+        -- end
 
         callback(itemInfo)
     end)
@@ -570,7 +580,7 @@ function Lib.b64Encode(x)
     local s = ''
     local part
     while x ~= 0 do
-        part = bit.band(x, 63)
+        part = bit.band(x, 63)  -- 63 == 0b111111 (first six bits)
         s = b64EncMap[part] .. s
         x = bit.rshift(x, 6)
     end
@@ -631,4 +641,64 @@ end
 function Lib.isFullPlayerGuid(guidFull)
     local res = string.match(guidFull, '^Player%-%d+%-%x%x%x%x%x%x%x%x$')
     return res ~= nil
+end
+
+
+function Lib.strStartsWith(s, pattern)
+    return s:sub(1, #pattern) == pattern
+end
+
+
+function Lib.strEndsWith(s, pattern)
+    local sLen = #s
+    return s:sub(sLen - #pattern + 1, sLen) == pattern
+end
+
+
+---@param reason number
+---@return string
+function Lib.getEventReason(reason, ...)
+    local args = {...}
+
+    if reason == ns.values.epgpReasons.MANUAL_SINGLE then
+        assert(type(args[1]) == 'string')  -- details
+        return ('%d:%s'):format(ns.values.epgpReasons.MANUAL_SINGLE, args[1])
+    end
+
+    if reason == ns.values.epgpReasons.MANUAL_MULTIPLE then
+        assert(type(args[1]) == 'string')  -- details
+        local reasonStr = ('%d:%s'):format(ns.values.epgpReasons.MANUAL_MULTIPLE, args[1])
+
+        if args[2] then
+            assert(type(args[2]) == 'boolean')
+            reasonStr = reasonStr .. ':1'
+        end
+
+        return reasonStr
+    end
+
+    if reason == ns.values.epgpReasons.DECAY then
+        assert(type(args[1]) == 'string')  -- details
+        return ('%d:%s'):format(ns.values.epgpReasons.DECAY, args[1])
+    end
+
+    if reason == ns.values.epgpReasons.AWARD then
+        assert(args[1] and (strlower(args[1]) == 'ms' or strlower(args[1]) == 'os'))  -- roll type
+        assert(args[2] and (type(args[2]) == 'number' or type(args[2]) == 'string'))  -- item ID or name
+        return ('%d:%s:%s'):format(ns.values.epgpReasons.AWARD, strlower(args[1]), args[2])
+    end
+
+    if reason == ns.values.epgpReasons.BOSS_KILL then
+        assert(args[1] and type(args[1] == 'number'))  -- boss ID
+        local reasonStr = ('%d:%d'):format(ns.values.epgpReasons.BOSS_KILL, args[1])
+
+        if args[2] then
+            assert(type(args[2]) == 'boolean')
+            reasonStr = reasonStr .. ':1'
+        end
+
+        return reasonStr
+    end
+
+    error(('Unknown event reason: %s'):format(reason))
 end

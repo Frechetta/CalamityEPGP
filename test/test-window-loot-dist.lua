@@ -80,9 +80,9 @@ describe('award', function()
         stub(ldw, 'successfulAward')
         stub(ldw, 'markAsToTrade')
 
-        ns.Lib.getItemInfo = function(itemLink, callback)
+        ns.Lib.getItemIdFromLink = function(itemLink)
             if itemInfo[itemLink] ~= nil then
-                callback({name = itemInfo[itemLink].name})
+                return itemInfo[itemLink].id
             end
         end
 
@@ -125,7 +125,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i2', 'p3', 'DERP', '87%', 100)
+        ldw:award('i2', 'p3', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.called(1)
         assert.spy(GiveMasterLoot).was.called_with(2, 3)
@@ -134,10 +134,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.not_called()
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'gp', 100, 'award: item2 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'gp', 100, '3:ms:2')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i2 was awarded to p3 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i2 was awarded to p3 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 
@@ -167,7 +167,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i2', 'p1', 'DERP', '87%', 100)
+        ldw:award('i2', 'p1', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.called(1)
         assert.spy(GiveMasterLoot).was.called_with(2, 1)
@@ -176,10 +176,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.not_called()
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 100, 'award: item2 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 100, '3:ms:2')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i2 was awarded to p1 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i2 was awarded to p1 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 
@@ -195,7 +195,7 @@ describe('award', function()
 
         local expectedAwarded = {}
 
-        ldw:award('i3', 'p2', 'DERP', '87%', 100)
+        ldw:award('i3', 'p2', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.not_called()
         assert.stub(ldw.successfulAward).was.not_called()
@@ -229,7 +229,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i4', 'p1', 'DERP', '87%', 100)
+        ldw:award('i4', 'p1', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.not_called()
 
@@ -239,10 +239,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.not_called()
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 100, 'award: item4 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 100, '3:ms:4')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p1 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p1 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 
@@ -272,7 +272,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i4', 'p2', 'DERP', '87%', 100)
+        ldw:award('i4', 'p2', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.not_called()
 
@@ -282,10 +282,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.called_with('i4', 'p2')
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p2_guid'}, 'gp', 100, 'award: item4 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p2_guid'}, 'gp', 100, '3:ms:4')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p2 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p2 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 
@@ -461,7 +461,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i2', 'p3', 'DERP', '87%', 100)
+        ldw:award('i2', 'p3', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.called(1)
         assert.spy(GiveMasterLoot).was.called_with(2, 3)
@@ -470,10 +470,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.not_called()
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'gp', 100, 'award: item2 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'gp', 100, '3:ms:2')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i2 was awarded to p3 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i2 was awarded to p3 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 
@@ -492,7 +492,7 @@ describe('award', function()
 
         local expectedAwarded = {}
 
-        ldw:award('i3', 'p2', 'DERP', '87%', 100)
+        ldw:award('i3', 'p2', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.not_called()
         assert.stub(ldw.successfulAward).was.not_called()
@@ -527,7 +527,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i4', 'p1', 'DERP', '87%', 100)
+        ldw:award('i4', 'p1', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.not_called()
 
@@ -537,10 +537,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.not_called()
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 100, 'award: item4 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 100, '3:ms:4')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p1 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p1 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 
@@ -571,7 +571,7 @@ describe('award', function()
             }
         }
 
-        ldw:award('i4', 'p2', 'DERP', '87%', 100)
+        ldw:award('i4', 'p2', 'MS', '87%', 100)
 
         assert.spy(GiveMasterLoot).was.not_called()
 
@@ -581,10 +581,10 @@ describe('award', function()
         assert.stub(ldw.markAsToTrade).was.called_with('i4', 'p2')
 
         assert.spy(ns.addon.modifyEpgp).was.called(1)
-        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p2_guid'}, 'gp', 100, 'award: item4 - DERP - 100.00')
+        assert.spy(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p2_guid'}, 'gp', 100, '3:ms:4')
 
         assert.spy(ns.printPublic).was.called(1)
-        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p2 for DERP (87% GP: 100)')
+        assert.spy(ns.printPublic).was.called_with('i4 was awarded to p2 for MS (87% GP: 100)')
 
         assert.same(expectedAwarded, ns.db.loot.awarded)
 

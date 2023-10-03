@@ -125,7 +125,7 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', -10, 'decay: because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', -10, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
@@ -138,7 +138,7 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', 1000, 'decay: because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', 1000, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
@@ -151,7 +151,7 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', -100, 'decay: because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', -100, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)

@@ -335,26 +335,22 @@ function addon.migrateData()
     ns.debug('migrating data...')
 
     -- STANDINGS
-    if not ns.db.standingsVersion or ns.db.standingsVersion == 1 then
-        ns.debug('migrating standings to v2')
+    if not ns.db.standingsVersion then
+        ns.debug('migrating standings to v1')
 
         for _, charData in pairs(ns.db.standings) do
             -- we now use rankIndex instead of rank
             charData.rank = nil
         end
 
-        ns.db.standingsVersion = 2
+        ns.db.standingsVersion = 1
     end
 
     -- HISTORY
     if not ns.db.historyVersion then
         ns.debug('migrating history to v1')
-        ns.HistoryWindow.fixHistory()
-        ns.db.historyVersion = 1
-    end
 
-    if ns.db.historyVersion == 1 then
-        ns.debug('migrating history to v2')
+        ns.HistoryWindow.fixHistory()
 
         local newHistory = {}
 
@@ -369,52 +365,79 @@ function addon.migrateData()
             local reason = event[7]
             local perc = event[8]
 
+            -- issuer
             issuer = ns.Lib.getShortPlayerGuid(issuer)
 
+            -- players
             local newPlayers = {}
             for _, guid in ipairs(players) do
                 tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
             end
 
+            -- reason
+            local bench = false
+            if ns.Lib.strEndsWith(reason, ' BENCH') then
+                bench = true
+                reason = reason:sub(0, #reason - 6)
+            end
+
+            if ns.Lib.strStartsWith(reason, 'manual_single:') then
+                local details = string.match(reason, '^manual_single: (.*)$')
+                if not details then
+                    details = ''
+                end
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE, details)
+            elseif ns.Lib.strStartsWith(reason, 'manual_multiple:') then
+                local details = string.match(reason, '^manual_multiple: (.*)$')
+                if not details then
+                    details = ''
+                end
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, details, bench)
+            elseif ns.Lib.strStartsWith(reason, 'decay:') then
+                local details = string.match(reason, '^decay: (.*)$')
+                if not details then
+                    details = ''
+                end
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.DECAY, details)
+            elseif ns.Lib.strStartsWith(reason, 'award:') then
+                local itemName, rollType = string.match(reason, '^award: (.+) %- (%u%u) %- .+$')
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.AWARD, rollType, itemName)
+            elseif ns.Lib.strStartsWith(reason, 'boss_kill:') then
+                local bossId = string.match(reason, '^boss_kill: ".+" %((%d+)%)')
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, bossId, bench)
+            else
+                error('unknown reason: ' .. reason)
+            end
+
+            -- create and insert event
             local newEvent = {ts, issuer, newPlayers, type, value, reason, perc}
             local newHash = ns.Lib.hash(newEvent)
             local newEventAndHash = {newEvent, newHash}
+
             tinsert(newHistory, newEventAndHash)
         end
 
         ns.db.history = newHistory
 
-        ns.db.historyVersion = 2
-    end
-
-    if ns.db.historyVersion == 2 then
-        ns.debug('migrating history to v3')
-
-        for _, eventAndHash in ipairs(ns.db.history) do
-            local event = eventAndHash[1]
-
-            local reason = event[6]
-
-            local itemName, type = string.match(reason, '^award: (.+) %- (%u%u) %- .+$')
-            if itemName ~= nil and type ~= nil then
-                local newReason = ('award: ? (%s) [%s]'):format(itemName, strlower(type))
-                event[6] = newReason
-            end
-
-            local bossName, bossId = string.match(reason, '^boss_kill: "(.+)" %((%d+)%)')
-            if bossName ~= nil and bossId ~= nil then
-                local newReason = ('boss_kill: %d (%s)'):format(bossId, bossName)
-                event[6] = newReason
-            end
-
-            local newHash = ns.Lib.hash(event)
-            eventAndHash[2] = newHash
-        end
-
-        ns.db.historyVersion = 3
+        ns.db.historyVersion = 1
     end
 
     ns.debug('done migrating data')
+
+    ns.debug('testing b64 encoding...')
+    for _, eventAndHash in ipairs(ns.db.history) do
+        local event = eventAndHash[1]
+        local hash = eventAndHash[2]
+
+        local ts = event[1]
+
+        local encodedTs = ns.Lib.b64Encode(ts)
+        assert(ts == ns.Lib.b64Decode(encodedTs))
+
+        local encodedHash = ns.Lib.b64Encode(hash)
+        assert(hash == ns.Lib.b64Decode(encodedHash))
+    end
+    ns.debug('done')
 end
 
 
@@ -1118,7 +1141,7 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
     end
 
     local proceedFunc = function()
-        local reason = string.format('%s: %d (%s)', ns.values.epgpReasons.BOSS_KILL, encounterId, encounterName)
+        local reason = ns.Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, encounterId)
         local players = {}
 
         for player in self.raidRoster:iter() do
@@ -1129,13 +1152,13 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
         self:modifyEpgp(players, ns.consts.MODE_EP, ep, reason)
 
         if #ns.db.benchedPlayers > 0 then
-            local benchedReason = reason .. ' BENCH'
             local benchedPlayers = {}
             for _, player in ipairs(ns.db.benchedPlayers) do
                 local guid = ns.Lib.getPlayerGuid(player)
                 tinsert(benchedPlayers, guid)
             end
 
+            local benchedReason = ns.Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, encounterId, true)
             self:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, ep, benchedReason)
         end
 

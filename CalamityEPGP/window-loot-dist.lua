@@ -436,6 +436,11 @@ function LootDistWindow:checkAward()
 end
 
 
+---@param itemLink string
+---@param awardee string
+---@param rollType string
+---@param perc string
+---@param gp number
 function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
     ns.debug(itemLink .. ' awarded to ' .. awardee)
 
@@ -468,11 +473,10 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
 
     if rollType ~= nil then
         -- add gp
-        ns.Lib.getItemInfo(itemLink, function(itemInfo)
-            local reason = string.format('%s: %d (%s) [%s]', ns.values.epgpReasons.AWARD, itemInfo.id, itemInfo.name, rollType)
-            ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
-            ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
-        end)
+        local itemId = ns.Lib.getItemIdFromLink(itemLink)
+        local reason = ns.Lib.getEventReason(ns.values.epgpReasons.AWARD, rollType, itemId)
+        ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
+        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
     else
         ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
     end

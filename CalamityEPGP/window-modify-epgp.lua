@@ -148,7 +148,7 @@ function ModifyEpgpWindow:confirm()
         return
     end
 
-    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_SINGLE, enteredReason)
+    local reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE, enteredReason)
 
     ns.addon:modifyEpgp({self.charGuid}, self.mode, value, reason)
 

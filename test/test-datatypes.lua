@@ -849,7 +849,9 @@ describe('Set', function()
                 table.insert(elements, element)
             end
 
-            assert.same({1, 5, 6, 4}, elements)
+            table.sort(elements)
+
+            assert.same({1, 4, 5, 6}, elements)
         end)
     end)
 

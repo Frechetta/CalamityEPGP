@@ -109,7 +109,7 @@ function DecayEpgpWindow:confirm()
         return
     end
 
-    local reason = string.format('%s: %s', ns.values.epgpReasons.DECAY, self.mainFrame.reasonEditBox:GetText())
+    local reason = ns.Lib.getEventReason(ns.values.epgpReasons.DECAY, self.mainFrame.reasonEditBox:GetText())
 
     local players = {}
 

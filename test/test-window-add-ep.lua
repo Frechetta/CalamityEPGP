@@ -130,7 +130,7 @@ describe('confirm', function()
         aew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', 45, 'manual_multiple: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', 45, '1:because')
 
         assert.stub(ns.printPublic).was.not_called()
         assert.stub(aew.hide).was.called(1)
@@ -161,7 +161,7 @@ describe('confirm', function()
         aew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, 'manual_multiple: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, '1:because')
 
         assert.stub(ns.printPublic).was.not_called()
         assert.stub(aew.hide).was.called(1)
@@ -178,7 +178,7 @@ describe('confirm', function()
         aew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, 'manual_multiple: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, '1:because')
 
         assert.stub(ns.printPublic).was.called(1)
         assert.stub(ns.printPublic).was.called_with('Awarded 45 EP to raid. Reason: because')
@@ -197,8 +197,8 @@ describe('confirm', function()
         aew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, 'manual_multiple: because')
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 45, 'manual_multiple: because BENCH')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, '1:because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 45, '1:because:1')
 
         assert.stub(ns.printPublic).was.not_called()
         assert.stub(aew.hide).was.called(1)
@@ -215,8 +215,8 @@ describe('confirm', function()
         aew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, 'manual_multiple: because')
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 45, 'manual_multiple: because BENCH')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid'}, 'ep', 45, '1:because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 45, '1:because:1')
 
         assert.stub(ns.printPublic).was.called(1)
         assert.stub(ns.printPublic).was.called_with('Awarded 45 EP to raid. Reason: because')

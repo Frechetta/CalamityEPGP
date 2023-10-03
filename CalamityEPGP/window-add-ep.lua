@@ -116,7 +116,7 @@ function AddEpWindow:confirm()
 
     ns.debug(string.format('add %d EP to %s', value, ns.MainWindow:getRaidOnly() and 'raid' or 'everyone'))
 
-    local reason = string.format('%s: %s', ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
+    local reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
     local proceedFunc
     local numPlayers
@@ -144,7 +144,7 @@ function AddEpWindow:confirm()
             ns.addon:modifyEpgp(players, ns.consts.MODE_EP, value, reason)
 
             if #benchedPlayers > 0 then
-                local benchedReason = reason .. ' BENCH'
+                local benchedReason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason, true)
                 ns.addon:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, value, benchedReason)
             end
 

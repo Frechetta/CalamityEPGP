@@ -1,7 +1,6 @@
 local addonName, ns = ...  -- Namespace
 
 local Set = ns.Set
-local Dict = ns.Dict
 
 local Comm = {
     prefix = 'calepgp',
@@ -265,6 +264,8 @@ function Comm.handleHistory(message)
     Comm:getEventHashes()
 
     for _, eventAndHash in ipairs(events) do
+        eventAndHash = Comm.decodeEvent(eventAndHash)
+
         local hash = eventAndHash[2]
 
         if not Comm.eventHashes:contains(hash) then
@@ -352,12 +353,14 @@ function Comm:sendHistory(target, theirLatestEventTime)
             break
         end
 
+        eventAndHash = self.encodeEvent(eventAndHash)
+
         tinsert(newEvents, eventAndHash)
 
-        if #newEvents == 100 then
+        if #newEvents == 20 then
             toSend.events = newEvents
 
-            ns.debug(string.format('sending a batch of %d history events to %s', #newEvents, target))
+            ns.debug(string.format('sending a batch of 20 history events to %s', target))
             self:send(self.msgTypes.HISTORY, toSend, 'WHISPER', target)
             newEvents = {}
         end
@@ -373,6 +376,8 @@ end
 
 
 function Comm:sendEventToGuild(eventAndHash)
+    eventAndHash = self.encodeEvent(eventAndHash)
+
     local toSend = {
         events = {eventAndHash}
     }
@@ -412,6 +417,36 @@ end
 function Comm:sendRollPass()
     local ml = ns.Lib.getMl()
     self:send(self.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
+end
+
+
+---@param eventAndHash table
+---@return table
+function Comm.encodeEvent(eventAndHash)
+    eventAndHash = ns.Lib.deepcopy(eventAndHash)
+
+    local event = eventAndHash[1]
+    local hash = eventAndHash[2]
+
+    event[1] = ns.Lib.b64Encode(event[1])  -- ts
+    eventAndHash[2] = ns.Lib.b64Encode(hash)
+
+    return eventAndHash
+end
+
+
+---@param eventAndHash table
+---@return table
+function Comm.decodeEvent(eventAndHash)
+    eventAndHash = ns.Lib.deepcopy(eventAndHash)
+
+    local event = eventAndHash[1]
+    local hash = eventAndHash[2]
+
+    event[1] = ns.Lib.b64Decode(event[1])  -- ts
+    eventAndHash[2] = ns.Lib.b64Decode(hash)
+
+    return eventAndHash
 end
 
 
