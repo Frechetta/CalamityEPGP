@@ -142,8 +142,22 @@ end
 ---@param index integer
 ---@return any
 function List:removeIndex(index)
+    assert(type(index) == 'number')
+
+    if index == 0 then
+        error('index must not be 0')
+    end
+
+    if index > self:len() then
+        error('index must be in bounds')
+    end
+
     if index < 0 then
         index = self:len() + index + 1
+
+        if index <= 0 then
+            error('index must be in bounds')
+        end
     end
 
     return table.remove(self._list, index)
