@@ -283,8 +283,10 @@ end
 
 
 function Lib.hash(data)
+    local serialized = ns.addon:Serialize(data)
+
     local hasher = ns.addon.libc:fcs32init()
-    hasher = ns.addon.libc:fcs32update(hasher, tostring(data))
+    hasher = ns.addon.libc:fcs32update(hasher, serialized)
     return ns.addon.libc:fcs32final(hasher)
 end
 

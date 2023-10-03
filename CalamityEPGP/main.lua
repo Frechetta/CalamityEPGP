@@ -422,6 +422,17 @@ function addon.migrateData()
         ns.db.historyVersion = 1
     end
 
+    if ns.db.historyVersion == 1 then
+        ns.debug('migrating history to v2')
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local newHash = ns.Lib.hash(eventAndHash[1])
+            eventAndHash[2] = newHash
+        end
+
+        ns.db.historyVersion = 2
+    end
+
     ns.debug('done migrating data')
 
     ns.debug('testing b64 encoding...')
