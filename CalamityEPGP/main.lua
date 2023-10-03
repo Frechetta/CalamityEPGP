@@ -722,9 +722,10 @@ function addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
             amount = -diff
         end
 
-        local baseReason = ns.Lib.split(reason, ':')[1]
+        local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
+        local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
 
-        ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
+        ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReasonPretty))
     end
 end
 
