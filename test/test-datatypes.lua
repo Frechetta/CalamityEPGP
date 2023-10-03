@@ -1388,6 +1388,34 @@ describe('Dict', function()
         end)
     end)
 
+    describe('remove', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('empty', function()
+            local d = Dict:new()
+            d:remove('a')
+            assert.same({}, d._dict)
+        end)
+
+        test('nominal', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            d:remove('a')
+            assert.same({b = 6, c = 7}, d._dict)
+        end)
+
+        test('unknown key', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            d:remove('d')
+            assert.same({a = 5, b = 6, c = 7}, d._dict)
+        end)
+    end)
+
     describe('toTable', function()
         setup(function()
             Util:loadModule('lib', ns)
