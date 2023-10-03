@@ -1,3 +1,7 @@
+# 0.15.1
+
+- fix hashing algorithm
+
 # 0.15.0
 
 - make history events and their transmission more efficient

@@ -422,6 +422,17 @@ function addon.migrateData()
         ns.db.historyVersion = 1
     end
 
+    if ns.db.historyVersion == 1 then
+        ns.debug('migrating history to v2')
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local newHash = ns.Lib.hash(eventAndHash[1])
+            eventAndHash[2] = newHash
+        end
+
+        ns.db.historyVersion = 2
+    end
+
     ns.debug('done migrating data')
 
     ns.debug('testing b64 encoding...')
@@ -722,9 +733,10 @@ function addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
             amount = -diff
         end
 
-        local baseReason = ns.Lib.split(reason, ':')[1]
+        local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
+        local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
 
-        ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReason))
+        ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReasonPretty))
     end
 end
 

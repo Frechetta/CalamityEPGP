@@ -6,7 +6,7 @@ describe('modifyEpgpSingle', function()
     local addon
 
     local charGuid = '0'
-    local reason = 'stuff: stuff'
+    local reason = '0:stuff'
 
     before_each(function()
         ns = {
@@ -20,7 +20,9 @@ describe('modifyEpgpSingle', function()
         }
 
         Util:loadModule('constants', ns)
+        Util:loadModule('values', ns)
         Util:loadModule('lib', ns)
+        Util:loadModule('window-history', ns)
         Util:loadModule('main', ns)
 
         addon = ns.addon
