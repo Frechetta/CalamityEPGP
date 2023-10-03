@@ -203,7 +203,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', 31, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', 31, '0:because')
 
         assert.stub(ns.printPublic).was.not_called()
 
@@ -223,7 +223,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 31, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 31, '0:because')
 
         assert.stub(ns.printPublic).was.not_called()
 
@@ -243,7 +243,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', 31, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', 31, '0:because')
 
         assert.stub(ns.printPublic).was.called(1)
         assert.stub(ns.printPublic).was.called_with('Awarded 31 EP to p1. Reason: because')
@@ -264,7 +264,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 31, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p3_guid'}, 'ep', 31, '0:because')
 
         assert.stub(ns.printPublic).was.not_called()
 
@@ -420,7 +420,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', -1000000, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', -1000000, '0:because')
 
         assert.stub(ns.printPublic).was.not_called()
 
@@ -440,7 +440,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', 1000000, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'ep', 1000000, '0:because')
 
         assert.stub(ns.printPublic).was.not_called()
 
@@ -460,7 +460,7 @@ describe('confirm', function()
         mew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 150, 'manual_single: because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid'}, 'gp', 150, '0:because')
 
         assert.stub(ns.printPublic).was.not_called()
 

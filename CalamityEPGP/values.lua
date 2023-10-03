@@ -3,12 +3,11 @@ local _, ns = ...  -- Namespace
 ns.values = {}
 
 ns.values.epgpReasons = {
-    MANUAL_SINGLE = 'manual_single',
-    MANUAL_MULTIPLE = 'manual_multiple',
-    DECAY = 'decay',
-    AWARD = 'award',
-    ALT_SYNC = 'alt_sync',
-    BOSS_KILL = 'boss_kill',
+    MANUAL_SINGLE = 0,
+    MANUAL_MULTIPLE = 1,
+    DECAY = 2,
+    AWARD = 3,
+    BOSS_KILL = 4,
 }
 
 ns.values.gpDefaults = {
@@ -41,93 +40,6 @@ ns.values.gpDefaults = {
 }
 
 ns.values.epDefaults = {
-    -- ['Vanilla'] = {
-    --     ['Onyxia\'s Lair'] = {
-	-- 	    ["Onyxia"] = {1084, 5}
-    --     },
-    --     ['Molten Core'] = {
-    --         ["Lucifron"] = {663, 5},
-    --         ["Magmadar"] = {664, 5},
-    --         ["Gehennas"] = {665, 5},
-    --         ["Garr"] = {666, 5},
-    --         ["Baron Geddon"] = {668, 5},
-    --         ["Shazzrah"] = {667, 5},
-    --         ["Sulfuron Harbinger"] = {669, 5},
-    --         ["Golemagg the Incinerator"] = {670, 5},
-    --         ["Majordomo Executus"] = {671, 5},
-    --         ["Ragnaros"] = {672, 7},
-    --     },
-    --     ['Blackwing Lair'] = {
-    --         ["Razorgore the Untamed"] = {610, 7},
-    --         ["Vaelastrasz the Corrupt"] = {611, 7},
-    --         ["Broodlord Lashlayer"] = {612, 7},
-    --         ["Firemaw"] = {613, 7},
-    --         ["Ebonroc"] = {614, 7},
-    --         ["Flamegor"] = {615, 7},
-    --         ["Chromaggus"] = {616, 7},
-    --         ["Nefarian"] = {617, 10},
-    --     },
-    --     ['Zul\'Gurub'] = {
-    --         ["High Priest Venoxis"] = 2,
-    --         ["High Priestess Jeklik"] = 2,
-    --         ["High Priestess Mar'li"] = 2,
-    --         ["High Priest Thekal"] = 2,
-    --         ["High Priestess Arlokk"] = 2,
-    --         ["Edge of Madness"] = 2,
-    --         ["Bloodlord Mandokir"] = 2,
-    --         ["Jin'do the Hexxer"] = 2,
-    --         ["Gahz'ranka"] = 2,
-    --         ["Hakkar"] = 3,
-    --     },
-    --     ['Ruins of Ahn\'Qiraj'] = {
-    --         ["Kurinnaxx"] = 3,
-    --         ["General Rajaxx"] = 3,
-    --         ["Moam"] = 3,
-    --         ["Buru the Gorger"] = 3,
-    --         ["Ayamiss the Hunter"] = 3,
-    --         ["Ossirian the Unscarred"] = 4,
-    --     },
-    --     ['Ahn\'Qiraj'] = {
-    --         ["The Prophet Skeram"] = 10,
-    --         ["Battleguard Sartura"] = 10,
-    --         ["Fankriss the Unyielding"] = 10,
-    --         ["Princess Huhuran"] = 10,
-    --         ["The Silithid Royalty"] = 10,
-    --         ["Viscidus"] = 10,
-    --         ["Ouro"] = 10,
-    --         ["The Twin Emperors"] = 10,
-    --         ["C'Thun"] = 12,
-    --     },
-    --     ['Naxxramas'] = {
-    --         ["Anub'Rekhan"] = 12,
-    --         ["Grand Widow Faerlina"] = 12,
-    --         ["Maexxna"] = 15,
-
-    --         ["Noth the Plaguebringer"] = 12,
-    --         ["Heigan the Unclean"] = 12,
-    --         ["Loatheb"] = 15,
-
-    --         ["Instructor Razuvious"] = 12,
-    --         ["Gothik the Harvester"] = 12,
-    --         ["The Four Horsemen"] = 15,
-
-    --         ["Patchwerk"] = 12,
-    --         ["Grobbulus"] = 12,
-    --         ["Gluth"] = 12,
-    --         ["Thaddius"] = 15,
-
-    --         ["Sapphiron"] = 15,
-    --         ["Kel'Thuzad"] = 15,
-    --     },
-    --     ['Other'] = {
-    --         ["Lord Kazzak"] = 7,
-    --         ["Azuregos"] = 7,
-    --         ["Emeriss"] = 7,
-    --         ["Lethon"] = 7,
-    --         ["Ysondre"] = 7,
-    --         ["Taerar"] = 7,
-    --     },
-	-- },
     {
         'Vanilla',  -- expansion name
         {
@@ -255,6 +167,23 @@ ns.values.epDefaults = {
     }
 }
 
+ns.values.encounters = {}
+
+for _, expansion in ipairs(ns.values.epDefaults) do
+    for _, instance in ipairs(expansion[2]) do
+        for _, encounter in ipairs(instance[2]) do
+            local encounterName = encounter[1]
+            local encounterId = encounter[2]
+            local encounterEp = encounter[3]
+
+            ns.values.encounters[encounterId] = {
+                name = encounterName,
+                defaultEp = encounterEp,
+            }
+        end
+    end
+end
+
 ns.values.tokenGp = {
     --- WOTLK ---
     -- Onyxia's Layer
@@ -357,3 +286,92 @@ ns.values.tokenGp = {
     [52028] = 277, -- Vanquisher's Mark of Sanctification (heroic)
     [52029] = 277,  -- Protector's Mark of Sanctification (heroic)
 }
+
+
+    -- ['Vanilla'] = {
+    --     ['Onyxia\'s Lair'] = {
+	-- 	    ["Onyxia"] = {1084, 5}
+    --     },
+    --     ['Molten Core'] = {
+    --         ["Lucifron"] = {663, 5},
+    --         ["Magmadar"] = {664, 5},
+    --         ["Gehennas"] = {665, 5},
+    --         ["Garr"] = {666, 5},
+    --         ["Baron Geddon"] = {668, 5},
+    --         ["Shazzrah"] = {667, 5},
+    --         ["Sulfuron Harbinger"] = {669, 5},
+    --         ["Golemagg the Incinerator"] = {670, 5},
+    --         ["Majordomo Executus"] = {671, 5},
+    --         ["Ragnaros"] = {672, 7},
+    --     },
+    --     ['Blackwing Lair'] = {
+    --         ["Razorgore the Untamed"] = {610, 7},
+    --         ["Vaelastrasz the Corrupt"] = {611, 7},
+    --         ["Broodlord Lashlayer"] = {612, 7},
+    --         ["Firemaw"] = {613, 7},
+    --         ["Ebonroc"] = {614, 7},
+    --         ["Flamegor"] = {615, 7},
+    --         ["Chromaggus"] = {616, 7},
+    --         ["Nefarian"] = {617, 10},
+    --     },
+    --     ['Zul\'Gurub'] = {
+    --         ["High Priest Venoxis"] = 2,
+    --         ["High Priestess Jeklik"] = 2,
+    --         ["High Priestess Mar'li"] = 2,
+    --         ["High Priest Thekal"] = 2,
+    --         ["High Priestess Arlokk"] = 2,
+    --         ["Edge of Madness"] = 2,
+    --         ["Bloodlord Mandokir"] = 2,
+    --         ["Jin'do the Hexxer"] = 2,
+    --         ["Gahz'ranka"] = 2,
+    --         ["Hakkar"] = 3,
+    --     },
+    --     ['Ruins of Ahn\'Qiraj'] = {
+    --         ["Kurinnaxx"] = 3,
+    --         ["General Rajaxx"] = 3,
+    --         ["Moam"] = 3,
+    --         ["Buru the Gorger"] = 3,
+    --         ["Ayamiss the Hunter"] = 3,
+    --         ["Ossirian the Unscarred"] = 4,
+    --     },
+    --     ['Ahn\'Qiraj'] = {
+    --         ["The Prophet Skeram"] = 10,
+    --         ["Battleguard Sartura"] = 10,
+    --         ["Fankriss the Unyielding"] = 10,
+    --         ["Princess Huhuran"] = 10,
+    --         ["The Silithid Royalty"] = 10,
+    --         ["Viscidus"] = 10,
+    --         ["Ouro"] = 10,
+    --         ["The Twin Emperors"] = 10,
+    --         ["C'Thun"] = 12,
+    --     },
+    --     ['Naxxramas'] = {
+    --         ["Anub'Rekhan"] = 12,
+    --         ["Grand Widow Faerlina"] = 12,
+    --         ["Maexxna"] = 15,
+
+    --         ["Noth the Plaguebringer"] = 12,
+    --         ["Heigan the Unclean"] = 12,
+    --         ["Loatheb"] = 15,
+
+    --         ["Instructor Razuvious"] = 12,
+    --         ["Gothik the Harvester"] = 12,
+    --         ["The Four Horsemen"] = 15,
+
+    --         ["Patchwerk"] = 12,
+    --         ["Grobbulus"] = 12,
+    --         ["Gluth"] = 12,
+    --         ["Thaddius"] = 15,
+
+    --         ["Sapphiron"] = 15,
+    --         ["Kel'Thuzad"] = 15,
+    --     },
+    --     ['Other'] = {
+    --         ["Lord Kazzak"] = 7,
+    --         ["Azuregos"] = 7,
+    --         ["Emeriss"] = 7,
+    --         ["Lethon"] = 7,
+    --         ["Ysondre"] = 7,
+    --         ["Taerar"] = 7,
+    --     },
+	-- },

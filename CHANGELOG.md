@@ -1,3 +1,7 @@
+# 0.15.0
+
+- make history events and their transmission more efficient
+
 # 0.14.4
 
 - added AceGUI back in for AceConfigDialog

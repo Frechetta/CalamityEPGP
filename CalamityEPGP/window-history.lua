@@ -14,7 +14,6 @@ local HistoryWindow = {
         [ns.values.epgpReasons.MANUAL_MULTIPLE] = 'Manual',
         [ns.values.epgpReasons.DECAY] = 'Decay',
         [ns.values.epgpReasons.AWARD] = 'Award',
-        [ns.values.epgpReasons.ALT_SYNC] = 'Alt Sync',
         [ns.values.epgpReasons.BOSS_KILL] = 'Boss Kill',
     },
     dropDownRows = 8,
@@ -231,10 +230,11 @@ function HistoryWindow:refresh()
         return
     end
 
-    self:getData()
-    self:getRenderedData()
-    self:setDropDownData()
-    self:setTableData()
+    self:getData(function()
+        HistoryWindow:getRenderedData()
+        HistoryWindow:setDropDownData()
+        HistoryWindow:setTableData()
+    end)
 end
 
 
@@ -383,7 +383,10 @@ function HistoryWindow:filterData()
 end
 
 
-function HistoryWindow:getData()
+---@param callback function
+function HistoryWindow:getData(callback)
+    callback = callback or function(_) end
+
     self.data.rowsRaw = {}
 
     local playerGuidToName = {}
@@ -399,61 +402,109 @@ function HistoryWindow:getData()
         playerValsTracker[guid]['GP'] = playerData.gp
     end
 
+    local numEvents = #ns.db.history
+    local eventsProcessed = 0
+
     for _, eventAndHash in ipairs(ns.db.history) do
         local event = eventAndHash[1]
 
-        local time = date('%Y-%m-%d %H:%M:%S', event[2])
-        local issuedBy = playerGuidToName[event[3]]
-        local players = event[4]
-        local mode = event[5]
-        local value = event[6]
-        local reason = event[7]
-        local percent = event[8]
+        local time = date('%Y-%m-%d %H:%M:%S', event[1])
+        local issuedBy = playerGuidToName[ns.Lib.getFullPlayerGuid(event[2])]
+        local players = event[3]
+        local mode = event[4]
+        local value = event[5]
+        local reason = event[6]
+        local percent = event[7]
 
-        local prettyReason
-        reason, prettyReason = self:getFormattedReason(reason)
+        local newPlayers = {}
+        for _, guidShort in ipairs(players) do
+            tinsert(newPlayers, ns.Lib.getFullPlayerGuid(guidShort))
+        end
 
-        local row = {
-            time,
-            issuedBy,
-            mode,
-            value,
-            reason,
-            percent,
-            {baseReason = prettyReason, players = players}
-        }
+        self:getFormattedReason(reason, function(reason, prettyReason)
+            local row = {
+                time,
+                issuedBy,
+                mode,
+                value,
+                reason,
+                percent,
+                {baseReason = prettyReason, players = newPlayers}
+            }
 
-        ns.Lib.bininsert(self.data.rowsRaw, row, function(left, right)
-            return left[1] > right[1]
+            ns.Lib.bininsert(self.data.rowsRaw, row, function(left, right)
+                return left[1] > right[1]
+            end)
+
+            eventsProcessed = eventsProcessed + 1
+            if eventsProcessed == numEvents then
+                callback()
+            end
         end)
     end
 end
 
 
-function HistoryWindow:getFormattedReason(reason)
+---@param reason string
+---@param callback function
+function HistoryWindow:getFormattedReason(reason, callback)
     if reason == nil then
-        return nil
+        callback(nil, nil)
+        return
     end
 
-    local reasonSplit = ns.Lib.split(reason, ':')
-    local baseReason = reasonSplit[1]
-    local details = strtrim(reasonSplit[2])
+    local reasonType, details = string.match(reason, '^(%d):(.*)$')
+    reasonType = tonumber(reasonType)
 
-    if baseReason == ns.values.epgpReasons.AWARD then
-        local detailsSplit = ns.Lib.split(details, '-')
-        details = string.format('%s - %s', strtrim(detailsSplit[1]), strtrim(detailsSplit[2]))
-    elseif baseReason == ns.values.epgpReasons.BOSS_KILL then
-        local i = string.find(details, '%(')
-        details = string.sub(details, 2, i - 3)
+    local bench = false
+    if ns.Lib.strEndsWith(details, ':1') then
+        bench = true
+        details = details:sub(1, #details - 2)
     end
 
-    local prettyReason = self.epgpReasonsPretty[baseReason]
-    reason = prettyReason
-    if #details > 0 then
-        reason = string.format('%s (%s)', reason, details)
+    local prettyReason = self.epgpReasonsPretty[reasonType]
+
+    if reasonType == ns.values.epgpReasons.AWARD then
+        local rollType, item = string.match(details, '^(.+):(.+)$')
+        rollType = strupper(rollType)
+
+        local itemId = tonumber(item)
+        if itemId then
+            ns.Lib.getItemInfo(itemId, function(itemInfo)
+                if itemInfo == nil then
+                    callback(nil, nil)
+                    return
+                end
+
+                details = string.format('%s (%s)', itemInfo.name, rollType)
+                reason = string.format('%s (%s)', prettyReason, details)
+
+                if bench then
+                    reason = reason + ' [BENCH]'
+                end
+
+                callback(reason, prettyReason)
+            end)
+            return
+        end
+
+        details = string.format('%s (%s)', item, rollType)
+    elseif reasonType == ns.values.epgpReasons.BOSS_KILL then
+        local bossId = tonumber(details)
+        details = ns.values.encounters[bossId].name
     end
 
-    return reason, prettyReason
+    if details ~= nil and #details > 0 then
+        reason = string.format('%s (%s)', prettyReason, details)
+    else
+        reason = prettyReason
+    end
+
+    if bench then
+        reason = reason .. ' [BENCH]'
+    end
+
+    callback(reason, prettyReason)
 end
 
 
@@ -614,7 +665,7 @@ function HistoryWindow:getRenderedData()
 
                 local valueStr = tostring(value)
                 valueStr = percent and valueStr .. '%' or valueStr
-                valueStr = value > 0 and '+' .. valueStr or valueStr
+                valueStr = value >= 0 and '+' .. valueStr or valueStr
 
                 local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
                 local action = string.format('%s %s', actionMode, valueStr)

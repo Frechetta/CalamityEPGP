@@ -27,14 +27,10 @@ local Config = {
 ns.Config = Config
 
 -- add default encounter EP to defaults
-for _, expansion in ipairs(ns.values.epDefaults) do
-    for _, instance in ipairs(expansion[2]) do
-        for _, encounter in ipairs(instance[2]) do
-            local encounterId = encounter[2]
-            local ep = encounter[3]
-            Config.defaults.encounterEp[encounterId] = ep
-        end
-    end
+
+for encounterId, encounterData in pairs(ns.values.encounters) do
+    local ep = encounterData.defaultEp
+    Config.defaults.encounterEp[encounterId] = ep
 end
 
 Config.aceConfig = LibStub("AceConfig-3.0")

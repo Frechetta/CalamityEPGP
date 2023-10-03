@@ -96,9 +96,14 @@ function Lib.remove(container, value, all)
 
     while true do
         local i = Lib.find(container, value)
+
+        if i == -1 then
+            break
+        end
+
         table.remove(container, i)
 
-        if i == -1 or not all then
+        if not all then
             break
         end
     end
@@ -465,22 +470,27 @@ function Lib.getCachedItemInfo(itemId)
 end
 
 
----@param itemLink string
+---@param item string | number
 ---@param callback? function
-function Lib.getItemInfo(itemLink, callback)
+function Lib.getItemInfo(item, callback)
     callback = callback or function(_) end
 
-    local itemId = Lib.getItemIdFromLink(itemLink)
-    if itemId == nil then
-        error('Invalid item link "' .. itemLink .. '"')
+    local itemId
+    if type(item) == 'number' then
+        itemId = item
+    elseif type(item) == 'string' then
+        itemId = Lib.getItemIdFromLink(item)
+        if itemId == nil then
+            error('Invalid item link "' .. item .. '"')
+        end
     end
 
-    local item = Item:CreateFromItemID(itemId)
-    if item:IsItemEmpty() then
-        error('No item found with link "' .. itemLink .. '"')
+    local theItem = Item:CreateFromItemID(itemId)
+    if theItem:IsItemEmpty() then
+        error('No item found with ID "' .. itemId .. '"')
     end
 
-    if item:IsItemDataCached() then
+    if theItem:IsItemDataCached() then
         local itemInfo = Lib.getCachedItemInfo(itemId)
 
         if itemInfo then
@@ -489,12 +499,12 @@ function Lib.getItemInfo(itemLink, callback)
         end
     end
 
-    item:ContinueOnItemLoad(function()
+    theItem:ContinueOnItemLoad(function()
         local itemInfo = Lib.getCachedItemInfo(itemId)
 
-        if itemInfo == nil then
-            return
-        end
+        -- if itemInfo == nil then
+        --     return
+        -- end
 
         callback(itemInfo)
     end)
@@ -541,4 +551,154 @@ end
 ---@return string?
 function Lib.getRankName(rankIndex)
     return GuildControlGetRankName(rankIndex + 1)
+end
+
+
+local b64EncMap = {
+     [0] = 'A',  [1] = 'B',  [2] = 'C',  [3] = 'D',  [4] = 'E',  [5] = 'F',  [6] = 'G',  [7] = 'H',
+     [8] = 'I',  [9] = 'J', [10] = 'K', [11] = 'L', [12] = 'M', [13] = 'N', [14] = 'O', [15] = 'P',
+    [16] = 'Q', [17] = 'R', [18] = 'S', [19] = 'T', [20] = 'U', [21] = 'V', [22] = 'W', [23] = 'X',
+    [24] = 'Y', [25] = 'Z', [26] = 'a', [27] = 'b', [28] = 'c', [29] = 'd', [30] = 'e', [31] = 'f',
+    [32] = 'g', [33] = 'h', [34] = 'i', [35] = 'j', [36] = 'k', [37] = 'l', [38] = 'm', [39] = 'n',
+    [40] = 'o', [41] = 'p', [42] = 'q', [43] = 'r', [44] = 's', [45] = 't', [46] = 'u', [47] = 'v',
+    [48] = 'w', [49] = 'x', [50] = 'y', [51] = 'z', [52] = '0', [53] = '1', [54] = '2', [55] = '3',
+    [56] = '4', [57] = '5', [58] = '6', [59] = '7', [60] = '8', [61] = '9', [62] = '+', [63] = '/',
+}
+
+local b64DecMap = {}
+for i, c in pairs(b64EncMap) do
+    b64DecMap[c] = i
+end
+
+---@param x number
+---@return string
+function Lib.b64Encode(x)
+    if x == 0 then
+        return b64EncMap[x]
+    end
+
+    local s = ''
+    local part
+    while x ~= 0 do
+        part = bit.band(x, 63)  -- 63 == 0b111111 (first six bits)
+        s = b64EncMap[part] .. s
+        x = bit.rshift(x, 6)
+    end
+
+    return s
+end
+
+---@param s string
+---@return number
+function Lib.b64Decode(s)
+    local sLen = #s
+    local num = 0
+    local c
+    local cNum
+    local shift
+    for i = 1, sLen do
+        c = s:sub(i, i)
+        cNum = b64DecMap[c]
+        shift = (sLen - i) * 6
+        num = bit.bor(num, bit.lshift(cNum, shift))
+    end
+
+    return num
+end
+
+
+---@param guidFull string
+---@return string
+function Lib.getShortPlayerGuid(guidFull)
+    local realmId, guidShort = string.match(guidFull, '^Player%-(%d+)%-(%x%x%x%x%x%x%x%x)$')
+
+    if realmId == nil or guidShort == nil then
+        error(('Player GUID is malformed: "%s"'):format(guidFull))
+    end
+
+    if tonumber(realmId) ~= ns.db.realmId then
+        error(('Player GUID has incorrect realm ID: "%d"; ID should be %d'):format(tonumber(realmId), ns.db.realmId))
+    end
+
+    return guidShort
+end
+
+---@param guidShort string
+---@return string
+function Lib.getFullPlayerGuid(guidShort)
+    if not Lib.isShortPlayerGuid(guidShort) then
+        error(('Player short GUID is malformed: "%s"'):format(guidShort))
+    end
+
+    return ('Player-%d-%s'):format(ns.db.realmId, guidShort)
+end
+
+function Lib.isShortPlayerGuid(guidShort)
+    local res = string.match(guidShort, '^%x%x%x%x%x%x%x%x$')
+    return res ~= nil and #res == 8
+end
+
+function Lib.isFullPlayerGuid(guidFull)
+    local res = string.match(guidFull, '^Player%-%d+%-%x%x%x%x%x%x%x%x$')
+    return res ~= nil
+end
+
+
+function Lib.strStartsWith(s, pattern)
+    return s:sub(1, #pattern) == pattern
+end
+
+
+function Lib.strEndsWith(s, pattern)
+    local sLen = #s
+    return s:sub(sLen - #pattern + 1, sLen) == pattern
+end
+
+
+---@param reason number
+---@return string
+function Lib.getEventReason(reason, ...)
+    local args = {...}
+
+    if reason == ns.values.epgpReasons.MANUAL_SINGLE then
+        assert(type(args[1]) == 'string')  -- details
+        return ('%d:%s'):format(ns.values.epgpReasons.MANUAL_SINGLE, args[1])
+    end
+
+    if reason == ns.values.epgpReasons.MANUAL_MULTIPLE then
+        assert(type(args[1]) == 'string')  -- details
+        local reasonStr = ('%d:%s'):format(ns.values.epgpReasons.MANUAL_MULTIPLE, args[1])
+
+        if args[2] then
+            assert(type(args[2]) == 'boolean')
+            reasonStr = reasonStr .. ':1'
+        end
+
+        return reasonStr
+    end
+
+    if reason == ns.values.epgpReasons.DECAY then
+        assert(type(args[1]) == 'string')  -- details
+        return ('%d:%s'):format(ns.values.epgpReasons.DECAY, args[1])
+    end
+
+    if reason == ns.values.epgpReasons.AWARD then
+        assert(args[1] and (strlower(args[1]) == 'ms' or strlower(args[1]) == 'os'))  -- roll type
+        assert(args[2] and (type(args[2]) == 'number' or type(args[2]) == 'string'))  -- item ID or name
+        return ('%d:%s:%s'):format(ns.values.epgpReasons.AWARD, strlower(args[1]), args[2])
+    end
+
+    if reason == ns.values.epgpReasons.BOSS_KILL then
+        assert(args[1] and type(args[1] == 'number'))  -- boss ID
+        local reasonStr = ('%d:%d'):format(ns.values.epgpReasons.BOSS_KILL, args[1])
+
+        if args[2] then
+            assert(type(args[2]) == 'boolean')
+            reasonStr = reasonStr .. ':1'
+        end
+
+        return reasonStr
+    end
+
+    error(('Unknown event reason: %s'):format(reason))
 end

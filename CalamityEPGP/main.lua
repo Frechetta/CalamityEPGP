@@ -7,9 +7,9 @@ SlashCmdList.FRAMESTK = function()
     FrameStackTooltip_Toggle()
 end
 
-for i = 1, NUM_CHAT_WINDOWS do
-    _G['ChatFrame' .. i .. 'EditBox']:SetAltArrowKeyMode(false)
-end
+-- for i = 1, NUM_CHAT_WINDOWS do
+--     _G['ChatFrame' .. i .. 'EditBox']:SetAltArrowKeyMode(false)
+-- end
 ---------------------------------------------------------------
 
 local addonName, ns = ...  -- Namespace
@@ -58,9 +58,7 @@ function addon:OnInitialize()
         INFO = '!ceinfo',
     }
 
-    ns.minSyncVersion = ns.Lib.getVersionNum('0.14.0')
-
-    ns.peers = Dict:new()
+    ns.minSyncVersion = ns.Lib.getVersionNum('0.15.0')
 
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 
@@ -188,7 +186,7 @@ end
 
 function addon:init()
     if self == nil then
-        C_Timer.After(0.5, addon.init)
+        C_Timer.After(0.5, function() addon:init() end)
         return
     end
 
@@ -198,7 +196,7 @@ function addon:init()
 
         -- haven't actually received guild data yet. wait 1 second and run this function again
         if guildName == nil then
-            C_Timer.After(1, addon.init)
+            C_Timer.After(1, function() addon:init() end)
             return
         end
 
@@ -213,7 +211,11 @@ function addon:init()
         ns.standings = ns.db.standings
         ns.cfg = ns.db.cfg
 
+        ns.db.realmId = GetRealmID()
+
         ns.guild = guildFullName
+
+        ns.peers = Dict:new()
 
         self.ldb = LibStub('LibDataBroker-1.1', true)
         self.ldbi = LibStub('LibDBIcon-1.0', true)
@@ -312,7 +314,6 @@ function addon:init()
 
         self:initMinimapButton()
 
-        ns.HistoryWindow.fixHistory()
         self.syncAltEpGp()
 
         ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
@@ -333,21 +334,116 @@ end
 function addon.migrateData()
     ns.debug('migrating data...')
 
-    for guid, charData in pairs(ns.db.standings) do
-        -- we now use rankIndex instead of rank
-        charData.rank = nil
+    -- STANDINGS
+    if not ns.db.standingsVersion then
+        ns.debug('migrating standings to v1')
+
+        for _, charData in pairs(ns.db.standings) do
+            -- we now use rankIndex instead of rank
+            charData.rank = nil
+        end
+
+        ns.db.standingsVersion = 1
+    end
+
+    -- HISTORY
+    if not ns.db.historyVersion then
+        ns.debug('migrating history to v1')
+
+        ns.HistoryWindow.fixHistory()
+
+        local newHistory = {}
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local event = eventAndHash[1]
+
+            local ts = event[1]
+            local issuer = event[3]
+            local players = event[4]
+            local type = event[5]
+            local value = event[6]
+            local reason = event[7]
+            local perc = event[8]
+
+            -- issuer
+            issuer = ns.Lib.getShortPlayerGuid(issuer)
+
+            -- players
+            local newPlayers = {}
+            for _, guid in ipairs(players) do
+                tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
+            end
+
+            -- reason
+            local bench = false
+            if ns.Lib.strEndsWith(reason, ' BENCH') then
+                bench = true
+                reason = reason:sub(0, #reason - 6)
+            end
+
+            if ns.Lib.strStartsWith(reason, 'manual_single:') then
+                local details = string.match(reason, '^manual_single: (.*)$')
+                if not details then
+                    details = ''
+                end
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE, details)
+            elseif ns.Lib.strStartsWith(reason, 'manual_multiple:') then
+                local details = string.match(reason, '^manual_multiple: (.*)$')
+                if not details then
+                    details = ''
+                end
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, details, bench)
+            elseif ns.Lib.strStartsWith(reason, 'decay:') then
+                local details = string.match(reason, '^decay: (.*)$')
+                if not details then
+                    details = ''
+                end
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.DECAY, details)
+            elseif ns.Lib.strStartsWith(reason, 'award:') then
+                local itemName, rollType = string.match(reason, '^award: (.+) %- (%u%u) %- .+$')
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.AWARD, rollType, itemName)
+            elseif ns.Lib.strStartsWith(reason, 'boss_kill:') then
+                local bossId = string.match(reason, '^boss_kill: ".+" %((%d+)%)')
+                reason = ns.Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, bossId, bench)
+            else
+                error('unknown reason: ' .. reason)
+            end
+
+            -- create and insert event
+            local newEvent = {ts, issuer, newPlayers, type, value, reason, perc}
+            local newHash = ns.Lib.hash(newEvent)
+            local newEventAndHash = {newEvent, newHash}
+
+            tinsert(newHistory, newEventAndHash)
+        end
+
+        ns.db.history = newHistory
+
+        ns.db.historyVersion = 1
     end
 
     ns.debug('done migrating data')
+
+    ns.debug('testing b64 encoding...')
+    for _, eventAndHash in ipairs(ns.db.history) do
+        local event = eventAndHash[1]
+        local hash = eventAndHash[2]
+
+        local ts = event[1]
+
+        local encodedTs = ns.Lib.b64Encode(ts)
+        assert(ts == ns.Lib.b64Decode(encodedTs))
+
+        local encodedHash = ns.Lib.b64Encode(hash)
+        assert(hash == ns.Lib.b64Decode(encodedHash))
+    end
+    ns.debug('done')
 end
 
 
 function addon.fixGp()
     for _, charData in pairs(ns.db.standings) do
-        local min = 1
-        if ns.cfg.lmMode then
-            min = ns.cfg.gpBase
-        end
+        local min = ns.cfg.gpBase
         if charData.gp == nil or charData.gp < min then
             charData.gp = min
         end
@@ -482,6 +578,10 @@ end
 
 
 function addon.handleHeartbeat(message, sender)
+    if ns.peers == nil then
+        return
+    end
+
     local ts = time()
     local senderVersion = message.v
     local senderGuid = ns.Lib.getPlayerGuid(sender)
@@ -509,6 +609,24 @@ function addon:housekeepPeers()
     for guid in toRemove:iter() do
         ns.peers:remove(guid)
     end
+end
+
+
+function addon.createHistoryEvent(players, mode, value, reason, percent)
+    local ts = time()
+
+    local issuer = ns.Lib.getShortPlayerGuid(UnitGUID('player'))
+
+    local newPlayers = {}
+    for _, guid in ipairs(players) do
+        tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
+    end
+
+    local event = {ts, issuer, newPlayers, mode, value, reason, percent}
+    local hash = ns.Lib.hash(event)
+    local eventAndHash = {event, hash}
+
+    return eventAndHash
 end
 
 
@@ -553,20 +671,14 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
 
     self.syncAltEpGp(players)
 
-    local createTime = time()
-    local eventTime = createTime
-
-    local event = {createTime, eventTime, UnitGUID('player'), players, mode, value, reason, percent}
-    local hash = ns.Lib.hash(event)
-    local eventAndHash = {event, hash}
-
-    tinsert(ns.db.history, eventAndHash)
+    local event = self.createHistoryEvent(players, mode, value, reason, percent)
+    tinsert(ns.db.history, event)
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
     ns.Comm:sendStandingsToGuild()
-    ns.Comm:sendEventToGuild(eventAndHash)
+    ns.Comm:sendEventToGuild(event)
 end
 
 
@@ -655,7 +767,7 @@ function addon.syncAltEpGp(players)
 
         for _, eventAndHash in ipairs(ns.db.history) do
             local event = eventAndHash[1]
-            players = event[4]
+            players = event[3]
 
             for _, playerGuid in ipairs(players) do
                 local playerData = ns.db.standings[playerGuid]
@@ -798,7 +910,6 @@ function addon:handleChatMsg(_, message)
 
     local playerName = string.match(message, '(%S+) has gone offline.')
     if playerName then
-        ns.debug('caught ' .. playerName .. ' going offline!')
         playerName = self.getCharName(playerName)
         local guid = ns.Lib.getPlayerGuid(playerName)
         ns.peers:remove(guid)
@@ -1025,12 +1136,12 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
     local ep = ns.cfg.encounterEp[encounterId]
 
     if ep == nil then
-        ns.print(string.format('Encounter "%s" (%s) not in encounters table!', encounterName, encounterId))
+        ns.print(string.format('Encounter %d (%s) not in encounters table!', encounterId, encounterName))
         return
     end
 
     local proceedFunc = function()
-        local reason = string.format('%s: "%s" (%s)', ns.values.epgpReasons.BOSS_KILL, encounterName, encounterId)
+        local reason = ns.Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, encounterId)
         local players = {}
 
         for player in self.raidRoster:iter() do
@@ -1041,13 +1152,13 @@ function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
         self:modifyEpgp(players, ns.consts.MODE_EP, ep, reason)
 
         if #ns.db.benchedPlayers > 0 then
-            local benchedReason = reason .. ' BENCH'
             local benchedPlayers = {}
             for _, player in ipairs(ns.db.benchedPlayers) do
                 local guid = ns.Lib.getPlayerGuid(player)
                 tinsert(benchedPlayers, guid)
             end
 
+            local benchedReason = ns.Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, encounterId, true)
             self:modifyEpgp(benchedPlayers, ns.consts.MODE_EP, ep, benchedReason)
         end
 

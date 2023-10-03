@@ -579,6 +579,59 @@ describe('List', function()
             assert.same({1, 3}, l._list)
         end)
     end)
+
+    describe('removeIndex', function()
+        test('index 1', function()
+            local l = List:new({1, 2, 3, 4})
+            l:removeIndex(1)
+            assert.same({2, 3, 4}, l._list)
+        end)
+
+        test('index 3', function()
+            local l = List:new({1, 2, 3, 4})
+            l:removeIndex(3)
+            assert.same({1, 2, 4}, l._list)
+        end)
+
+        test('index 4', function()
+            local l = List:new({1, 2, 3, 4})
+            l:removeIndex(4)
+            assert.same({1, 2, 3}, l._list)
+        end)
+
+        test('index -1', function()
+            local l = List:new({1, 2, 3, 4})
+            l:removeIndex(-1)
+            assert.same({1, 2, 3}, l._list)
+        end)
+
+        test('index -3', function()
+            local l = List:new({1, 2, 3, 4})
+            l:removeIndex(-3)
+            assert.same({1, 3, 4}, l._list)
+        end)
+
+        test('index -4', function()
+            local l = List:new({1, 2, 3, 4})
+            l:removeIndex(-4)
+            assert.same({2, 3, 4}, l._list)
+        end)
+
+        test('index 5', function()
+            local l = List:new({1, 2, 3, 4})
+            assert.has.errors(function() l:removeIndex(5) end)
+        end)
+
+        test('index -5', function()
+            local l = List:new({1, 2, 3, 4})
+            assert.has.errors(function() l:removeIndex(-5) end)
+        end)
+
+        test('wrong type', function()
+            local l = List:new({1, 2, 3, 4})
+            assert.has.errors(function() l:removeIndex('hi') end)
+        end)
+    end)
 end)
 
 
@@ -849,7 +902,9 @@ describe('Set', function()
                 table.insert(elements, element)
             end
 
-            assert.same({1, 5, 6, 4}, elements)
+            table.sort(elements)
+
+            assert.same({1, 4, 5, 6}, elements)
         end)
     end)
 
@@ -980,12 +1035,10 @@ describe('Dict', function()
             local expectedDict = {}
             local expectedKeys = Set:new()
             local expectedValues = List:new()
-            local expectedKeyToValueIndex = {}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('zero elements', function()
@@ -994,12 +1047,10 @@ describe('Dict', function()
             local expectedDict = {}
             local expectedKeys = Set:new()
             local expectedValues = List:new()
-            local expectedKeyToValueIndex = {}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('one element', function()
@@ -1010,12 +1061,10 @@ describe('Dict', function()
             local expectedDict = {a = 5}
             local expectedKeys = Set:new({'a'})
             local expectedValues = List:new({5})
-            local expectedKeyToValueIndex = {a = 1}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('multiple elements', function()
@@ -1028,12 +1077,10 @@ describe('Dict', function()
             local expectedDict = {a = 5, c = 7, b = 6}
             local expectedKeys = Set:new({'a', 'b', 'c'})
             local expectedValues = List:new({5, 7, 6})
-            local expectedKeyToValueIndex = {a = 1, b = 3, c = 2}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
     end)
 
@@ -1165,6 +1212,10 @@ describe('Dict', function()
     end)
 
     describe('set', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
         test('empty', function()
             local d = Dict:new()
 
@@ -1173,12 +1224,10 @@ describe('Dict', function()
             local expectedDict = {a = 5}
             local expectedKeys = Set:new({'a'})
             local expectedValues = List:new({5})
-            local expectedKeyToValueIndex = {a = 1}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('one element key exists', function()
@@ -1189,12 +1238,10 @@ describe('Dict', function()
             local expectedDict = {a = 9}
             local expectedKeys = Set:new({'a'})
             local expectedValues = List:new({9})
-            local expectedKeyToValueIndex = {a = 1}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('one element key does not exist', function()
@@ -1205,12 +1252,10 @@ describe('Dict', function()
             local expectedDict = {a = 5, b = 6}
             local expectedKeys = Set:new({'a', 'b'})
             local expectedValues = List:new({5, 6})
-            local expectedKeyToValueIndex = {a = 1, b = 2}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('multiple elements key exists', function()
@@ -1221,12 +1266,10 @@ describe('Dict', function()
             local expectedDict = {a = 5, c = 7, b = 9}
             local expectedKeys = Set:new({'a', 'b', 'c'})
             local expectedValues = List:new({5, 7, 9})
-            local expectedKeyToValueIndex = {a = 1, b = 3, c = 2}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('multiple elements key does not exist', function()
@@ -1237,12 +1280,10 @@ describe('Dict', function()
             local expectedDict = {a = 5, c = 7, b = 6, d = 1}
             local expectedKeys = Set:new({'a', 'b', 'c', 'd'})
             local expectedValues = List:new({5, 7, 6, 1})
-            local expectedKeyToValueIndex = {a = 1, b = 3, c = 2, d = 4}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
     end)
 
@@ -1312,12 +1353,10 @@ describe('Dict', function()
             local expectedDict = {}
             local expectedKeys = Set:new()
             local expectedValues = List:new()
-            local expectedKeyToValueIndex = {}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('one element', function()
@@ -1328,12 +1367,10 @@ describe('Dict', function()
             local expectedDict = {}
             local expectedKeys = Set:new()
             local expectedValues = List:new()
-            local expectedKeyToValueIndex = {}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
         end)
 
         test('multiple elements', function()
@@ -1344,12 +1381,38 @@ describe('Dict', function()
             local expectedDict = {}
             local expectedKeys = Set:new()
             local expectedValues = List:new()
-            local expectedKeyToValueIndex = {}
 
             assert.same(expectedDict, d._dict)
             assert.same(expectedKeys, d._keys)
             assert.same(expectedValues, d._values)
-            assert.same(expectedKeyToValueIndex, d._keyToValueIndex)
+        end)
+    end)
+
+    describe('remove', function()
+        setup(function()
+            Util:loadModule('lib', ns)
+        end)
+
+        teardown(function()
+            ns.Lib = nil
+        end)
+
+        test('empty', function()
+            local d = Dict:new()
+            d:remove('a')
+            assert.same({}, d._dict)
+        end)
+
+        test('nominal', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            d:remove('a')
+            assert.same({b = 6, c = 7}, d._dict)
+        end)
+
+        test('unknown key', function()
+            local d = Dict:new({a = 5, b = 6, c = 7})
+            d:remove('d')
+            assert.same({a = 5, b = 6, c = 7}, d._dict)
         end)
     end)
 

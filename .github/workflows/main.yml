@@ -30,7 +30,11 @@ jobs:
 
       - name: Install Lua and LuaRocks
         run: |
-          sudo apt install lua5.1
+          git clone https://github.com/cogwheel/lua-wow.git
+          cd lua-wow
+          make linux
+          make test
+          sudo make install
           sudo apt install luarocks
           sudo luarocks install luacheck
           sudo luarocks install busted

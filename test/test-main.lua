@@ -174,7 +174,10 @@ describe('modifyEpgp', function()
         stub(addon, 'syncAltEpGp')
 
         ns.Lib = mock({
-            hash = function() return 0 end
+            hash = function() return 0 end,
+            getShortPlayerGuid = function(guid)
+                return guid
+            end
         })
 
         ns.MainWindow = mock({
@@ -335,8 +338,8 @@ describe('handleEncounterEnd', function()
         ns = {
             cfg = {
                 encounterEp = {
-                    e1 = 1,
-                    e2 = 2,
+                    [51] = 1,
+                    [52] = 2,
                 },
             },
             db = {
@@ -364,11 +367,9 @@ describe('handleEncounterEnd', function()
             end
         })
 
-        ns.Lib = mock({
-            getPlayerGuid = function(player)
-                return 'g' .. player
-            end
-        })
+        ns.Lib.getPlayerGuid = spy.new(function(player)
+            return 'g' .. player
+        end)
 
         addon.useForRaid = true
         addon.raidRoster = ns.List:new({'1', '2'})
@@ -408,35 +409,35 @@ describe('handleEncounterEnd', function()
     end)
 
     test('unknown encounter', function()
-        addon:handleEncounterEnd(nil, 'e3', 'E3', nil, nil, 1)
+        addon:handleEncounterEnd(nil, 53, 'E3', nil, nil, 1)
 
         assert.spy(addon.Print).was.called(1)
-        assert.spy(addon.Print).was.called_with(addon, 'Encounter "E3" (e3) not in encounters table!')
+        assert.spy(addon.Print).was.called_with(addon, 'Encounter 53 (E3) not in encounters table!')
         assert.is.falsy(confirmWindowMsg)
         assert.spy(ns.ConfirmWindow.show).was.not_called()
         assert.stub(addon.modifyEpgp).was.not_called()
     end)
 
     test('encounter no benched players', function()
-        addon:handleEncounterEnd(nil, 'e1', 'E1', nil, nil, 1)
+        addon:handleEncounterEnd(nil, 51, 'E1', nil, nil, 1)
 
         assert.spy(addon.Print).was.not_called()
         assert.same('Award 1 EP to raid for killing E1?', confirmWindowMsg)
         assert.spy(ns.ConfirmWindow.show).was.called(1)
         assert.stub(addon.modifyEpgp).was.called(1)
-        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 1, 'boss_kill: "E1" (e1)')
+        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 1, '4:51')
     end)
 
     test('encounter 2 benched players', function()
         ns.db.benchedPlayers = {'3', '4'}
 
-        addon:handleEncounterEnd(nil, 'e2', 'E2', nil, nil, 1)
+        addon:handleEncounterEnd(nil, 52, 'E2', nil, nil, 1)
 
         assert.spy(addon.Print).was.not_called()
         assert.same('Award 2 EP to raid for killing E2?', confirmWindowMsg)
         assert.spy(ns.ConfirmWindow.show).was.called(1)
         assert.stub(addon.modifyEpgp).was.called(2)
-        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 2, 'boss_kill: "E2" (e2)')
-        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g3', 'g4'}, 'ep', 2, 'boss_kill: "E2" (e2) BENCH')
+        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g1', 'g2'}, 'ep', 2, '4:52')
+        assert.stub(addon.modifyEpgp).was.called_with(addon, {'g3', 'g4'}, 'ep', 2, '4:52:1')
     end)
 end)

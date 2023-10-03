@@ -363,4 +363,317 @@ describe('lib', function()
             assert.same({6, 7}, container)
         end)
     end)
+
+    -- TODO: b64Encode
+
+    -- TODO: b64Decode
+
+    -- TODO: getShortPlayerGuid
+
+    -- TODO: getFullPlayerGuid
+
+    -- TODO: isShortPlayerGuid
+
+    -- TODO: isFullPlayerGuid
+
+    describe('strStartsWith', function()
+        test('first char', function()
+            local s = 'Hello, world!'
+            local pattern = 'H'
+
+            local result = Lib.strStartsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+
+        test('first chars', function()
+            local s = 'Hello, world!'
+            local pattern = 'Hello, w'
+
+            local result = Lib.strStartsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+
+        test('whole string', function()
+            local s = 'Hello, world!'
+            local pattern = 'Hello, world!'
+
+            local result = Lib.strStartsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+
+        test('random chars', function()
+            local s = 'Hello, world!'
+            local pattern = 'derp'
+
+            local result = Lib.strStartsWith(s, pattern)
+
+            assert.is_false(result)
+        end)
+
+        test('later chars', function()
+            local s = 'Hello, world!'
+            local pattern = 'ello'
+
+            local result = Lib.strStartsWith(s, pattern)
+
+            assert.is_false(result)
+        end)
+
+        test('empty', function()
+            local s = 'Hello, world!'
+            local pattern = ''
+
+            local result = Lib.strStartsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+    end)
+
+    describe('strEndsWith', function()
+        test('last char', function()
+            local s = 'Hello, world!'
+            local pattern = '!'
+
+            local result = Lib.strEndsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+
+        test('last chars', function()
+            local s = 'Hello, world!'
+            local pattern = ' world!'
+
+            local result = Lib.strEndsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+
+        test('whole string', function()
+            local s = 'Hello, world!'
+            local pattern = 'Hello, world!'
+
+            local result = Lib.strEndsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+
+        test('random chars', function()
+            local s = 'Hello, world!'
+            local pattern = 'derp'
+
+            local result = Lib.strEndsWith(s, pattern)
+
+            assert.is_false(result)
+        end)
+
+        test('earlier chars', function()
+            local s = 'Hello, world!'
+            local pattern = 'worl'
+
+            local result = Lib.strEndsWith(s, pattern)
+
+            assert.is_false(result)
+        end)
+
+        test('empty', function()
+            local s = 'Hello, world!'
+            local pattern = ''
+
+            local result = Lib.strEndsWith(s, pattern)
+
+            assert.is_true(result)
+        end)
+    end)
+
+    describe('getEventReason', function()
+        before_each(function()
+            Util:loadModule('values', ns)
+        end)
+
+        after_each(function()
+            ns.values = nil
+        end)
+
+        describe('manual_single', function()
+            test('nominal', function()
+                local expected = '0:derp'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE, 'derp')
+
+                assert.same(expected, actual)
+            end)
+
+            test('empty', function()
+                local expected = '0:'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE, '')
+
+                assert.same(expected, actual)
+            end)
+
+            test('nil', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE) end)
+            end)
+
+            test('wrong type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.MANUAL_SINGLE, 5) end)
+            end)
+        end)
+
+        describe('manual_multiple', function()
+            test('nominal', function()
+                local expected = '1:derp'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, 'derp')
+
+                assert.same(expected, actual)
+            end)
+
+            test('nominal with false bench', function()
+                local expected = '1:derp'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, 'derp', false)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nominal with true bench', function()
+                local expected = '1:derp:1'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, 'derp', true)
+
+                assert.same(expected, actual)
+            end)
+
+            test('empty', function()
+                local expected = '1:'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, '')
+
+                assert.same(expected, actual)
+            end)
+
+            test('empty with bench', function()
+                local expected = '1::1'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, '', true)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nil', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE) end)
+            end)
+
+            test('wrong type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, 5) end)
+            end)
+
+            test('bench wrong type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, 'derp', 5) end)
+            end)
+        end)
+
+        describe('decay', function()
+            test('nominal', function()
+                local expected = '2:derp'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.DECAY, 'derp')
+
+                assert.same(expected, actual)
+            end)
+
+            test('empty', function()
+                local expected = '2:'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.DECAY, '')
+
+                assert.same(expected, actual)
+            end)
+
+            test('nil', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.DECAY) end)
+            end)
+
+            test('wrong type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.DECAY, 5) end)
+            end)
+        end)
+
+        describe('award', function()
+            test('nominal MS', function()
+                local expected = '3:ms:11'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.AWARD, 'MS', 11)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nominal OS', function()
+                local expected = '3:os:11'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.AWARD, 'OS', 11)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nominal item name', function()
+                local expected = '3:os:item'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.AWARD, 'OS', 'item')
+
+                assert.same(expected, actual)
+            end)
+
+            test('unknown roll', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.AWARD, 'FS', 11) end)
+            end)
+
+            test('empty roll', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.AWARD, '', 11) end)
+            end)
+
+            test('nil roll', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.AWARD, nil, 11) end)
+            end)
+
+            test('wrong roll type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.AWARD, 5, 11) end)
+            end)
+
+            test('wrong item type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.AWARD, 'MS', true) end)
+            end)
+        end)
+
+        describe('boss_kill', function()
+            test('nominal', function()
+                local expected = '4:52'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, 52)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nominal with false bench', function()
+                local expected = '4:52'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, 52, false)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nominal with true bench', function()
+                local expected = '4:52:1'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, 52, true)
+
+                assert.same(expected, actual)
+            end)
+
+            test('nil', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL) end)
+            end)
+
+            test('wrong type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, 'boss') end)
+            end)
+
+            test('bench wrong type', function()
+                assert.has.errors(function() Lib.getEventReason(ns.values.epgpReasons.BOSS_KILL, 52, 5) end)
+            end)
+        end)
+
+        test('unknown', function()
+            assert.has.errors(function() Lib.getEventReason(5, 'derp') end)
+        end)
+    end)
 end)
