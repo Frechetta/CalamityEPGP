@@ -1,3 +1,7 @@
+# 0.15.2
+
+- fix communication bug
+
 # 0.15.1
 
 - fix hashing algorithm

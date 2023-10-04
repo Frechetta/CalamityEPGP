@@ -195,17 +195,19 @@ function Comm.getLatestEventTime()
 end
 
 
-function Comm:handleUpdate(_, sender)
-    self:sendSyncProbe('WHISPER', sender, true, true)
+function Comm.handleUpdate(_, sender)
+    Comm:sendSyncProbe('WHISPER', sender, true, true)
 end
 
 
-function Comm:handleSyncProbe(message, sender)
+function Comm.handleSyncProbe(message, sender)
     local theirLatestEventTime = message.latestEventTime
     local theirLmSettingsLastChange = message.lmSettingsLastChange
 
+    -- ns.debug(('got SYNC_PROBE message from %s; theirLatestEventTime: %s, theirLmSettingsLastChange: %s'):format(sender, theirLatestEventTime, theirLmSettingsLastChange))
+
     if theirLatestEventTime ~= nil then
-        local myLatestEventTime = self.getLatestEventTime()
+        local myLatestEventTime = Comm.getLatestEventTime()
         if theirLatestEventTime < myLatestEventTime then
             -- they are behind me
             ns.debug(string.format(
@@ -214,8 +216,8 @@ function Comm:handleSyncProbe(message, sender)
                 myLatestEventTime
             ))
 
-            self:sendStandingsToTarget(sender)
-            self:sendHistory(sender, theirLatestEventTime)
+            Comm:sendStandingsToTarget(sender)
+            Comm:sendHistory(sender, theirLatestEventTime)
         elseif theirLatestEventTime > myLatestEventTime then
             -- they are ahead of me
             ns.debug(string.format(
@@ -224,7 +226,7 @@ function Comm:handleSyncProbe(message, sender)
                 myLatestEventTime
             ))
 
-            self:sendSyncProbe('WHISPER', sender, true, false)
+            Comm:sendSyncProbe('WHISPER', sender, true, false)
         end
     end
 
@@ -237,10 +239,10 @@ function Comm:handleSyncProbe(message, sender)
                 ns.db.lmSettingsLastChange
             ))
 
-            self:sendLmSettingsToTarget(sender)
+            Comm:sendLmSettingsToTarget(sender)
         elseif theirLmSettingsLastChange > ns.db.lmSettingsLastChange then
             -- their LM settings are ahead of mine
-            self:sendSyncProbe('WHISPER', sender, false, true)
+            Comm:sendSyncProbe('WHISPER', sender, false, true)
         end
     end
 end
@@ -317,6 +319,8 @@ function Comm:sendSyncProbe(distribution, target, latestEventTime, lmSettingsLas
     if lmSettingsLastChange then
         toSend.lmSettingsLastChange = ns.db.lmSettingsLastChange
     end
+
+    -- ns.debug(('sending SYNC_PROBE with latestEventTime %s and lmSettingsLastChange %s'):format(toSend.latestEventTime, toSend.lmSettingsLastChange))
 
     self:send(self.msgTypes.SYNC_PROBE, toSend, distribution, target)
 end
