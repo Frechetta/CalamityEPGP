@@ -75,11 +75,6 @@ function LootDistWindow:createWindow()
     mainFrame.startButton:SetPoint('RIGHT', mainFrame.stopButton, 'LEFT', 0, 0)
     mainFrame.startButton:SetWidth(80)
 
-    mainFrame.gpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.gpLabel:SetPoint('RIGHT', mainFrame.startButton, 'LEFT', -15, 0)
-    mainFrame.gpLabel:SetJustifyH('RIGHT')
-    mainFrame.gpLabel:SetTextColor(1, 1, 0)
-
     mainFrame.timerLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.timerLabel:SetText('Timer (s):')
     mainFrame.timerLabel:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -17)
@@ -190,9 +185,6 @@ function LootDistWindow:show(itemLink)
         self.data.rolls = {}
 
         self.itemLink = itemLink
-        self.itemGp = itemInfo.gp
-
-        self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
 
         self:setData()
         self.mainFrame:Raise()
@@ -432,7 +424,7 @@ function LootDistWindow:checkAward()
 
     local rollType = self.data.rolls[awardee].type
 
-    ns.ConfirmAwardWindow:show(self.itemLink, self.itemGp, awardee, rollType)
+    ns.ConfirmAwardWindow:show(self.itemLink, awardee, rollType)
 end
 
 

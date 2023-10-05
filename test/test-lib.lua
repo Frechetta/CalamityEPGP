@@ -1,6 +1,7 @@
 loadfile('test/setup.lua')(spy, stub, mock)
 
 local ns = {}
+Util:loadModule('constants', ns)
 Util:loadModule('datatypes', ns)
 
 describe('lib', function()

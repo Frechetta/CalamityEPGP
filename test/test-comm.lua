@@ -7,6 +7,7 @@ describe('encodeEvent', function()
     before_each(function()
         ns = {}
 
+        Util:loadModule('constants', ns)
         Util:loadModule('datatypes', ns)
         Util:loadModule('lib', ns)
         Util:loadModule('comm', ns)
@@ -58,6 +59,7 @@ describe('decodeEvent', function()
     before_each(function()
         ns = {}
 
+        Util:loadModule('constants', ns)
         Util:loadModule('datatypes', ns)
         Util:loadModule('lib', ns)
         Util:loadModule('comm', ns)

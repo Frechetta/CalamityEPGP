@@ -21,7 +21,7 @@ describe('confirm', function()
             },
         }
 
-        -- Util:loadModule('constants', ns)
+        Util:loadModule('constants', ns)
         Util:loadModule('values', ns)
         Util:loadModule('lib', ns)
         Util:loadModule('datatypes', ns)
