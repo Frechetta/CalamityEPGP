@@ -433,6 +433,13 @@ function addon.migrateData()
         ns.db.historyVersion = 2
     end
 
+    -- GP SLOT MODIFIERS
+    if not ns.db.slotModifiersVersion then
+        ns.debug('migrating slot modifiers to v1')
+        ns.db.cfg.gpSlotMods = nil
+        ns.db.slotModifiersVersion = 1
+    end
+
     ns.debug('done migrating data')
 
     ns.debug('testing b64 encoding...')
