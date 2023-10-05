@@ -111,7 +111,9 @@ ns.values.gpDefaults = {
                 PALADIN = {
                     Protection = 1,
                 },
-                WARRIOR = 1,
+                WARRIOR = {
+                    Protection = 1,
+                },
             },
         },
         INVTYPE_RANGED = {

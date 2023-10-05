@@ -17,7 +17,7 @@ function ConfirmAwardWindow:createWindow()
     local mainFrameName = addonName .. '_ConfirmAwardWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent, 'BasicFrameTemplateWithInset')
-	mainFrame:SetSize(350, 165)
+	mainFrame:SetSize(350, 185)
 	mainFrame:SetPoint('CENTER')
     mainFrame:SetFrameStrata('DIALOG')
     mainFrame:SetToplevel(true)
@@ -43,7 +43,7 @@ function ConfirmAwardWindow:createWindow()
     mainFrame.rollLabel:SetTextScale(1.2)
 
     mainFrame.specButtonRow = CreateFrame('Frame', nil, mainFrame)
-    mainFrame.specButtonRow:SetPoint('TOP', mainFrame.rollLabel, 'BOTTOM', 0, -15)
+    mainFrame.specButtonRow:SetPoint('TOP', mainFrame.rollLabel, 'BOTTOM', 0, -10)
     mainFrame.specButtonRow:SetWidth(mainFrame:GetWidth())
     mainFrame.specButtonRow:SetHeight(30)
     mainFrame.specButtonRow.buttons = {
@@ -69,6 +69,12 @@ function ConfirmAwardWindow:createWindow()
     mainFrame.freeButton:SetHeight(30)
     mainFrame.freeButton:GetFontString():SetTextScale(1.2)
     mainFrame.freeButton:SetText('Free')
+
+    mainFrame.baseGpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.baseGpLabel:SetPoint('BOTTOMRIGHT', mainFrame.osButton, 'TOP', -10, 10)
+
+    mainFrame.theirGpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.theirGpLabel:SetPoint('BOTTOMLEFT', mainFrame.osButton, 'TOP', 10, 10)
 
     mainFrame.cancelButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.cancelButton:SetText('Cancel')
@@ -98,7 +104,7 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
     self.mainFrame.specButtonRow.buttons[2]:SetChecked(false)
     self.mainFrame.specButtonRow:Hide()
 
-    self.mainFrame:SetHeight(165)
+    self.mainFrame:SetHeight(185)
 
     self.mainFrame:Raise()
 
@@ -112,9 +118,14 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
         local playerGuid = ns.Lib.getPlayerGuid(player)
         local classFilename = ns.db.standings[playerGuid].classFileName
 
-        self.baseGp = ns.Lib.getGpWithInfo(itemInfo, classFilename)
-        self.msGp = self.baseGp
+        self.baseGp = ns.Lib.getGpWithInfo(itemInfo)
+        self.baseClassGp = ns.Lib.getGpWithInfo(itemInfo, classFilename)
+
+        self.msGp = self.baseClassGp
         self.osGp = math.floor(self.msGp * .1)
+
+        self.mainFrame.baseGpLabel:SetText(string.format('Base GP: %d', self.baseGp))
+        self.mainFrame.theirGpLabel:SetText(string.format('Their GP: %d', self.msGp))
 
         self.mainFrame.msButton:SetText(string.format('MS (%d GP)', self.msGp))
         self.mainFrame.osButton:SetText(string.format('OS (%d GP)', self.osGp))
@@ -169,17 +180,19 @@ function ConfirmAwardWindow:_renderSpecButtonRow(classFilename, classOverride, i
             if button:GetChecked() then
                 self.msGp = ns.Lib.getGpWithInfo(itemInfo, classFilename, spec)
             else
-                self.msGp = self.baseGp
+                self.msGp = self.baseClassGp
             end
 
             self.osGp = math.floor(self.msGp * .1)
+
+            self.mainFrame.theirGpLabel:SetText(string.format('Their GP: %d', self.msGp))
 
             self.mainFrame.msButton:SetText(string.format('MS (%d GP)', self.msGp))
             self.mainFrame.osButton:SetText(string.format('OS (%d GP)', self.osGp))
         end)
     end
 
-    self.mainFrame:SetHeight(195)
+    self.mainFrame:SetHeight(215)
 
     self.mainFrame.specButtonRow:Show()
 
