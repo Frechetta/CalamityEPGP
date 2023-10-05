@@ -14,28 +14,124 @@ ns.values.gpDefaults = {
     base = 1,
     -- https://wowpedia.fandom.com/wiki/Enum.InventoryType
     slotModifiers = {
-        INVTYPE_HEAD = 1,
-        INVTYPE_NECK = 0.5,
-        INVTYPE_SHOULDER = 0.75,
-        INVTYPE_CLOAK = 0.5,
-        INVTYPE_CHEST = 1,
-        INVTYPE_WRIST = 0.5,
-        INVTYPE_HAND = 0.75,
-        INVTYPE_WAIST = 0.75,
-        INVTYPE_LEGS = 1,
-        INVTYPE_FEET = 0.75,
-        INVTYPE_FINGER = 0.5,
-        INVTYPE_TRINKET = 0.75,
-        INVTYPE_WEAPON = 1,  -- one handed weapon; [decrease to 0.5 for hunters, increase to 1.5 for casters]
-        INVTYPE_WEAPONMAINHAND = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
-        INVTYPE_WEAPONOFFHAND = 1,  -- [decrease to 0.5 for hunters]
-        INVTYPE_2HWEAPON = 2,  -- [decrease to 1 for hunters and fury warriors]
-        INVTYPE_SHIELD = 0.5,  -- [increase to 1 for warriors and prot paladins]
-        INVTYPE_RANGED = 0.5,  -- [increase to 1.5 for hunters]
-        INVTYPE_HOLDABLE = 0.5,  -- held in off hand
-        INVTYPE_RELIC = 0.5,
-        INVTYPE_THROWN = 0.5,
-        INVTYPE_RANGEDRIGHT = 0.5,  -- wand
+        INVTYPE_HEAD = {
+            base = 1,
+        },
+        INVTYPE_NECK = {
+            base = 0.5,
+        },
+        INVTYPE_SHOULDER = {
+            base = 0.75,
+        },
+        INVTYPE_CLOAK = {
+            base = 0.5,
+        },
+        INVTYPE_CHEST = {
+            base = 1,
+        },
+        INVTYPE_WRIST = {
+            base = 0.5,
+        },
+        INVTYPE_HAND = {
+            base = 0.75,
+        },
+        INVTYPE_WAIST = {
+            base = 0.75,
+        },
+        INVTYPE_LEGS = {
+            base = 1,
+        },
+        INVTYPE_FEET = {
+            base = 0.75,
+        },
+        INVTYPE_FINGER = {
+            base = 0.5,
+        },
+        INVTYPE_TRINKET = {
+            base = 0.75,
+        },
+        INVTYPE_WEAPON = {  -- one handed weapon
+            base = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
+            overrides = {
+                DRUID = {
+                    Balance = 1.5,
+                    Restoration = 1.5,
+                },
+                HUNTER = 0.5,
+                MAGE = 1.5,
+                PALADIN = {
+                    Holy = 1.5,
+                },
+                PRIEST = 1.5,
+                SHAMAN = {
+                    Elemental = 1.5,
+                    Restoration = 1.5,
+                },
+                WARLOCK = 1.5,
+            },
+        },
+        INVTYPE_WEAPONMAINHAND = {
+            base = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
+            overrides = {
+                DRUID = {
+                    Balance = 1.5,
+                    Restoration = 1.5,
+                },
+                HUNTER = 0.5,
+                MAGE = 1.5,
+                PALADIN = {
+                    Holy = 1.5,
+                },
+                PRIEST = 1.5,
+                SHAMAN = {
+                    Elemental = 1.5,
+                    Restoration = 1.5,
+                },
+                WARLOCK = 1.5,
+            },
+        },
+        INVTYPE_WEAPONOFFHAND = {
+            base = 1,  -- [decrease to 0.5 for hunters]
+            overrides = {
+                HUNTER = 0.5,
+            },
+        },
+        INVTYPE_2HWEAPON = {
+            base = 2,  -- [decrease to 1 for hunters and fury warriors]
+            overrides = {
+                HUNTER = 1,
+                WARRIOR = {
+                    Fury = 1,
+                },
+            },
+        },
+        INVTYPE_SHIELD = {
+            base = 0.5,  -- [increase to 1 for warriors and prot paladins]
+            overrides = {
+                PALADIN = {
+                    Protection = 1,
+                },
+                WARRIOR = 1,
+            },
+        },
+        INVTYPE_RANGED = {
+            base = 0.5,  -- [increase to 1.5 for hunters]
+            overrides = {
+                HUNTER = 1.5,
+            },
+        },
+        INVTYPE_HOLDABLE = {  -- held in off hand
+            base = 0.5,
+        },
+        INVTYPE_RELIC = {
+            base = 0.5,
+        },
+        INVTYPE_THROWN = {
+            base = 0.5,
+        },
+        INVTYPE_RANGEDRIGHT = {  -- wand
+            base = 0.5,
+        },
     },
 }
 

@@ -1200,7 +1200,10 @@ function addon:handleTooltipUpdate(frame)
     end
 
     -- add GP to tooltip
-    ns.Lib.getGp(itemLink, function(gp)
+    local classFilename = UnitClassBase('player')
+    local spec = ns.Lib.getSpecName(classFilename, ns.Lib.getActiveSpecIndex())
+
+    ns.Lib.getGp(itemLink, classFilename, spec, function(gp)
         if gp == nil then
             gp = '?'
         end
