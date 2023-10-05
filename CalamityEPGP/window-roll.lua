@@ -10,7 +10,7 @@ function RollWindow:createWindow()
         return
     end
 
-    local mainFrameName = addonName .. '_ConfirmAwardWindow'
+    local mainFrameName = addonName .. '_RollWindow'
 
     local mainFrame = CreateFrame('Frame', mainFrameName, UIParent)
     mainFrame.texture = mainFrame:CreateTexture(nil, 'BACKGROUND')

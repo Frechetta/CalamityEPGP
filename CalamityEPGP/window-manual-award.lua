@@ -14,7 +14,7 @@ function ManualAwardWindow:createWindow()
     end
 
     local mainFrame = CreateFrame('Frame', addonName .. '_ManualAwardWindow', UIParent, 'BasicFrameTemplateWithInset')
-	mainFrame:SetSize(300, 200)
+	mainFrame:SetSize(300, 250)
 	mainFrame:SetPoint('CENTER'); -- Doesn't need to be ('CENTER', UIParent, 'CENTER')
     mainFrame:SetFrameStrata('HIGH')
     mainFrame:SetToplevel(true)
@@ -42,17 +42,6 @@ function ManualAwardWindow:createWindow()
     mainFrame.itemLabel:SetPoint('LEFT', mainFrame.itemIcon, 'RIGHT', 10, 0)
     mainFrame.itemLabel:EnableMouse(true)
 
-    mainFrame.gpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.gpLabel:SetPoint('TOP', mainFrame.itemLabel)
-    mainFrame.gpLabel:SetPoint('RIGHT', mainFrame, 'RIGHT', -20, 0)
-    mainFrame.gpLabel:SetJustifyH('RIGHT')
-    mainFrame.gpLabel:SetTextColor(1, 1, 0)
-
-    mainFrame.awardButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.awardButton:SetText('Award')
-    mainFrame.awardButton:SetPoint('TOPRIGHT', mainFrame.gpLabel, 'BOTTOMRIGHT', 0, -20)
-    mainFrame.awardButton:SetWidth(70)
-
     mainFrame.closeButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.closeButton:SetText('Close')
     mainFrame.closeButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -20, 20)
@@ -61,6 +50,12 @@ function ManualAwardWindow:createWindow()
     mainFrame.tableFrame = ns.Table:new(mainFrame, nil, false, true, true, nil, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOPLEFT', mainFrame.itemIcon, 'BOTTOMLEFT', 0, -10)
     mainFrame.tableFrame:SetPoint('BOTTOMRIGHT', mainFrame.closeButton, 'BOTTOMLEFT', -15, 0)
+
+    mainFrame.awardButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.awardButton:SetText('Award')
+    mainFrame.awardButton:SetPoint('TOP', mainFrame.tableFrame:getFrame())
+    mainFrame.awardButton:SetPoint('RIGHT', mainFrame.closeButton)
+    mainFrame.awardButton:SetWidth(70)
 
     mainFrame.closeButton:SetScript('OnClick', function() mainFrame:Hide() end)
     mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
@@ -94,10 +89,7 @@ function ManualAwardWindow:show(itemLink)
         self.mainFrame.awardButton:Disable()
 
         self.itemLink = itemLink
-        self.itemGp = itemInfo.gp
         self.selectedPlayer = nil
-
-        self.mainFrame.gpLabel:SetText('GP: ' .. self.itemGp)
 
         self:setData()
         self.mainFrame:Show()
@@ -144,7 +136,7 @@ function ManualAwardWindow:checkAward()
         return
     end
 
-    ns.debug(self.itemLink .. ' ' .. self.itemGp .. ' ' .. awardee)
+    ns.debug(self.itemLink .. ' ' .. awardee)
 
-    ns.ConfirmAwardWindow:show(self.itemLink, self.itemGp, awardee)
+    ns.ConfirmAwardWindow:show(self.itemLink, awardee)
 end

@@ -433,6 +433,13 @@ function addon.migrateData()
         ns.db.historyVersion = 2
     end
 
+    -- GP SLOT MODIFIERS
+    if not ns.db.slotModifiersVersion then
+        ns.debug('migrating slot modifiers to v1')
+        ns.db.cfg.gpSlotMods = nil
+        ns.db.slotModifiersVersion = 1
+    end
+
     ns.debug('done migrating data')
 
     ns.debug('testing b64 encoding...')
@@ -1200,12 +1207,26 @@ function addon:handleTooltipUpdate(frame)
     end
 
     -- add GP to tooltip
-    ns.Lib.getGp(itemLink, function(gp)
-        if gp == nil then
-            gp = '?'
+    local classFilename = UnitClassBase('player')
+    local spec = ns.Lib.getSpecName(classFilename, ns.Lib.getActiveSpecIndex())
+
+    ns.Lib.getItemInfo(itemLink, function(itemInfo)
+        local gpBase = itemInfo.gp
+        local gpYours = ns.Lib.getGpWithInfo(itemInfo, classFilename, spec)
+
+        if gpBase == nil then
+            gpBase = '?'
         end
 
-        frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
+        if gpYours == nil then
+            gpYours = '?'
+        end
+
+        frame:AddLine('GP: ' .. gpBase, 0.5, 0.6, 1)
+
+        if gpYours ~= gpBase then
+            frame:AddLine('Your GP: ' .. gpYours, 0.5, 0.6, 1)
+        end
 
         -- add awarded list to tooltip
         local awardedList = List:new()
