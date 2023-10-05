@@ -1,3 +1,7 @@
+# 0.16.0
+
+- Add class/spec GP overrides
+
 # 0.15.2
 
 - fix communication bug
