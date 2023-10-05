@@ -731,16 +731,16 @@ end
 
 
 Lib.specTable = {
-    WARRIOR = {'Arms', 'Fury', 'Protection'},
-    PALADIN = {'Holy', 'Protection', 'Retribution'},
-    HUNTER = {'Beast Mastery', 'Marksmanship', 'Survival'},
-    ROGUE = {'Assassination', 'Combat', 'Subtlety'},
-    PRIEST = {'Discipline', 'Holy', 'Shadow'},
-    DEATHKNIGHT = {'Blood', 'Frost', 'Unholy'},
-    SHAMAN = {'Elemental', 'Enhancement', 'Restoration'},
-    MAGE = {'Arcane', 'Fire', 'Frost'},
-    WARLOCK = {'Affliction', 'Demonology', 'Destruction'},
-    DRUID = {'Balance', 'Feral Combat', 'Restoration'},
+    DEATHKNIGHT = {ns.consts.SPEC_DK_BLOOD, ns.consts.SPEC_DK_FROST, ns.consts.SPEC_DK_UNHOLY},
+    DRUID = {ns.consts.SPEC_DRUID_BALANCE, ns.consts.SPEC_DRUID_FERAL, ns.consts.SPEC_DRUID_RESTO},
+    HUNTER = {ns.consts.SPEC_HUNTER_BM, ns.consts.SPEC_HUNTER_MM, ns.consts.SPEC_HUNTER_SV},
+    MAGE = {ns.consts.SPEC_MAGE_ARCANE, ns.consts.SPEC_MAGE_FIRE, ns.consts.SPEC_MAGE_FROST},
+    PALADIN = {ns.consts.SPEC_PALADIN_HOLY, ns.consts.SPEC_PALADIN_PROT, ns.consts.SPEC_PALADIN_RET},
+    PRIEST = {ns.consts.SPEC_PRIEST_DISC, ns.consts.SPEC_PRIEST_HOLY, ns.consts.SPEC_PRIEST_SHADOW},
+    ROGUE = {ns.consts.SPEC_ROGUE_ASS, ns.consts.SPEC_ROGUE_COMBAT, ns.consts.SPEC_ROGUE_SUB},
+    SHAMAN = {ns.consts.SPEC_SHAMAN_ELE, ns.consts.SPEC_SHAMAN_ENH, ns.consts.SPEC_SHAMAN_RESTO},
+    WARLOCK = {ns.consts.SPEC_WARLOCK_AFF, ns.consts.SPEC_WARLOCK_DEMO, ns.consts.SPEC_WARLOCK_DESTRO},
+    WARRIOR = {ns.consts.SPEC_WARRIOR_ARMS, ns.consts.SPEC_WARRIOR_FURY, ns.consts.SPEC_WARRIOR_PROT},
 }
 
 ---@return number

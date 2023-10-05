@@ -54,18 +54,18 @@ ns.values.gpDefaults = {
             base = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
             overrides = {
                 DRUID = {
-                    Balance = 1.5,
-                    Restoration = 1.5,
+                    [ns.consts.SPEC_DRUID_BALANCE] = 1.5,
+                    [ns.consts.SPEC_DRUID_RESTO] = 1.5,
                 },
                 HUNTER = 0.5,
                 MAGE = 1.5,
                 PALADIN = {
-                    Holy = 1.5,
+                    [ns.consts.SPEC_PALADIN_HOLY] = 1.5,
                 },
                 PRIEST = 1.5,
                 SHAMAN = {
-                    Elemental = 1.5,
-                    Restoration = 1.5,
+                    [ns.consts.SPEC_SHAMAN_ELE] = 1.5,
+                    [ns.consts.SPEC_SHAMAN_RESTO] = 1.5,
                 },
                 WARLOCK = 1.5,
             },
@@ -74,18 +74,18 @@ ns.values.gpDefaults = {
             base = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
             overrides = {
                 DRUID = {
-                    Balance = 1.5,
-                    Restoration = 1.5,
+                    [ns.consts.SPEC_DRUID_BALANCE] = 1.5,
+                    [ns.consts.SPEC_DRUID_RESTO] = 1.5,
                 },
                 HUNTER = 0.5,
                 MAGE = 1.5,
                 PALADIN = {
-                    Holy = 1.5,
+                    [ns.consts.SPEC_PALADIN_HOLY] = 1.5,
                 },
                 PRIEST = 1.5,
                 SHAMAN = {
-                    Elemental = 1.5,
-                    Restoration = 1.5,
+                    [ns.consts.SPEC_SHAMAN_ELE] = 1.5,
+                    [ns.consts.SPEC_SHAMAN_RESTO] = 1.5,
                 },
                 WARLOCK = 1.5,
             },
@@ -101,23 +101,29 @@ ns.values.gpDefaults = {
             overrides = {
                 HUNTER = 1,
                 WARRIOR = {
-                    Fury = 1,
+                    [ns.consts.SPEC_WARRIOR_FURY] = 1,
                 },
             },
         },
         INVTYPE_SHIELD = {
-            base = 0.5,  -- [increase to 1 for warriors and prot paladins]
+            base = 0.5,  -- [increase to 1 for prot warriors and prot paladins]
             overrides = {
                 PALADIN = {
-                    Protection = 1,
+                    [ns.consts.SPEC_PALADIN_PROT] = 1,
                 },
                 WARRIOR = {
-                    Protection = 1,
+                    [ns.consts.SPEC_WARRIOR_PROT] = 1,
                 },
             },
         },
         INVTYPE_RANGED = {
             base = 0.5,  -- [increase to 1.5 for hunters]
+            overrides = {
+                HUNTER = 1.5,
+            },
+        },
+        INVTYPE_RANGEDRIGHT = {  -- wand and some other ranged [increase to 1.5 for hunters]
+            base = 0.5,
             overrides = {
                 HUNTER = 1.5,
             },
@@ -130,12 +136,6 @@ ns.values.gpDefaults = {
         },
         INVTYPE_THROWN = {
             base = 0.5,
-        },
-        INVTYPE_RANGEDRIGHT = {  -- wand and some other ranged [increase to 1.5 for hunters]
-            base = 0.5,
-            overrides = {
-                HUNTER = 1.5,
-            },
         },
     },
 }
