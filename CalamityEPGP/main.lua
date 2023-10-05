@@ -1203,12 +1203,23 @@ function addon:handleTooltipUpdate(frame)
     local classFilename = UnitClassBase('player')
     local spec = ns.Lib.getSpecName(classFilename, ns.Lib.getActiveSpecIndex())
 
-    ns.Lib.getGp(itemLink, classFilename, spec, function(gp)
-        if gp == nil then
-            gp = '?'
+    ns.Lib.getItemInfo(itemLink, function(itemInfo)
+        local gpBase = itemInfo.gp
+        local gpYours = ns.Lib.getGpWithInfo(itemInfo, classFilename, spec)
+
+        if gpBase == nil then
+            gpBase = '?'
         end
 
-        frame:AddLine('GP: ' .. gp, 0.5, 0.6, 1)
+        if gpYours == nil then
+            gpYours = '?'
+        end
+
+        frame:AddLine('GP: ' .. gpBase, 0.5, 0.6, 1)
+
+        if gpYours ~= gpBase then
+            frame:AddLine('Your GP: ' .. gpYours, 0.5, 0.6, 1)
+        end
 
         -- add awarded list to tooltip
         local awardedList = List:new()

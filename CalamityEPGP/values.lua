@@ -129,8 +129,11 @@ ns.values.gpDefaults = {
         INVTYPE_THROWN = {
             base = 0.5,
         },
-        INVTYPE_RANGEDRIGHT = {  -- wand
+        INVTYPE_RANGEDRIGHT = {  -- wand and some other ranged [increase to 1.5 for hunters]
             base = 0.5,
+            overrides = {
+                HUNTER = 1.5,
+            },
         },
     },
 }

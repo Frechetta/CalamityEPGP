@@ -240,17 +240,15 @@ function Lib.getGpWithInfo(itemInfo, classFilename, spec)
         modifier = 0.75
     else
         modifier = slotMod.base
-        if classFilename then
-            if slotMod.overrides ~= nil then
-                local classOverride = slotMod.overrides[classFilename]
-                if classOverride ~= nil then
-                    if type(classOverride) == 'number' then
-                        modifier = classOverride
-                    elseif spec ~= nil then  -- it's a table with specs (spec can't be nil)
-                        local specOverride = classOverride[spec]
-                        if specOverride ~= nil then
-                            modifier = specOverride
-                        end
+        if classFilename ~= nil and slotMod.overrides ~= nil then
+            local classOverride = slotMod.overrides[classFilename]
+            if classOverride ~= nil then
+                if type(classOverride) == 'number' then
+                    modifier = classOverride
+                elseif spec ~= nil then  -- it's a table with specs (spec can't be nil)
+                    local specOverride = classOverride[spec]
+                    if specOverride ~= nil then
+                        modifier = specOverride
                     end
                 end
             end
