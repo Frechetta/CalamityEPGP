@@ -196,7 +196,7 @@ function addon:init()
 
         -- haven't actually received guild data yet. wait 1 second and run this function again
         if guildName == nil then
-            C_Timer.After(1, function() addon:init() end)
+            C_Timer.After(0.5, function() addon:init() end)
             return
         end
 
@@ -227,7 +227,14 @@ function addon:init()
 
         self.migrateData()
 
+        table.sort(ns.db.history, function(left, right)
+            return left[1][1] < right[1][1]
+        end)
+
+        -- TODO: prune history
+
         ns.Comm:init()
+        ns.Sync:init()
 
         self.clearAwarded()
         self.clearAwardedTimer = self:ScheduleRepeatingTimer(function() self.clearAwarded() end, 60)
@@ -317,6 +324,7 @@ function addon:init()
         self.syncAltEpGp()
 
         ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
+        ns.Comm:registerHandler(ns.Comm.msgTypes.ROLL_PASS, self.handleRollPass)
 
         self.housekeepPeersTimer = self:ScheduleRepeatingTimer(function() self:housekeepPeers() end, 25)
 
@@ -326,7 +334,7 @@ function addon:init()
         self:sendHeartbeat()
         self.heartbeatTimer = self:ScheduleRepeatingTimer(function() self:sendHeartbeat() end, 60)
 
-        ns.Comm:syncInit()
+        ns.Sync:syncInit()
     end
 end
 
@@ -608,8 +616,19 @@ function addon.handleHeartbeat(message, sender)
 end
 
 
-function addon:sendHeartbeat()
+function addon.sendHeartbeat()
     ns.Comm:send(ns.Comm.msgTypes.HEARTBEAT, nil, 'GUILD')
+end
+
+
+function addon.handleRollPass(_, sender)
+    ns.LootDistWindow:handlePass(sender)
+end
+
+
+function addon.sendRollPass()
+    local ml = ns.Lib.getMl()
+    ns.Comm:send(ns.Comm.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
 end
 
 

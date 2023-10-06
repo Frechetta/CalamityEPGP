@@ -246,6 +246,23 @@ function Set:difference(...)
     return newSet
 end
 
+---@return Set
+function Set:intersection(...)
+    local others = {...}
+
+    local newSet = Set:new()
+
+    for item in self:iter() do
+        for _, other in ipairs(others) do
+            if other:contains(item) then
+                newSet:add(item)
+            end
+        end
+    end
+
+    return newSet
+end
+
 
 ---------------
 ---@param table? table
