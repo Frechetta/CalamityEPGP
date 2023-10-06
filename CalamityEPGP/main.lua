@@ -208,7 +208,7 @@ function addon:init()
         db:SetProfile(guildFullName)
 
         ns.db = db.profile
-        ns.standings = ns.db.standings
+        ns.standings = ns.db.standings  -- TODO: move standings out of DB
         ns.cfg = ns.db.cfg
 
         ns.db.realmId = GetRealmID()
@@ -322,6 +322,8 @@ function addon:init()
         self:initMinimapButton()
 
         self.syncAltEpGp()
+
+        -- TODO: compute standings
 
         ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
         ns.Comm:registerHandler(ns.Comm.msgTypes.ROLL_PASS, self.handleRollPass)
@@ -711,11 +713,12 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     local event = self.createHistoryEvent(players, mode, value, reason, percent)
     tinsert(ns.db.history, event)
 
+    -- TODO: compute standings
+
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
-    ns.Comm:sendStandingsToGuild()
-    ns.Comm:sendEventToGuild(event)
+    ns.Sync:sendEventToGuild(event)
 end
 
 
@@ -912,8 +915,9 @@ end
 
 
 function addon:clearData()
-    ns.db.standings = {}
     ns.db.history = {}
+
+    -- TODO: compute standings
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
@@ -926,7 +930,7 @@ end
 
 function addon.modifiedLmSettings()
     ns.db.lmSettingsLastChange = time()
-    ns.Comm:sendLmSettingsToGuild()
+    ns.Sync:sendLmSettingsToGuild()
 end
 
 

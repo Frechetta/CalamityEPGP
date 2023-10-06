@@ -42,6 +42,11 @@ function List:len()
     return #self._list
 end
 
+---@return boolean
+function List:isEmpty()
+    return self:len() == 0
+end
+
 ---@param reverse? boolean
 ---@param enumerate? boolean
 ---@return function
@@ -193,6 +198,11 @@ end
 ---@return number
 function Set:len()
     return self._len
+end
+
+---@return boolean
+function Set:isEmpty()
+    return self:len() == 0
 end
 
 ---@param item any
