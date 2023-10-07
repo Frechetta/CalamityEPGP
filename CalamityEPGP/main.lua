@@ -683,7 +683,9 @@ end
 
 function addon.sendRollPass()
     local ml = ns.Lib.getMl()
-    ns.Comm:send(ns.Comm.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
+    if ml ~= nil then
+        ns.Comm:send(ns.Comm.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
+    end
 end
 
 
