@@ -159,7 +159,7 @@ function Sync:getEventHashesByDay(dayTs)
         i = i + 1
     end
 
-    returnevents
+    return events
 end
 
 
@@ -493,10 +493,8 @@ function Sync.handleDataReq(message, sender)
 
     ---@type number
     local timeframe = message[1]
-
     ---@type table
     local timestamps = message[2]  -- list of encoded timestamps
-
     ---@type boolean
     local lmSettings = message[3]
 
@@ -511,9 +509,10 @@ function Sync.handleDataSend(message, sender)
 
     ---@type table
     local events = message[1]
-
     ---@type table?
     local lmSettings = message[2]
+
+    local recompute = false
 
     local numEvents = #events
     if numEvents > 0 then
@@ -525,7 +524,7 @@ function Sync.handleDataSend(message, sender)
             ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
         end
 
-        -- TODO: compute standings
+        recompute = true
     end
 
     if lmSettings ~= nil then
@@ -541,6 +540,12 @@ function Sync.handleDataSend(message, sender)
         ns.db.lmSettingsLastChange = lmSettings[8]
 
         LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+
+        recompute = true
+    end
+
+    if recompute then
+        ns.addon:computeStandings()
     end
 end
 

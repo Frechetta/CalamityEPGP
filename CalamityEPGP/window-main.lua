@@ -9,7 +9,7 @@ ns.MainWindow = MainWindow
 
 
 function MainWindow:createWindow()
-    if self.mainFrame ~= nil then
+    if not ns.addon.initialized or self.mainFrame ~= nil then
         return
     end
 
@@ -274,17 +274,28 @@ function MainWindow:getData()
         ['sorted'] = sorted,
     }
 
-    for _, charData in pairs(ns.db.standings) do
+    for guid, playerStandings in ns.standings:iter() do
+        local playerData = ns.knownPlayers:get(guid)
+
+        local name = playerData.name
+        local classFilename = playerData.classFilename
+        local class = LOCALIZED_CLASS_NAMES_MALE[classFilename]
+        local inGuild = playerData.inGuild
+        local rankIndex = playerData.rankIndex
+
+        local ep = playerStandings.ep
+        local gp = playerStandings.gp
+
         local row = {
-            charData.name,
-            charData.class,
-            charData.inGuild and 'Yes' or 'No',
-            charData.rankIndex and ns.Lib.getRankName(charData.rankIndex) or 'N/A',
-            tonumber(string.format("%.2f", charData.ep)),
-            tonumber(string.format("%.2f", charData.gp)),
-            tonumber(string.format("%.3f", charData.ep / charData.gp)),
+            name,
+            class,
+            inGuild and 'Yes' or 'No',
+            rankIndex and ns.Lib.getRankName(rankIndex) or 'N/A',
+            tonumber(string.format("%.2f", ep)),
+            tonumber(string.format("%.2f", gp)),
+            tonumber(string.format("%.3f", ep / gp)),
             {
-                color = RAID_CLASS_COLORS[charData.classFileName],
+                color = RAID_CLASS_COLORS[classFilename],
             }
         }
 

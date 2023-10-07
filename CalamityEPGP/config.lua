@@ -298,7 +298,8 @@ function Config:setAltManagementData()
         rows = {}
     }
 
-    for _, playerData in pairs(ns.db.standings) do
+    for guid in ns.standings:iter() do
+        local playerData = ns.knownPlayers:get(guid)
         local player = playerData.name
 
         local main_alt = 'Unknown'
@@ -312,7 +313,7 @@ function Config:setAltManagementData()
         local row = {
             player,
             main_alt,
-            {color = RAID_CLASS_COLORS[playerData.classFileName]}
+            {color = RAID_CLASS_COLORS[playerData.classFilename]}
         }
 
         ns.Lib.bininsert(data.rows, row, function(left, right)
@@ -750,7 +751,8 @@ function Config:showAltSelector(player)
         local alt = addAltWindow.altEditBox:GetText()
 
         local allPlayers = Set:new()
-        for _, playerData in pairs(ns.db.standings) do
+        for guid in ns.standings:iter() do
+            local playerData = ns.knownPlayers:get(guid)
             allPlayers:add(playerData.name)
         end
 

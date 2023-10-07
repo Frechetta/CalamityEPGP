@@ -242,7 +242,7 @@ function HistoryWindow:setDropDownData()
     local dropDown = self.mainFrame.dropDown
 
     local players = {}
-    for _, playerData in pairs(ns.standings) do
+    for _, playerData in ns.knownPlayers:iter() do
         local playerName = playerData.name
         -- filter if mainsOnly == true
         if not self.mainsOnly or ns.db.altData.altMainMapping[playerName] == playerName then
@@ -357,7 +357,7 @@ function HistoryWindow:filterData()
 
             local hasMain = false
             for _, playerGuid in ipairs(playerGuids) do
-                local playerData = ns.db.standings[playerGuid]
+                local playerData = ns.knownPlayers:get(playerGuid)
 
                 if playerData ~= nil then
                     local player = playerData.name
@@ -391,7 +391,7 @@ function HistoryWindow:getData(callback)
 
     local playerGuidToName = {}
     local playerValsTracker = {}
-    for guid, playerData in pairs(ns.db.standings) do
+    for guid, playerData in ns.knownPlayers:iter() do
         playerGuidToName[guid] = playerData.name
 
         if playerValsTracker[guid] == nil then
@@ -524,7 +524,7 @@ function HistoryWindow:getRenderedData()
         }
 
         local playerValsTracker = {}
-        for guid, playerData in pairs(ns.db.standings) do
+        for guid, playerData in ns.standings:iter() do
             if playerValsTracker[guid] == nil then
                 playerValsTracker[guid] = {}
             end
@@ -546,7 +546,7 @@ function HistoryWindow:getRenderedData()
             local players = metadata.players
 
             for _, playerGuid in ipairs(players) do
-                local playerData = ns.db.standings[playerGuid]
+                local playerData = ns.knownPlayers:get(playerGuid)
 
                 if playerData ~= nil then
                     local player = playerData.name
@@ -660,7 +660,7 @@ function HistoryWindow:getRenderedData()
                     player = string.format('Multiple (%d)', #players)
                 else
                     local guid = players[1]
-                    player = ns.db.standings[guid].name
+                    player = ns.knownPlayers:get(guid).name
                 end
 
                 local valueStr = tostring(value)

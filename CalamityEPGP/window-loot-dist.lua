@@ -300,8 +300,8 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
     end
 
     local rollerGuid = ns.Lib.getPlayerGuid(roller)
-    local charData = ns.db.standings[rollerGuid]
-    local priority = tonumber(string.format("%.3f", charData.ep / charData.gp))
+    local playerStandings = ns.standings:get(rollerGuid)
+    local priority = tonumber(string.format("%.3f", playerStandings.ep / playerStandings.gp))
 
     -- local newRoll = false
 

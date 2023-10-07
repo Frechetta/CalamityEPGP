@@ -113,13 +113,14 @@ function BenchWindow:setData()
 
     local playersBenched = ns.db.benchedPlayers
 
-    for _, charData in pairs(ns.db.standings) do
-        local player = charData.name
+    for guid in ns.standings:iter() do
+        local playerData = ns.knownPlayers:get(guid)
+        local player = playerData.name
 
         if not ns.Lib.contains(playersBenched, player) then
             local row = {
                 player,
-                {color = RAID_CLASS_COLORS[charData.classFileName]}
+                {color = RAID_CLASS_COLORS[playerData.classFilename]}
             }
 
             ns.Lib.bininsert(dataAvailable.rows, row, function(left, right) return left[1] < right[1] end)

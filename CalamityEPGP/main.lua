@@ -26,7 +26,6 @@ ns.addon = addon
 
 local dbDefaults = {
     profile = {
-        standings = {},
         history = {},
         cfg = {},
         altData = {
@@ -135,7 +134,7 @@ function addon:handleSlashCommand(input)
 end
 
 function addon:handleGuildRosterUpdate()
-    C_Timer.After(0.5, function() self:init(); ns.MainWindow:refresh() end)
+    C_Timer.After(0.1, function() self:init(); ns.MainWindow:refresh() end)
 end
 
 function addon.showMainWindow()
@@ -186,7 +185,7 @@ end
 
 function addon:init()
     if self == nil then
-        C_Timer.After(0.5, function() addon:init() end)
+        C_Timer.After(0.25, function() addon:init() end)
         return
     end
 
@@ -196,7 +195,11 @@ function addon:init()
 
         -- haven't actually received guild data yet. wait 1 second and run this function again
         if guildName == nil then
-            C_Timer.After(0.5, function() addon:init() end)
+            -- TODO: handle guildless players
+            if IsInGuild() then
+                C_Timer.After(0.5, function() addon:init() end)
+            end
+
             return
         end
 
@@ -208,14 +211,14 @@ function addon:init()
         db:SetProfile(guildFullName)
 
         ns.db = db.profile
-        ns.standings = ns.db.standings  -- TODO: move standings out of DB
         ns.cfg = ns.db.cfg
 
         ns.db.realmId = GetRealmID()
 
         ns.guild = guildFullName
-
         ns.peers = Dict:new()
+        ns.knownPlayers = Dict:new()
+        ns.standings = Dict:new()
 
         self.ldb = LibStub('LibDataBroker-1.1', true)
         self.ldbi = LibStub('LibDBIcon-1.0', true)
@@ -270,73 +273,35 @@ function addon:init()
     end
 
     -- Load guild data
-    local guildMembers = {}
-
-    for i = 1, GetNumGuildMembers() do
-        local fullName, _, rankIndex, level, class, _, _, _, _, _, classFileName, _, _, _, _, _, guid = GetGuildRosterInfo(i)
-        if fullName ~= nil then
-            local name = self.getCharName(fullName)
-
-            local charData = ns.db.standings[guid]
-            if charData ~= nil then
-                charData.name = name
-                charData.fullName = fullName
-                charData.level = level
-                charData.class = class
-                charData.classFileName = classFileName
-                charData.inGuild = true
-                charData.rankIndex = rankIndex
-            else
-                ns.db.standings[guid] = self.createStandingsEntry(
-                    guid, fullName, name, level, class, classFileName, true, rankIndex
-                )
-            end
-
-            table.insert(guildMembers, guid)
-        end
-    end
-
-    for guid, charData in pairs(ns.db.standings) do
-        if charData.inGuild and not ns.Lib.contains(guildMembers, guid) then
-            charData.inGuild = false
-            charData.rankIndex = nil
-        end
-    end
+    self:loadGuildRoster()
 
     -- load raid data
     if IsInRaid() then
         self:handleEnteredRaid()
     end
 
-    for guid, playerData in pairs(ns.db.standings) do
-        local name = playerData.name
-        ns.Lib.playerNameToGuid[name] = guid
-    end
-
-    self.fixGp()
-
     if not self.initialized then
         -- Load config module
         ns.Config:init()
 
-        self:initMinimapButton()
+        self:computeStandings(function()
+            self.syncAltEpGp()
 
-        self.syncAltEpGp()
+            self:initMinimapButton()
 
-        -- TODO: compute standings
+            ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
+            ns.Comm:registerHandler(ns.Comm.msgTypes.ROLL_PASS, self.handleRollPass)
 
-        ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
-        ns.Comm:registerHandler(ns.Comm.msgTypes.ROLL_PASS, self.handleRollPass)
+            self.housekeepPeersTimer = self:ScheduleRepeatingTimer(function() self:housekeepPeers() end, 25)
 
-        self.housekeepPeersTimer = self:ScheduleRepeatingTimer(function() self:housekeepPeers() end, 25)
+            self.initialized = true
+            ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
 
-        self.initialized = true
-        ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
+            self:sendHeartbeat()
+            self.heartbeatTimer = self:ScheduleRepeatingTimer(function() self:sendHeartbeat() end, 60)
 
-        self:sendHeartbeat()
-        self.heartbeatTimer = self:ScheduleRepeatingTimer(function() self:sendHeartbeat() end, 60)
-
-        ns.Sync:syncInit()
+            ns.Sync:syncInit()
+        end)
     end
 end
 
@@ -345,15 +310,10 @@ function addon.migrateData()
     ns.debug('migrating data...')
 
     -- STANDINGS
-    if not ns.db.standingsVersion then
-        ns.debug('migrating standings to v1')
-
-        for _, charData in pairs(ns.db.standings) do
-            -- we now use rankIndex instead of rank
-            charData.rank = nil
-        end
-
-        ns.db.standingsVersion = 1
+    if ns.db.standingsVersion ~= nil then
+        ns.debug('removing standings')
+        ns.db.standings = nil
+        ns.db.standingsVersion = nil
     end
 
     -- HISTORY
@@ -469,11 +429,168 @@ function addon.migrateData()
 end
 
 
+function addon:loadGuildRoster()
+    local guildMembers = Set:new()
+
+    for i = 1, GetNumGuildMembers() do
+        local fullName, _, rankIndex, _, _, _, _, _, _, _, classFilename, _, _, _, _, _, guid = GetGuildRosterInfo(i)
+        if fullName ~= nil then
+            local name = self.getCharName(fullName)
+
+            ns.Lib.createKnownPlayer(guid, name, classFilename, true, rankIndex)
+            guildMembers:add(guid)
+        end
+    end
+
+    for guid, playerData in ns.knownPlayers:iter() do
+        if playerData.inGuild and not guildMembers:contains(guid) then
+            playerData.inGuild = false
+            playerData.rankIndex = nil
+        end
+    end
+end
+
+
+function addon:loadRaidRoster()
+    self.raidRoster:clear()
+
+    if IsInRaid() then
+        for i = 1, MAX_RAID_MEMBERS do
+            local name, _, _, _, _, classFilename, _, online, _, _, isMl, _ = GetRaidRosterInfo(i)
+
+            if name ~= nil then
+                self.raidRoster:set(name, {
+                    online = online,
+                    ml = isMl,
+                })
+
+                local guid = ns.Lib.getPlayerGuid(name)
+
+                if not ns.knownPlayers:contains(guid) then
+                    ns.Lib.createKnownPlayer(guid, name, classFilename, false, nil)
+                end
+            end
+        end
+    end
+
+    ns.MainWindow:refresh()
+end
+
+
+---@param callback function?
+function addon:computeStandings(callback)
+    ns.standings:clear()
+    self:computeStandingsWithEvents(ns.db.history, callback)
+end
+
+
+---@param events table
+---@param callback function?
+---@return Dict
+function addon:computeStandingsWithEvents(events, callback)
+    callback = callback or function() end
+
+    local shortToFullGuids = Dict:new()
+
+    local playerDiffs = Dict:new()
+
+    for _, eventAndHash in ipairs(events) do
+        local event = eventAndHash[1]
+        local players = event[3]
+        local mode = event[4]
+        local value = event[5]
+        local percent = event[7]
+
+        for _, guidShort in ipairs(players) do
+            local guid = shortToFullGuids:get(guidShort)
+            if guid == nil then
+                guid = ns.Lib.getFullPlayerGuid(guidShort)
+                shortToFullGuids:set(guidShort, guid)
+            end
+
+            ns.Lib.getPlayerInfo(guid)
+
+            if not playerDiffs:contains(guid) then
+                playerDiffs:set(guid, {ep = 0, gp = 0})
+            end
+
+            local playerData = ns.standings:get(guid)
+            if playerData == nil then
+                playerData = self:createStandingsEntry(guid)
+                ns.standings:set(guid, playerData)
+            end
+
+            local modifyPlayer = function(theMode)
+                local oldValue = playerData[theMode]
+                local newValue
+
+                if percent then
+                    -- value is expected to be something like -10, meaning decrease by 10%
+                    local multiplier = (100 + value) / 100
+                    newValue = oldValue * multiplier
+                else
+                    newValue = oldValue + value
+                end
+
+                -- TODO: use min GP in event for this part
+                if theMode == ns.consts.MODE_GP and newValue < ns.cfg.gpBase then
+                    newValue = ns.cfg.gpBase
+                end
+
+                playerData[theMode] = newValue
+
+                local diff = newValue - oldValue
+                local playerDiff = playerDiffs:get(guid)
+                playerDiff[theMode] = playerDiff[theMode] + diff
+            end
+
+            if mode == ns.consts.MODE_EP or mode == ns.consts.MODE_BOTH then
+                modifyPlayer(ns.consts.MODE_EP)
+            end
+
+            if mode == ns.consts.MODE_GP or mode == ns.consts.MODE_BOTH then
+                modifyPlayer(ns.consts.MODE_GP)
+            end
+        end
+    end
+
+    for guid, playerData in ns.knownPlayers:iter() do
+        if not ns.standings:contains(guid) and playerData.inGuild then
+            playerData = self:createStandingsEntry(guid)
+            ns.standings:set(guid, playerData)
+        end
+    end
+
+    local i = 0
+    for guid in ns.standings:iter() do
+        i = i + 1
+        ns.Lib.getPlayerInfo(guid, function(_)
+            if i >= ns.standings:len() then
+                callback()
+            end
+        end)
+    end
+
+    return playerDiffs
+end
+
+
+---@param guid string
+---@return table
+function addon:createStandingsEntry(guid)
+    return {
+        guid = guid,
+        ep = 0,
+        gp = ns.cfg.gpBase,
+    }
+end
+
+
 function addon.fixGp()
-    for _, charData in pairs(ns.db.standings) do
+    for _, playerData in pairs(ns.standings) do
         local min = ns.cfg.gpBase
-        if charData.gp == nil or charData.gp < min then
-            charData.gp = min
+        if playerData.gp == nil or playerData.gp < min then
+            playerData.gp = min
         end
     end
 end
@@ -528,46 +645,6 @@ function addon.clearAwarded()
 end
 
 
-function addon:loadRaidRoster()
-    self.raidRoster:clear()
-
-    if IsInRaid() then
-        local standings = ns.db.standings
-
-        for i = 1, GetNumGroupMembers() do
-            local name, _, _, level, class, classFileName, _, online, _, _, isMl, _ = GetRaidRosterInfo(i)
-
-            if name ~= nil then
-                self.raidRoster:set(name, {
-                    online = online,
-                    ml = isMl,
-                })
-
-                if self.useForRaid then
-                    local fullName = GetUnitName(name, true)
-                    local guid = ns.Lib.getPlayerGuid(name)
-
-                    local charData = standings[guid]
-                    if charData == nil then
-                        standings[guid] = self.createStandingsEntry(
-                            guid, fullName, name, level, class, classFileName, false, nil
-                        )
-                    elseif not charData.inGuild then
-                        charData.fullName = fullName
-                        charData.name = name
-                        charData.level = level
-                        charData.class = class
-                        charData.classFileName = classFileName
-                    end
-                end
-            end
-        end
-    end
-
-    ns.MainWindow:refresh()
-end
-
-
 function addon.getCharName(fullName)
     local nameDash = string.find(fullName, '-')
 
@@ -577,31 +654,6 @@ function addon.getCharName(fullName)
 
     local name = string.sub(fullName, 0, nameDash - 1)
     return name
-end
-
-
----@param guid string
----@param fullName string
----@param name string
----@param level integer
----@param class string
----@param classFileName string
----@param inGuild boolean
----@param rankIndex? integer
----@return table
-function addon.createStandingsEntry(guid, fullName, name, level, class, classFileName, inGuild, rankIndex)
-    return {
-        guid = guid,
-        fullName = fullName,
-        name = name,
-        level = level,
-        class = class,
-        classFileName = classFileName,
-        inGuild = inGuild,
-        rankIndex = rankIndex,
-        ep = 0,
-        gp = ns.cfg.gpBase,
-    }
 end
 
 
@@ -661,6 +713,7 @@ function addon.createHistoryEvent(players, mode, value, reason, percent)
         tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
     end
 
+    -- TODO: include current min GP in event
     local event = {ts, issuer, newPlayers, mode, value, reason, percent}
     local hash = ns.Lib.hash(event)
     local eventAndHash = {event, hash}
@@ -690,82 +743,37 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
         return
     end
 
-    local modified = false
-
-    for _, playerGuid in ipairs(players) do
-        if mode == ns.consts.MODE_BOTH or mode == ns.consts.MODE_EP then
-            self._modifyEpgpSingle(playerGuid, ns.consts.MODE_EP, value, reason, percent)
-            modified = true
-        end
-
-        if mode == ns.consts.MODE_BOTH or mode == ns.consts.MODE_GP then
-            self._modifyEpgpSingle(playerGuid, ns.consts.MODE_GP, value, reason, percent)
-            modified = true
-        end
-    end
-
-    if not modified then
-        return
-    end
-
     self.syncAltEpGp(players)
 
     local event = self.createHistoryEvent(players, mode, value, reason, percent)
     tinsert(ns.db.history, event)
 
-    -- TODO: compute standings
+    local playerDiffs = self:computeStandingsWithEvents({event})
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
     ns.Sync:sendEventToGuild(event)
-end
 
+    for guid, diffData in playerDiffs:iter() do
+        for theMode, diff in pairs(diffData) do
+            if diff ~= 0 then
+                local verb = 'gained'
+                local amount = diff
 
----@param charGuid string
----@param mode 'ep' | 'gp'
----@param value number
----@param reason string
----@param percent boolean?
-function addon._modifyEpgpSingle(charGuid, mode, value, reason, percent)
-    if not ns.cfg.lmMode then
-        ns.print('Cannot modify EPGP when loot master mode is off')
-        return
-    end
+                if diff < 0 then
+                    verb = 'lost'
+                    amount = -diff
+                end
 
-    local charData = ns.db.standings[charGuid]
+                local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
+                local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
 
-    local oldValue = charData[mode]
-    local newValue
+                local playerData = ns.knownPlayers:get(guid)
 
-    if percent then
-        -- value is expected to be something like -10, meaning decrease by 10%
-        local multiplier = (100 + value) / 100
-        newValue = oldValue * multiplier
-    else
-        newValue = oldValue + value
-    end
-
-    if mode == ns.consts.MODE_GP and newValue < ns.cfg.gpBase then
-        newValue = ns.cfg.gpBase
-    end
-
-    charData[mode] = newValue
-
-    local diff = newValue - oldValue
-    if diff ~= 0 then
-        local verb = 'gained'
-        local amount = diff
-
-        if diff < 0 then
-            verb = 'lost'
-            amount = -diff
+                ns.debug(string.format('%s %s %.2f %s (%s)', playerData.name, verb, amount, string.upper(theMode), baseReasonPretty))
+            end
         end
-
-        local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
-        local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
-
-        ns.debug(string.format('%s %s %.2f %s (%s)', charData.name, verb, amount, string.upper(mode), baseReasonPretty))
     end
 end
 
@@ -777,7 +785,8 @@ function addon.syncAltEpGp(players)
 
     if players ~= nil then
         for _, playerGuid in ipairs(players) do
-            local playerData = ns.db.standings[playerGuid]
+            local playerStandings = ns.standings:get(playerGuid)
+            local playerData = ns.knownPlayers:get(playerGuid)
             local player = playerData.name
 
             local main = ns.db.altData.altMainMapping[player]
@@ -788,15 +797,15 @@ function addon.syncAltEpGp(players)
                 for _, alt in ipairs(alts) do
                     if alt ~= player then
                         local altGuid = ns.Lib.getPlayerGuid(alt)
-                        local altData = ns.db.standings[altGuid]
+                        local altStandings = ns.standings:get(altGuid)
 
-                        if altData ~= nil then
+                        if altStandings ~= nil then
                             if ns.cfg.syncAltEp then
-                                altData.ep = playerData.ep
+                                altStandings.ep = playerStandings.ep
                             end
 
                             if ns.cfg.syncAltGp then
-                                altData.gp = playerData.gp
+                                altStandings.gp = playerStandings.gp
                             end
                         end
                     end
@@ -811,7 +820,8 @@ function addon.syncAltEpGp(players)
             players = event[3]
 
             for _, playerGuid in ipairs(players) do
-                local playerData = ns.db.standings[playerGuid]
+                local playerStandings = ns.standings:get(playerGuid)
+                local playerData = ns.knownPlayers:get(playerGuid)
 
                 if playerData ~= nil then
                     local player = playerData.name
@@ -828,15 +838,15 @@ function addon.syncAltEpGp(players)
                                 for _, alt in ipairs(alts) do
                                     if alt ~= player then
                                         local altGuid = ns.Lib.getPlayerGuid(alt)
-                                        local altData = ns.db.standings[altGuid]
+                                        local altStandings = ns.standings:get(altGuid)
 
-                                        if altData ~= nil then
+                                        if altStandings ~= nil then
                                             if ns.cfg.syncAltEp then
-                                                altData.ep = playerData.ep
+                                                altStandings.ep = playerStandings.ep
                                             end
 
                                             if ns.cfg.syncAltGp then
-                                                altData.gp = playerData.gp
+                                                altStandings.gp = playerStandings.gp
                                             end
                                         end
 
@@ -917,7 +927,7 @@ end
 function addon:clearData()
     ns.db.history = {}
 
-    -- TODO: compute standings
+    self:computeStandings()
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
@@ -1000,7 +1010,7 @@ function addon:handleChatMsgWhisper(_, message, playerFullName)
 
         local guid = ns.Lib.getPlayerGuid(name)
 
-        if guid == nil or ns.db.standings[guid] == nil then
+        if guid == nil or not ns.standings:contains(guid) then
             local msgName = 'You'
             local msgWord = 'aren\'t'
             if parts[2] ~= nil then
@@ -1012,22 +1022,26 @@ function addon:handleChatMsgWhisper(_, message, playerFullName)
             return
         end
 
-        local playerStandings = ns.db.standings[guid]
+        local playerStandings = ns.standings:get(guid)
         local playerEp = playerStandings.ep
         local playerGp = playerStandings.gp
         local playerPr = playerEp / playerGp
 
-        local sortedStandings = {}
-        for _, charData in pairs(ns.db.standings) do
-            tinsert(sortedStandings, charData)
+        local sortedStandings = List:new()
+        for g, standings in ns.standings:iter() do
+            local playerData = ns.knownPlayers:get(g)
+
+            local combined = ns.Lib.deepcopy(standings)
+            combined.name = playerData.name
+            combined.inGuild = playerData.inGuild
+
+            sortedStandings:bininsert(combined, function(left, right)
+                local prLeft = left.ep / left.gp
+                local prRight = right.ep / right.gp
+
+                return prLeft > prRight
+            end)
         end
-
-        table.sort(sortedStandings, function(left, right)
-            local prLeft = left.ep / left.gp
-            local prRight = right.ep / right.gp
-
-            return prLeft > prRight
-        end)
 
         local overallRank
         local guildRank
@@ -1035,19 +1049,19 @@ function addon:handleChatMsgWhisper(_, message, playerFullName)
 
         local j = 1  -- guild index
         local k = 1  -- raid index
-        for i, charData in ipairs(sortedStandings) do
-            if charData.name == name then
+        for i, playerData in sortedStandings:iter() do
+            if playerData.name == name then
                 overallRank = i
                 guildRank = j
                 raidRank = k
                 break
             end
 
-            if charData.inGuild then
+            if playerData.inGuild then
                 j  = j + 1
             end
 
-            if self.raidRoster:contains(charData.name) then
+            if self.raidRoster:contains(playerData.name) then
                 k = k + 1
             end
         end
@@ -1274,8 +1288,8 @@ function addon:handleTooltipUpdate(frame)
                 local player = awardedItem[1]
                 local given = awardedItem[2] and 'yes' or 'no'
 
-                local _, classFileName = UnitClass(player)
-                local classColor = RAID_CLASS_COLORS[classFileName]
+                local _, playerClassFilename = UnitClass(player)
+                local classColor = RAID_CLASS_COLORS[playerClassFilename]
 
                 if classColor ~= nil then
                     local playerColored = classColor:WrapTextInColorCode(player)

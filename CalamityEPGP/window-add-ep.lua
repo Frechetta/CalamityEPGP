@@ -153,11 +153,7 @@ function AddEpWindow:confirm()
             end
         end
     else
-        local players = {}
-
-        for _, charData in pairs(ns.db.standings) do
-            tinsert(players, charData.guid)
-        end
+        local players = ns.standings:keys():toTable()
 
         numPlayers = #players
 

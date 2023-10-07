@@ -425,9 +425,9 @@ function Lib.bininsert(t, value, fcomp)
 
 function Lib.getPlayerClassColor(player)
     local playerGuid = Lib.getPlayerGuid(player)
-    local playerData = ns.db.standings[playerGuid]
+    local playerData = ns.knownPlayers:get(playerGuid)
 
-    return RAID_CLASS_COLORS[playerData.classFileName]
+    return RAID_CLASS_COLORS[playerData.classFilename]
 end
 
 
@@ -584,12 +584,12 @@ function Lib.isOfficer(player)
         return false
     end
 
-    local charData = ns.db.standings[playerGuid]
-    if charData == nil then
+    local playerData = ns.knownPlayers:get(playerGuid)
+    if playerData == nil then
         return false
     end
 
-    local rankIndex = charData.rankIndex
+    local rankIndex = playerData.rankIndex
     if rankIndex == nil then
         return false
     end
@@ -821,4 +821,52 @@ function Lib.getSpecName(class, specIndex)
     assert(type(specIndex) == 'number' and specIndex > 0 and specIndex < 4, 'specIndex is not a valid number (1-3)')
 
     return specs[specIndex]
+end
+
+
+---@param guid string
+---@param callback function?
+function Lib.getPlayerInfo(guid, callback)
+    callback = callback or function(_) end
+
+    local playerData = ns.knownPlayers:get(guid)
+    if playerData ~= nil then
+        callback(playerData)
+        return
+    end
+
+    local _, classFilename, _, _, _, name, _ = GetPlayerInfoByGUID(guid)
+    if name ~= nil and #name > 0 then
+        playerData = Lib.createKnownPlayer(guid, name, classFilename, false, nil)
+        callback(playerData)
+        return
+    elseif name == nil then
+        C_Timer.After(0.2, function() Lib.getPlayerInfo(guid, callback) end)
+        return
+    end
+
+    callback(nil)
+end
+
+
+---@param guid string
+---@param name string
+---@param classFilename string
+---@param inGuild boolean
+---@param rankIndex integer?
+---@return table
+function Lib.createKnownPlayer(guid, name, classFilename, inGuild, rankIndex)
+    local playerData = {
+        guid = guid,
+        name = name,
+        classFilename = classFilename,
+        inGuild = inGuild,
+        rankIndex = rankIndex,
+    }
+
+    ns.knownPlayers:set(guid, playerData)
+
+    Lib.playerNameToGuid[name] = guid
+
+    return playerData
 end
