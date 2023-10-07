@@ -404,6 +404,24 @@ function addon.migrateData()
         ns.db.historyVersion = 2
     end
 
+    if ns.db.historyVersion == 2 then
+        ns.debug('migrating history to v3')
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local event = eventAndHash[1]
+            if event[7] == nil then
+                event[7] = false
+            end
+
+            event[8] = ns.cfg.gpBase
+
+            local newHash = ns.Lib.hash(eventAndHash[1])
+            eventAndHash[2] = newHash
+        end
+
+        ns.db.historyVersion = 3
+    end
+
     -- GP SLOT MODIFIERS
     if not ns.db.slotModifiersVersion then
         ns.debug('migrating slot modifiers to v1')
@@ -501,6 +519,7 @@ function addon:computeStandingsWithEvents(events, callback)
         local mode = event[4]
         local value = event[5]
         local percent = event[7]
+        local minGp = event[8]
 
         for _, guidShort in ipairs(players) do
             local guid = shortToFullGuids:get(guidShort)
@@ -533,9 +552,8 @@ function addon:computeStandingsWithEvents(events, callback)
                     newValue = oldValue + value
                 end
 
-                -- TODO: use min GP in event for this part
-                if theMode == ns.consts.MODE_GP and newValue < ns.cfg.gpBase then
-                    newValue = ns.cfg.gpBase
+                if theMode == ns.consts.MODE_GP and newValue < minGp then
+                    newValue = minGp
                 end
 
                 playerData[theMode] = newValue
@@ -706,7 +724,14 @@ function addon:housekeepPeers()
 end
 
 
+---@param players table
+---@param mode 'ep' | 'gp' | 'both'
+---@param value number
+---@param reason string
+---@param percent boolean?
 function addon.createHistoryEvent(players, mode, value, reason, percent)
+    percent = percent or false
+
     local ts = time()
 
     local issuer = ns.Lib.getShortPlayerGuid(UnitGUID('player'))
@@ -716,8 +741,9 @@ function addon.createHistoryEvent(players, mode, value, reason, percent)
         tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
     end
 
-    -- TODO: include current min GP in event
-    local event = {ts, issuer, newPlayers, mode, value, reason, percent}
+    local minGp = ns.cfg.gpBase
+
+    local event = {ts, issuer, newPlayers, mode, value, reason, percent, minGp}
     local hash = ns.Lib.hash(event)
     local eventAndHash = {event, hash}
 
