@@ -309,34 +309,40 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
     end
 
     local rollerGuid = ns.Lib.getPlayerGuid(roller)
-    local playerStandings = ns.standings:get(rollerGuid)
-    local priority = tonumber(string.format("%.3f", playerStandings.ep / playerStandings.gp))
-    local inGuild = ns.knownPlayers:get(rollerGuid).inGuild
 
-    -- local newRoll = false
+    ns.Lib.getPlayerInfo(rollerGuid, function(playerData)
+        local playerStandings = ns.standings:get(rollerGuid)
+        if playerStandings == nil then
+            playerStandings = ns.addon.createStandingsEntry(rollerGuid)
+        end
+        local priority = tonumber(string.format("%.3f", playerStandings.ep / playerStandings.gp))
+        local inGuild = playerData.inGuild
 
-    if self.data.rolls[roller] == nil then
-        self.data.rolls[roller] = {}
-        -- newRoll = true
-    end
+        -- local newRoll = false
 
-    local rollerData = self.data.rolls[roller]
+        if self.data.rolls[roller] == nil then
+            self.data.rolls[roller] = {}
+            -- newRoll = true
+        end
 
-    if rollerData[rollType] == nil then
-        rollerData[rollType] = roll
-    end
+        local rollerData = self.data.rolls[roller]
 
-    roll = rollerData[rollType]
+        if rollerData[rollType] == nil then
+            rollerData[rollType] = roll
+        end
 
-    rollerData.guid = rollerGuid
-    rollerData.type = rollType
-    rollerData.pr = priority
-    rollerData.inGuild = inGuild
+        roll = rollerData[rollType]
 
-    -- TODO: don't print if roll is already there unless response is changed
-    ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
+        rollerData.guid = rollerGuid
+        rollerData.type = rollType
+        rollerData.pr = priority
+        rollerData.inGuild = inGuild
 
-    self:setData()
+        -- TODO: don't print if roll is already there unless response is changed
+        ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
+
+        self:setData()
+    end)
 end
 
 

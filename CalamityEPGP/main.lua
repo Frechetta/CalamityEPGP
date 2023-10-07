@@ -517,7 +517,7 @@ function addon:computeStandingsWithEvents(events, callback)
 
             local playerData = ns.standings:get(guid)
             if playerData == nil then
-                playerData = self:createStandingsEntry(guid)
+                playerData = self.createStandingsEntry(guid)
                 ns.standings:set(guid, playerData)
             end
 
@@ -557,7 +557,7 @@ function addon:computeStandingsWithEvents(events, callback)
 
     for guid, playerData in ns.knownPlayers:iter() do
         if not ns.standings:contains(guid) and playerData.inGuild then
-            playerData = self:createStandingsEntry(guid)
+            playerData = self.createStandingsEntry(guid)
             ns.standings:set(guid, playerData)
         end
     end
@@ -578,7 +578,7 @@ end
 
 ---@param guid string
 ---@return table
-function addon:createStandingsEntry(guid)
+function addon.createStandingsEntry(guid)
     return {
         guid = guid,
         ep = 0,
