@@ -300,6 +300,7 @@ function addon:init()
             self:sendHeartbeat()
             self.heartbeatTimer = self:ScheduleRepeatingTimer(function() self:sendHeartbeat() end, 60)
 
+            ns.Sync:computeIndices()
             ns.Sync:syncInit()
         end)
     end
