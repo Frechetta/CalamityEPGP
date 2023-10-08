@@ -420,7 +420,9 @@ end
 
 function Comm:sendRollPass()
     local ml = ns.Lib.getMl()
-    self:send(self.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
+    if ml ~= nil then
+        self:send(self.msgTypes.ROLL_PASS, nil, 'WHISPER', ml)
+    end
 end
 
 

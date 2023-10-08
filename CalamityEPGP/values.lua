@@ -229,24 +229,24 @@ ns.values.epDefaults = {
             {
                 "Icecrown Citadel",
                 {
-                    {"Lord Marrowgar", 845, 32},
-                    {"Lady Deathwhisper", 846, 32},
-                    {"Icecrown Gunship Battle", 847, 32},
-                    {"Deathbringer Saurfang", 848, 32},
-                    {"Festergut", 849, 32},
-                    {"Rotface", 850, 32},
-                    {"Professor Putricide", 851, 32},
-                    {"Blood Council", 852, 32},
-                    {"Queen Lana'thel", 853, 32},
-                    {"Valithria Dreamwalker", 854, 32},
-                    {"Sindragosa", 855, 32},
-                    {"The Lich King", 856, 34},
+                    {"Lord Marrowgar", 845, 75},
+                    {"Lady Deathwhisper", 846, 75},
+                    {"Icecrown Gunship Battle", 847, 75},
+                    {"Deathbringer Saurfang", 848, 75},
+                    {"Festergut", 849, 75},
+                    {"Rotface", 850, 75},
+                    {"Professor Putricide", 851, 75},
+                    {"Blood Council", 852, 75},
+                    {"Queen Lana'thel", 853, 75},
+                    {"Valithria Dreamwalker", 854, 75},
+                    {"Sindragosa", 855, 75},
+                    {"The Lich King", 856, 75},
                 }
             },
             {
                 "Ruby Sanctum",
                 {
-                    {"Halion", 887, 34},
+                    {"Halion", 887, 75},
                 }
             },
             {
@@ -255,7 +255,7 @@ ns.values.epDefaults = {
                     {"Archavon the Stone Watcher", 772, 26},
                     {"Emalon the Storm Watcher", 774, 28},
                     {"Koralon the Flame Watcher", 776, 30},
-                    {"Toravon the Ice Watcher", 885, 32},
+                    {"Toravon the Ice Watcher", 885, 75},
                 }
             },
             {

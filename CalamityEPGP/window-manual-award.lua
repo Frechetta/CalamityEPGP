@@ -29,7 +29,7 @@ function ManualAwardWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('CalamityEPGP Manual Award')
+	mainFrame.title:SetText(('%s Manual Award'):format(addonName))
 
     mainFrame.itemIcon = mainFrame:CreateTexture(nil, 'OVERLAY')
     mainFrame.itemIcon:SetSize(30, 30)

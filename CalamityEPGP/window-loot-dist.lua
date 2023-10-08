@@ -6,6 +6,7 @@ local LootDistWindow = {
     data = {
         header = {
             {'Player', 'LEFT'},
+            {'Guildie', 'LEFT'},
             {'Response', 'LEFT'},
             {'Priority', 'RIGHT'},
             {'Roll', 'RIGHT'},
@@ -50,7 +51,7 @@ function LootDistWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('CalamityEPGP Loot Distribution')
+	mainFrame.title:SetText(('%s Loot Distribution'):format(addonName))
 
     mainFrame.itemIcon = mainFrame:CreateTexture(nil, 'OVERLAY')
     mainFrame.itemIcon:SetSize(30, 30)
@@ -81,11 +82,18 @@ function LootDistWindow:createWindow()
 
     mainFrame.timerEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
     mainFrame.timerEditBox:SetText(tostring(ns.cfg.rollDuration))
-    mainFrame.timerEditBox:SetPoint('LEFT', mainFrame.timerLabel, 'RIGHT', 15, 0)
+    mainFrame.timerEditBox:SetPoint('LEFT', mainFrame.timerLabel, 'RIGHT', 8, 0)
     mainFrame.timerEditBox:SetHeight(20)
     mainFrame.timerEditBox:SetWidth(30)
     mainFrame.timerEditBox:SetNumeric(true)
     mainFrame.timerEditBox:SetAutoFocus(false)
+
+    mainFrame.rollSortLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.rollSortLabel:SetText('Sort by roll:')
+    mainFrame.rollSortLabel:SetPoint('LEFT', mainFrame.timerEditBox, 'RIGHT', 15, 0)
+
+    mainFrame.rollSortCheck = CreateFrame('CheckButton', nil, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.rollSortCheck:SetPoint('LEFT', mainFrame.rollSortLabel, 'RIGHT', 0, 0)
 
     mainFrame.deButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.deButton:SetText('Disenchant')
@@ -109,7 +117,7 @@ function LootDistWindow:createWindow()
 
     mainFrame.closeOnAwardLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.closeOnAwardLabel:SetText('Close on award')
-    mainFrame.closeOnAwardLabel:SetPoint('LEFT', mainFrame.closeOnAwardCheck, 'RIGHT', 3, 1)
+    mainFrame.closeOnAwardLabel:SetPoint('LEFT', mainFrame.closeOnAwardCheck, 'RIGHT', 2, 1)
 
     mainFrame.countdownLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.countdownLabel:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 25)
@@ -129,6 +137,7 @@ function LootDistWindow:createWindow()
     mainFrame.clearButton:SetScript('OnClick', function() self:clearRolls() end)
     mainFrame.awardButton:SetScript('OnClick', function() self:checkAward() end)
     mainFrame.deButton:SetScript('OnClick', function() self:disenchant() end)
+    mainFrame.rollSortCheck:SetScript('OnClick', function() self:setData() end)
 
     countDownFrame = CreateFrame("Frame")
     countDownFrame:Hide()
@@ -318,8 +327,10 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
 
     roll = rollerData[rollType]
 
+    rollerData.guid = rollerGuid
     rollerData.type = rollType
     rollerData.pr = priority
+    rollerData.inGuild = charData.inGuild
 
     -- TODO: don't print if roll is already there unless response is changed
     ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
@@ -350,29 +361,42 @@ function LootDistWindow:setData()
 
     data.rows = {}
 
+    local sortByRoll = self.mainFrame.rollSortCheck:GetChecked()
+
     for roller, rollData in pairs(data.rolls) do
         local type = rollData.type
         if type ~= nil then
             local roll = rollData[type]
             local pr = rollData.pr
+            local inGuild = rollData.inGuild and "Yes" or "No"
 
-            ns.Lib.bininsert(data.rows, {roller, type, pr, roll}, function(left, right)
-                local rollTypeLeft = left[2]
-                local rollTypeRight = right[2]
-                local prLeft = left[3]
-                local prRight = right[3]
-                local rollLeft = left[4]
-                local rollRight = right[4]
+            ns.Lib.bininsert(data.rows, {roller, inGuild, type, pr, roll}, function(left, right)
+                local rollTypeLeft = left[3]
+                local rollTypeRight = right[3]
+                local prLeft = left[4]
+                local prRight = right[4]
+                local rollLeft = left[5]
+                local rollRight = right[5]
 
                 if rollTypeLeft ~= rollTypeRight then
                     return rollTypeLeft < rollTypeRight
                 end
 
-                if prLeft ~= prRight then
+                -- sort by PR first, then roll
+                if not sortByRoll then
+                    if prLeft ~= prRight then
+                        return prLeft > prRight
+                    end
+
+                    return rollLeft > rollRight
+                -- sort by roll first, then PR
+                else
+                    if rollLeft ~= rollRight then
+                        return rollLeft > rollRight
+                    end
+
                     return prLeft > prRight
                 end
-
-                return rollLeft > rollRight
             end)
         end
     end
