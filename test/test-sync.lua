@@ -10,7 +10,7 @@ describe('encodeEvent', function()
         Util:loadModule('constants', ns)
         Util:loadModule('datatypes', ns)
         Util:loadModule('lib', ns)
-        Util:loadModule('comm', ns)
+        Util:loadModule('sync', ns)
     end)
 
     test('test', function()
@@ -46,7 +46,7 @@ describe('encodeEvent', function()
             'B7qcBn'
         }
 
-        local actualEncodedEventAndHash = ns.Comm.encodeEvent(eventAndHash)
+        local actualEncodedEventAndHash = ns.Sync.encodeEvent(eventAndHash)
 
         assert.same(expectedEncodedEventAndHash, actualEncodedEventAndHash)
     end)
@@ -62,7 +62,7 @@ describe('decodeEvent', function()
         Util:loadModule('constants', ns)
         Util:loadModule('datatypes', ns)
         Util:loadModule('lib', ns)
-        Util:loadModule('comm', ns)
+        Util:loadModule('sync', ns)
     end)
 
     test('test', function()
@@ -98,7 +98,7 @@ describe('decodeEvent', function()
             2074722407
         }
 
-        local actualEventAndHash = ns.Comm.decodeEvent(encodedEventAndHash)
+        local actualEventAndHash = ns.Sync.decodeEvent(encodedEventAndHash)
 
         assert.same(expectedEventAndHash, actualEventAndHash)
     end)

@@ -1,11 +1,10 @@
 loadfile('test/setup.lua')(spy, stub, mock)
 
 
-describe('modifyEpgpSingle', function()
+describe('modifyEpgp', function()
     local ns
     local addon
 
-    local charGuid = '0'
     local reason = '0:stuff'
 
     before_each(function()
@@ -15,184 +14,48 @@ describe('modifyEpgpSingle', function()
                 gpBase = 250,
             },
             db = {
-                standings = {}
+                history = {},
             }
         }
 
         Util:loadModule('constants', ns)
         Util:loadModule('values', ns)
         Util:loadModule('lib', ns)
+        Util:loadModule('datatypes', ns)
         Util:loadModule('window-history', ns)
         Util:loadModule('main', ns)
 
-        addon = ns.addon
-    end)
-
-    local initEpGp = function(initialEp, initialGp)
-        ns.db.standings[charGuid] = {
-            name = 'p1',
-            ep = initialEp,
-            gp = initialGp,
-        }
-    end
-
-    test('return when LM mode is off', function()
-        ns.cfg.lmMode = false
-
-        addon._modifyEpgpSingle()
-
-        assert.spy(addon.Print).was.called(1)
-        assert.spy(addon.Print).was.called_with(addon, 'Cannot modify EPGP when loot master mode is off')
-        assert.is.falsy(ns.db.standings[charGuid])
-        assert.is.falsy(ns.db.standings[charGuid])
-    end)
-
-    test('add EP', function()
-        initEpGp(100, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'ep', 50, reason, false)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(150, ns.db.standings[charGuid].ep)
-        assert.same(300, ns.db.standings[charGuid].gp)
-    end)
-
-    test('substract EP', function()
-        initEpGp(100, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'ep', -10, reason, false)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(90, ns.db.standings[charGuid].ep)
-        assert.same(300, ns.db.standings[charGuid].gp)
-    end)
-
-    test('add GP', function()
-        initEpGp(100, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'gp', 50, reason, false)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(100, ns.db.standings[charGuid].ep)
-        assert.same(350, ns.db.standings[charGuid].gp)
-    end)
-
-    test('subtract GP', function()
-        initEpGp(100, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'gp', -10, reason, false)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(100, ns.db.standings[charGuid].ep)
-        assert.same(290, ns.db.standings[charGuid].gp)
-    end)
-
-    test('don\'t let GP go below min', function()
-        initEpGp(100, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'gp', -200, reason, false)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(100, ns.db.standings[charGuid].ep)
-        assert.same(ns.cfg.gpBase, ns.db.standings[charGuid].gp)
-    end)
-
-    test('add EP %', function()
-        initEpGp(150, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'ep', 10, reason, true)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(165, ns.db.standings[charGuid].ep)
-        assert.same(300, ns.db.standings[charGuid].gp)
-    end)
-
-    test('subtract EP %', function()
-        initEpGp(150, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'ep', -10, reason, true)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(135, ns.db.standings[charGuid].ep)
-        assert.same(300, ns.db.standings[charGuid].gp)
-    end)
-
-    test('add GP %', function()
-        initEpGp(150, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'gp', 10, reason, true)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(150, ns.db.standings[charGuid].ep)
-        assert.same(330, ns.db.standings[charGuid].gp)
-    end)
-
-    test('subtract GP %', function()
-        initEpGp(150, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'gp', -10, reason, true)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(150, ns.db.standings[charGuid].ep)
-        assert.same(270, ns.db.standings[charGuid].gp)
-    end)
-
-    test('don\'t let GP go below min %', function()
-        initEpGp(150, 300)
-
-        addon._modifyEpgpSingle(charGuid, 'gp', -50, reason, true)
-
-        assert.spy(addon.Print).was.not_called()
-        assert.same(150, ns.db.standings[charGuid].ep)
-        assert.same(ns.cfg.gpBase, ns.db.standings[charGuid].gp)
-    end)
-end)
-
-
-describe('modifyEpgp', function()
-    local ns
-    local addon
-
-    local reason = 'stuff: stuff'
-
-    before_each(function()
-        ns = {
-            cfg = {
-                lmMode = true,
-                gpBase = 250,
-            },
-            db = {
-                standings = {},
-                history = {},
-            }
-        }
-
-        Util:loadModule('constants', ns)
-        Util:loadModule('main', ns)
+        ns.knownPlayers = ns.Dict:new()
+        ns.standings = ns.Dict:new()
 
         addon = ns.addon
 
-        stub(addon, '_modifyEpgpSingle')
         stub(addon, 'syncAltEpGp')
+        spy.on(addon, 'createHistoryEvent')
+        spy.on(addon, 'computeStandingsWithEvents')
+        stub(ns, 'debug')
 
-        ns.Lib = mock({
-            hash = function() return 0 end,
-            getShortPlayerGuid = function(guid)
-                return guid
-            end
-        })
+        ns.Lib.hash = function() return 0 end
+        ns.Lib.getShortPlayerGuid = function(guid)
+            return guid
+        end
+        ns.Lib.getFullPlayerGuid = function(guid)
+            return guid
+        end
+        ns.Lib.getPlayerInfo = function(guid, callback)
+            callback = callback or function() end
+            ns.knownPlayers:set(guid, {name = 'p' .. guid})
+            callback()
+        end
 
         ns.MainWindow = mock({
             refresh = function() end
         })
 
-        ns.HistoryWindow = mock({
-            refresh = function() end
-        })
+        ns.HistoryWindow.refresh = spy.new(function() end)
 
-        ns.Comm = mock({
-            sendStandingsToGuild = function() end,
-            sendEventToGuild = function(eventAndHash) end
+        ns.Sync = mock({
+            sendEventToGuild = function(_) end
         })
     end)
 
@@ -201,36 +64,76 @@ describe('modifyEpgp', function()
 
         assert.has_error(function() addon:modifyEpgp() end, 'Cannot modify EPGP when loot master mode is off')
 
-        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.spy(addon.Print).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
+        assert.spy(addon.createHistoryEvent).was.not_called()
+        assert.spy(addon.computeStandingsWithEvents).was.not_called()
+        assert.stub(ns.MainWindow.refresh).was.not_called()
+        assert.stub(ns.HistoryWindow.refresh).was.not_called()
+        assert.stub(ns.Sync.sendEventToGuild).was.not_called()
+        assert.stub(ns.debug).was.not_called()
+        assert.same({}, ns.db.history)
+        assert.is_true(ns.standings:isEmpty())
     end)
 
     test('error when mode is wrong 1', function()
         assert.has_error(function() addon:modifyEpgp(nil, 'EP') end, 'Mode (EP) is not one of allowed modes')
 
-        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.spy(addon.Print).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
+        assert.spy(addon.createHistoryEvent).was.not_called()
+        assert.spy(addon.computeStandingsWithEvents).was.not_called()
+        assert.stub(ns.MainWindow.refresh).was.not_called()
+        assert.stub(ns.HistoryWindow.refresh).was.not_called()
+        assert.stub(ns.Sync.sendEventToGuild).was.not_called()
+        assert.stub(ns.debug).was.not_called()
+        assert.same({}, ns.db.history)
+        assert.is_true(ns.standings:isEmpty())
     end)
 
     test('error when mode is wrong 2', function()
         assert.has_error(function() addon:modifyEpgp(nil, 'GP') end, 'Mode (GP) is not one of allowed modes')
 
-        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.spy(addon.Print).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
+        assert.spy(addon.createHistoryEvent).was.not_called()
+        assert.spy(addon.computeStandingsWithEvents).was.not_called()
+        assert.stub(ns.MainWindow.refresh).was.not_called()
+        assert.stub(ns.HistoryWindow.refresh).was.not_called()
+        assert.stub(ns.Sync.sendEventToGuild).was.not_called()
+        assert.stub(ns.debug).was.not_called()
+        assert.same({}, ns.db.history)
+        assert.is_true(ns.standings:isEmpty())
     end)
 
     test('error when mode is wrong 3', function()
         assert.has_error(function() addon:modifyEpgp(nil, 'BOTH') end, 'Mode (BOTH) is not one of allowed modes')
 
-        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.spy(addon.Print).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
+        assert.spy(addon.createHistoryEvent).was.not_called()
+        assert.spy(addon.computeStandingsWithEvents).was.not_called()
+        assert.stub(ns.MainWindow.refresh).was.not_called()
+        assert.stub(ns.HistoryWindow.refresh).was.not_called()
+        assert.stub(ns.Sync.sendEventToGuild).was.not_called()
+        assert.stub(ns.debug).was.not_called()
+        assert.same({}, ns.db.history)
+        assert.is_true(ns.standings:isEmpty())
     end)
 
     test('error when mode is wrong 4', function()
         assert.has_error(function() addon:modifyEpgp(nil, 'derp') end, 'Mode (derp) is not one of allowed modes')
 
-        assert.stub(addon._modifyEpgpSingle).was.not_called()
+        assert.spy(addon.Print).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
+        assert.spy(addon.createHistoryEvent).was.not_called()
+        assert.spy(addon.computeStandingsWithEvents).was.not_called()
+        assert.stub(ns.MainWindow.refresh).was.not_called()
+        assert.stub(ns.HistoryWindow.refresh).was.not_called()
+        assert.stub(ns.Sync.sendEventToGuild).was.not_called()
+        assert.stub(ns.debug).was.not_called()
+        assert.same({}, ns.db.history)
+        assert.is_true(ns.standings:isEmpty())
     end)
 
     test('no players', function()
@@ -238,8 +141,15 @@ describe('modifyEpgp', function()
 
         assert.spy(addon.Print).was.called(1)
         assert.spy(addon.Print).was.called_with(addon, 'Won\'t modify EP/GP for 0 players')
-        assert.stub(addon._modifyEpgpSingle).was.not_called()
         assert.stub(addon.syncAltEpGp).was.not_called()
+        assert.spy(addon.createHistoryEvent).was.not_called()
+        assert.spy(addon.computeStandingsWithEvents).was.not_called()
+        assert.stub(ns.MainWindow.refresh).was.not_called()
+        assert.stub(ns.HistoryWindow.refresh).was.not_called()
+        assert.stub(ns.Sync.sendEventToGuild).was.not_called()
+        assert.stub(ns.debug).was.not_called()
+        assert.same({}, ns.db.history)
+        assert.is_true(ns.standings:isEmpty())
     end)
 
     test('one player EP', function()
@@ -247,10 +157,22 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'ep', 50, reason, false)
 
+        local event = {{123, 'p1_guid', {'1'}, 'ep', 50, reason, false, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(1)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1'}, 'ep', 50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(1)
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 EP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 50, gp = 250}}, ns.standings._dict)
     end)
 
     test('one player GP', function()
@@ -258,10 +180,22 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'gp', 50, reason, false)
 
+        local event = {{123, 'p1_guid', {'1'}, 'gp', 50, reason, false, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(1)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1'}, 'gp', 50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(1)
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 GP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 0, gp = 300}}, ns.standings._dict)
     end)
 
     test('one player both', function()
@@ -269,11 +203,23 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'both', 50, reason, false)
 
+        local event = {{123, 'p1_guid', {'1'}, 'both', 50, reason, false, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(2)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1'}, 'both', 50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(2)
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 EP (Manual)')
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 GP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 50, gp = 300}}, ns.standings._dict)
     end)
 
     test('multiple players EP', function()
@@ -281,11 +227,23 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'ep', 50, reason, false)
 
+        local event = {{123, 'p1_guid', {'1', '2'}, 'ep', 50, reason, false, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(2)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'ep', 50, reason, false)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1', '2'}, 'ep', 50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(2)
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 EP (Manual)')
+        assert.stub(ns.debug).was.called_with('p2 gained 50.00 EP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 50, gp = 250}, ['2'] = {guid = '2', ep = 50, gp = 250}}, ns.standings._dict)
     end)
 
     test('multiple players GP', function()
@@ -293,11 +251,23 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'gp', 50, reason, false)
 
+        local event = {{123, 'p1_guid', {'1', '2'}, 'gp', 50, reason, false, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(2)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'gp', 50, reason, false)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1', '2'}, 'gp', 50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(2)
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 GP (Manual)')
+        assert.stub(ns.debug).was.called_with('p2 gained 50.00 GP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 0, gp = 300}, ['2'] = {guid = '2', ep = 0, gp = 300}}, ns.standings._dict)
     end)
 
     test('multiple players both', function()
@@ -305,13 +275,25 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'both', 50, reason, false)
 
+        local event = {{123, 'p1_guid', {'1', '2'}, 'both', 50, reason, false, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(4)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', 50, reason, false)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', 50, reason, false)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'ep', 50, reason, false)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'gp', 50, reason, false)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1', '2'}, 'both', 50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(4)
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 EP (Manual)')
+        assert.stub(ns.debug).was.called_with('p1 gained 50.00 GP (Manual)')
+        assert.stub(ns.debug).was.called_with('p2 gained 50.00 EP (Manual)')
+        assert.stub(ns.debug).was.called_with('p2 gained 50.00 GP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 50, gp = 300}, ['2'] = {guid = '2', ep = 50, gp = 300}}, ns.standings._dict)
     end)
 
     test('multiple players %', function()
@@ -319,13 +301,44 @@ describe('modifyEpgp', function()
 
         addon:modifyEpgp(players, 'both', -10, reason, true)
 
+        local event = {{123, 'p1_guid', {'1', '2'}, 'both', -10, reason, true, 250}, 0}
+
         assert.spy(addon.Print).was.not_called()
-        assert.stub(addon._modifyEpgpSingle).was.called(4)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'ep', -10, reason, true)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('1', 'gp', -10, reason, true)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'ep', -10, reason, true)
-        assert.stub(addon._modifyEpgpSingle).was.called_with('2', 'gp', -10, reason, true)
         assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1', '2'}, 'both', -10, reason, true)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.not_called()
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = 0, gp = 250}, ['2'] = {guid = '2', ep = 0, gp = 250}}, ns.standings._dict)
+    end)
+
+    test('multiple players %', function()
+        local players = {'1'}
+
+        addon:modifyEpgp(players, 'ep', -50, reason, false)
+
+        local event = {{123, 'p1_guid', {'1'}, 'ep', -50, reason, false, 250}, 0}
+
+        assert.spy(addon.Print).was.not_called()
+        assert.stub(addon.syncAltEpGp).was.called_with(players)
+        assert.spy(addon.createHistoryEvent).was.called(1)
+        assert.spy(addon.createHistoryEvent).was.called_with({'1'}, 'ep', -50, reason, false)
+        assert.spy(addon.computeStandingsWithEvents).was.called(1)
+        assert.spy(addon.computeStandingsWithEvents).was.called_with(addon, {event})
+        assert.stub(ns.MainWindow.refresh).was.called(1)
+        assert.stub(ns.HistoryWindow.refresh).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called(1)
+        assert.stub(ns.Sync.sendEventToGuild).was.called_with(ns.Sync, event)
+        assert.stub(ns.debug).was.called(1)
+        assert.stub(ns.debug).was.called_with('p1 lost 50.00 EP (Manual)')
+        assert.same({event}, ns.db.history)
+        assert.same({['1'] = {guid = '1', ep = -50, gp = 250}}, ns.standings._dict)
     end)
 end)
 

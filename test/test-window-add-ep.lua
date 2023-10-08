@@ -1,5 +1,38 @@
 loadfile('test/setup.lua')(spy, stub, mock)
 
+local match = require('luassert.match')
+
+local function unordered_table(state, arguments)
+    local expected = arguments[1]
+
+    local expectedMap = {}
+    for _, item in ipairs(expected) do
+        expectedMap[item] = true
+    end
+
+    assert(type(expected) == 'table')
+
+    return function(actual)
+        if type(actual) ~= 'table' then
+            return false
+        end
+
+        if #expected ~= #actual then
+            return false
+        end
+
+        for _, item in ipairs(actual) do
+            if expectedMap[item] == nil then
+                return false
+            end
+        end
+
+        return true
+    end
+end
+
+assert:register('matcher', 'unordered_table', unordered_table)
+
 
 describe('confirm', function()
     local ns
@@ -14,11 +47,6 @@ describe('confirm', function()
             cfg = {},
             db = {
                 benchedPlayers = {},
-                standings = {
-                    {guid = 'p1_guid'},
-                    {guid = 'p2_guid'},
-                    {guid = 'p3_guid'},
-                },
             },
         }
 
@@ -28,6 +56,12 @@ describe('confirm', function()
         Util:loadModule('datatypes', ns)
         Util:loadModule('window-add-ep', ns)
         Util:loadModule('main', ns)
+
+        ns.standings = ns.Dict:new({
+            p1_guid = {guid = 'p1_guid'},
+            p2_guid = {guid = 'p2_guid'},
+            p3_guid = {guid = 'p3_guid'},
+        })
 
         aew = ns.AddEpWindow
 
@@ -130,7 +164,7 @@ describe('confirm', function()
         aew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', 45, '1:because')
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'ep', 45, '1:because')
 
         assert.stub(ns.printPublic).was.not_called()
         assert.stub(aew.hide).was.called(1)
