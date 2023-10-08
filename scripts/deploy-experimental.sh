@@ -23,6 +23,8 @@ mv "$build_addon_dir/CalamityEPGP.toc" "$toc_file"
 sed -i "s/^## Title: .*/## Title: $experimental_addon_name/g" "$toc_file"
 sed -i "s/^## SavedVariables: .*/## SavedVariables: $experimental_addon_name/g" "$toc_file"
 
+sed -i "s/calepgp/calee/g" "$build_addon_dir/comm.lua"
+
 . "$root_dir/.env"
 
 addon_path="$WOW_DIR/Interface/Addons/CALEE"
