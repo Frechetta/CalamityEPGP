@@ -108,7 +108,7 @@ function ns.printPublic(msg, rw)
     msg = tostring(msg)
 
     if channel ~= nil then
-        SendChatMessage('CalamityEPGP: ' .. msg, channel)
+        SendChatMessage(('%s: %s'):format(addonName, msg), channel)
     else
         ns.print(msg)
     end
@@ -940,7 +940,7 @@ end
 
 
 function addon:showUseForRaidWindow()
-    ns.ConfirmWindow:show('Use CalamityEPGP for this raid?',
+    ns.ConfirmWindow:show(('Use %s for this raid?'):format(addonName),
                           function()   -- callback for "Yes"
                               self.useForRaid = true
                               self.useForRaidPrompted = true
