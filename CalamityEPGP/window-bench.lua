@@ -31,7 +31,7 @@ function BenchWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('CalamityEPGP Bench')
+	mainFrame.title:SetText(('%s Bench'):format(addonName))
 
     mainFrame.tableAvailable = ns.Table:new(mainFrame, 'Available', false, true, true, nil, self.handleRowClickAvailable)
     mainFrame.tableAvailable:SetPoint('TOP', mainFrame.TitleBg, 'BOTTOM', 0, -35)

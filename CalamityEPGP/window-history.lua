@@ -47,7 +47,7 @@ function HistoryWindow:createWindow()
 
 	mainFrame.title = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
-	mainFrame.title:SetText('CalamityEPGP History')
+	mainFrame.title:SetText(('%s History'):format(addonName))
 
     mainFrame.reasonsLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.reasonsLabel:SetText('Reason:')
