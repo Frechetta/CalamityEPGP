@@ -1,3 +1,9 @@
+# 0.17.0
+
+- add "Guildie" column to loot distribution window
+- add capability to loot distribution window to sort by roll over PR
+- change boss kill EP values for P4 to 75
+
 # 0.16.0
 
 - Add class/spec GP overrides
