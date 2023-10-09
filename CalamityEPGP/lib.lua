@@ -164,7 +164,7 @@ function Lib.getPlayerGuid(playerName)
     local guid = Lib.playerNameToGuid[playerName]
 
     if guid == nil then
-        guid = UnitGUID(playerName)
+        guid = ns.unitGuid(playerName)
         Lib.playerNameToGuid[playerName] = guid
     end
 
@@ -576,7 +576,7 @@ end
 ---@return boolean
 function Lib.isOfficer(player)
     if player == nil then
-        player = UnitName('player')
+        player = ns.unitName('player')
     end
 
     local playerGuid = Lib.getPlayerGuid(player)

@@ -305,8 +305,10 @@ function Sync.handleSync0(message, sender)
         return
     end
 
-    local theirWeeklyHashes = Dict:new(message[1])
-    local theirLmSettingsLastChange = ns.Lib.b64Decode(message[2])
+    local data = message.d
+
+    local theirWeeklyHashes = Dict:new(data[1])
+    local theirLmSettingsLastChange = ns.Lib.b64Decode(data[2])
 
     local myWeeklyHashes = Dict:new(Sync:getWeeklyHashes())
     local myLmSettingsLastChange = ns.db.lmSettingsLastChange
@@ -366,10 +368,12 @@ function Sync.handleSync1(message, sender)
         return
     end
 
+    local data = message.d
+
     local theirDailyHashesByWeek = Dict:new()
     local myDailyHashesByWeek = Dict:new()
 
-    for weekTs, theirDailyHashes in pairs(message) do
+    for weekTs, theirDailyHashes in pairs(data) do
         theirDailyHashesByWeek:set(weekTs, Dict:new(theirDailyHashes))
         myDailyHashesByWeek:set(weekTs, Dict:new(Sync:getDailyHashes(ns.Lib.b64Decode(weekTs))))
     end
@@ -440,10 +444,12 @@ function Sync.handleSync2(message, sender)
         return
     end
 
+    local data = message.d
+
     local theirEventHashesByDay = Dict:new()
     local myEventHashesByDay = Dict:new()
 
-    for dayTs, theirEventHashes in pairs(message) do
+    for dayTs, theirEventHashes in pairs(data) do
         theirEventHashesByDay:set(dayTs, Dict:new(theirEventHashes))
         myEventHashesByDay:set(dayTs, Dict:new(Sync:getEventHashesByDay(ns.Lib.b64Decode(dayTs))))
     end
@@ -491,12 +497,14 @@ function Sync.handleDataReq(message, sender)
         return
     end
 
+    local data = message.d
+
     ---@type number
-    local timeframe = message[1]
+    local timeframe = data[1]
     ---@type table
-    local timestamps = message[2]  -- list of encoded timestamps
+    local timestamps = data[2]  -- list of encoded timestamps
     ---@type boolean
-    local lmSettings = message[3]
+    local lmSettings = data[3]
 
     Sync:sendDataSend(timeframe, timestamps, lmSettings, sender)
 end
@@ -507,10 +515,12 @@ function Sync.handleDataSend(message, sender)
         return
     end
 
+    local data = message.d
+
     ---@type table
-    local events = message[1]
+    local events = data[1]
     ---@type table?
-    local lmSettings = message[2]
+    local lmSettings = data[2]
 
     local recompute = false
 

@@ -263,10 +263,15 @@ function Set:intersection(...)
     local newSet = Set:new()
 
     for item in self:iter() do
+        local add = true
         for _, other in ipairs(others) do
-            if other:contains(item) then
-                newSet:add(item)
+            if not other:contains(item) then
+                add = false
+                break
             end
+        end
+        if add then
+            newSet:add(item)
         end
     end
 

@@ -61,10 +61,10 @@ end
 
 
 ---@param msgType integer
----@param message? table
+---@param data? table
 ---@param distribution string
 ---@param target? string
-function Comm:send(msgType, message, distribution, target)
+function Comm:send(msgType, data, distribution, target)
     if msgType ~= self.msgTypes.HEARTBEAT then
         local dest
         if distribution == 'WHISPER' then
@@ -79,12 +79,15 @@ function Comm:send(msgType, message, distribution, target)
         error(('invalid message type %d'):format(msgType))
     end
 
-    if message == nil then
-        message = {}
+    if data == nil then
+        data = {}
     end
 
-    message.t = msgType
-    message.v = ns.addon.versionNum
+    local message = {
+        t = msgType,
+        d = data,
+        v = ns.addon.versionNum,
+    }
 
     local messageStr = self.packMessage(message)
     ns.addon:SendCommMessage(self.prefix, messageStr, distribution, target)
@@ -92,7 +95,7 @@ end
 
 
 function Comm.handleMessage(prefix, message, _, sender)
-    if prefix ~= Comm.prefix or sender == UnitName('player') then
+    if prefix ~= Comm.prefix or sender == ns.unitName('player') then
         return
     end
 

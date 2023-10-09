@@ -486,7 +486,7 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
 			ns.print('Could\'nt award ' .. itemLink .. ' to ' .. awardee .. ' as they are not eligible')
             return
 		end
-    elseif awardee == UnitName('player') then
+    elseif awardee == ns.unitName('player') then
         -- item is in inventory and was awarded to me
         self:successfulAward(itemLink, awardee)
     else
@@ -538,7 +538,7 @@ function LootDistWindow:handleLootReceived(itemLink, player)
     -- I received the item
     if player == 'You' then
         ns.debug('i received ' .. itemLink)
-        local myName = UnitName('player')
+        local myName = ns.unitName('player')
 
         -- iterate over awarded items for ones that haven't been collected
         for awardedPlayer, awardedItem in pairs(awardedData) do
@@ -591,7 +591,7 @@ end
 
 
 function LootDistWindow:handleTradeShow()
-	local player, _ = UnitName('npc')
+	local player, _ = ns.unitName('npc')
 
 	self.trading.player = player
 
