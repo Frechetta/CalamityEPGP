@@ -128,11 +128,11 @@ describe('algorithm', function()
         Util:loadModule('sync', ns)
         Util:loadModule('main', ns)
 
-        ns.realmId = 1234
+        local realmId = 1234
 
         ns.me = {
             name = playerName,
-            guid = ('Player-%s-%s'):format(ns.realmId, playerShortGuid),
+            guid = ('Player-%s-%s'):format(realmId, playerShortGuid),
         }
 
         players[playerName] = ns.me
@@ -177,7 +177,10 @@ describe('algorithm', function()
         ns.db = {
             history = {},
             lmSettingsLastChange = 1,
+            realmId = realmId,
         }
+
+        ns.standings = ns.Dict:new()
 
         ns.Lib.isOfficer = function(player)
             if player == nil then
@@ -221,7 +224,7 @@ describe('algorithm', function()
         end
 
         ns2.addon.SendCommMessage = function(_, prefix, message, distribution, target)
-            -- ns1.Comm.handleMessage(prefix, message, nil, ns2.me.name)
+            ns1.Comm.handleMessage(prefix, message, nil, ns2.me.name)
         end
 
         ns1.Sync:init()
@@ -234,10 +237,197 @@ describe('algorithm', function()
         ns2 = nil
     end)
 
-    test('test', function()
-        ns1.me.officer = false
-        ns2.me.officer = true
+    --[[
+        TEST CASES
 
-        ns1.Sync:syncInit()
+        Mia syncs
+            Tucker
+                week 1
+                    1
+                    2
+                    3
+                week 2
+                    4
+                    5
+                    6
+            Mia
+                week 1
+                    1
+                    2
+                    3
+                week 2
+                    4
+    ]]
+
+    test('test', function()
+        ns1.me.officer = true
+        ns2.me.officer = false
+
+        ns1.db.history = {
+            {
+                {
+                    1696208400,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'ep',
+                    100,
+                    '1:stuff',
+                    false,
+                },
+                1528093640,
+            },
+            {
+                {
+                    1696212000,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'gp',
+                    75,
+                    '2:boss',
+                    false,
+                },
+                573998641,
+            },
+            {
+                {
+                    1696294800,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'both',
+                    -10,
+                    '3:weekly',
+                    true,
+                },
+                3218483709,
+            },
+            {
+                {
+                    1696813200,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'ep',
+                    100,
+                    '1:stuff',
+                    false,
+                },
+                1528093640,
+            },
+            {
+                {
+                    1696816800,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'gp',
+                    75,
+                    '2:boss',
+                    false,
+                },
+                573998641,
+            },
+            {
+                {
+                    1696899600,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'both',
+                    -10,
+                    '3:weekly',
+                    true,
+                },
+                3218483709,
+            },
+        }
+
+        ns2.db.history = {
+            {
+                {
+                    1696208400,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'ep',
+                    100,
+                    '1:stuff',
+                    false,
+                },
+                1528093640,
+            },
+            {
+                {
+                    1696212000,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'gp',
+                    75,
+                    '2:boss',
+                    false,
+                },
+                573998641,
+            },
+            {
+                {
+                    1696294800,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'both',
+                    -10,
+                    '3:weekly',
+                    true,
+                },
+                3218483709,
+            },
+            {
+                {
+                    1696813200,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'ep',
+                    100,
+                    '1:stuff',
+                    false,
+                },
+                1528093640,
+            },
+        }
+
+        ns1.Sync:computeIndices()
+        ns2.Sync:computeIndices()
+
+        print(#ns1.db.history)
+        print(#ns2.db.history)
+
+        ns2.Sync:syncInit()
+
+        print(#ns1.db.history)
+        print(#ns2.db.history)
     end)
 end)
