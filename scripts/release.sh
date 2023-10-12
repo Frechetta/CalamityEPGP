@@ -59,10 +59,13 @@ done < CHANGELOG.md
 changelog=$(sed -e '/[^[:space:]]/,$!d' -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' "$changelog_file")
 echo "$changelog" > "$changelog_file"
 
+game_versions="9641,9894,10272"
+
 # CURSEFORGE
 metadata=$(jq -n \
                 --arg changelog "$changelog" \
-                '{changelog: $changelog, changelogType: "markdown", gameVersions: [9641, 9894, 10272], releaseType: "beta"}')
+                --arg game_versions "$game_versions" \
+                '{changelog: $changelog, changelogType: "markdown", gameVersions: $game_versions | split(",") | map(tonumber), releaseType: "beta"}')
 
 curl --http1.1 \
     -H "X-Api-Token: $CURSEFORGE_API_TOKEN" \
@@ -76,7 +79,7 @@ curl --http1.1 \
     -F "id=26606" \
     -F "version=$version" \
     -F "changelog=$changelog" \
-    -F "compatible=$game_version" \
+    -F "compatible=$game_versions" \
     -F "updatefile=@$zip_file" \
     https://api.wowinterface.com/addons/update 1>&2
 
