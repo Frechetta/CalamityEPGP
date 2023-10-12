@@ -605,6 +605,13 @@ function addon.handleHeartbeat(message, sender)
     local senderGuid = ns.Lib.getPlayerGuid(sender)
 
     ns.peers:set(senderGuid, {ts = ts, version = senderVersion})
+
+    if not addon.outOfDateMessageSent then
+        if ns.addon.versionNum < senderVersion then
+            ns.print('addon is out of date! Please download the latest version from CurseForge or WoWInterface.')
+            addon.outOfDateMessageSent = true
+        end
+    end
 end
 
 
