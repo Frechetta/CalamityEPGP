@@ -1,3 +1,7 @@
+# 0.17.1
+
+- update to patch 3.4.3
+
 # 0.17.0
 
 - add "Guildie" column to loot distribution window
