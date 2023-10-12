@@ -65,7 +65,7 @@ game_versions="9641,9894,10272"
 metadata=$(jq -n \
                 --arg changelog "$changelog" \
                 --arg game_versions "$game_versions" \
-                '{changelog: $changelog, changelogType: "markdown", gameVersions: [$game_versions], releaseType: "beta"}')
+                '{changelog: $changelog, changelogType: "markdown", gameVersions: $game_versions | split(",") | map(tonumber), releaseType: "beta"}')
 
 curl --http1.1 \
     -H "X-Api-Token: $CURSEFORGE_API_TOKEN" \
