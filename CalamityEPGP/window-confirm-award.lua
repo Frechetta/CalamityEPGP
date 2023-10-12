@@ -130,11 +130,14 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
         self.mainFrame.msButton:SetText(string.format('MS (%d GP)', self.msGp))
         self.mainFrame.osButton:SetText(string.format('OS (%d GP)', self.osGp))
 
-        local slotModOverrides = ns.cfg.gpSlotMods[itemInfo.slot].overrides
-        if slotModOverrides ~= nil then
-            local classOverride = slotModOverrides[classFilename]
-            if classOverride ~= nil and type(classOverride) == 'table' then
-                self:_renderSpecButtonRow(classFilename, classOverride, itemInfo)
+        local slotMod = ns.cfg.gpSlotMods[itemInfo.slot]
+        if slotMod ~= nil then
+            local slotModOverrides = slotMod.overrides
+            if slotModOverrides ~= nil then
+                local classOverride = slotModOverrides[classFilename]
+                if classOverride ~= nil and type(classOverride) == 'table' then
+                    self:_renderSpecButtonRow(classFilename, classOverride, itemInfo)
+                end
             end
         end
 

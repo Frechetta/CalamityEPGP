@@ -22,9 +22,6 @@ if ! grep -q "$version" "$root_dir/CHANGELOG.md"; then
     exit 1
 fi
 
-api_version=$(grep '## Interface:' "$toc_file" | grep -oP '\d+')
-game_version=$(curl -H "X-Api-Token: $CURSEFORGE_API_TOKEN" "https://wow.curseforge.com/api/game/versions" 2>/dev/null | jq -r ".[] | select(.apiVersion == \"$api_version\").id")
-
 zip_file="$build_dir/$addon_name-$version.zip"
 
 if [ -e "$zip_file" ]; then
@@ -65,8 +62,7 @@ echo "$changelog" > "$changelog_file"
 # CURSEFORGE
 metadata=$(jq -n \
                 --arg changelog "$changelog" \
-                --arg gameVersion "$game_version" \
-                '{changelog: $changelog, changelogType: "markdown", gameVersions: [$gameVersion | tonumber], releaseType: "beta"}')
+                '{changelog: $changelog, changelogType: "markdown", gameVersions: [9641, 9894, 10272], releaseType: "beta"}')
 
 curl --http1.1 \
     -H "X-Api-Token: $CURSEFORGE_API_TOKEN" \
