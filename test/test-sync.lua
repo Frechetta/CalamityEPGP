@@ -171,7 +171,6 @@ describe('algorithm', function()
         ns.addon.Print = spy.new(function(_, msg) print(('%s: %s'):format(ns.me.name, msg)) end)
 
         ns.cfg = {
-            debugMode = true,
             gpBase = 100,
         }
 
@@ -239,28 +238,6 @@ describe('algorithm', function()
         ns1 = nil
         ns2 = nil
     end)
-
-    --[[
-        TEST CASES
-
-        Mia syncs
-            Tucker
-                week 1
-                    1
-                    2
-                    3
-                week 2
-                    4
-                    5
-                    6
-            Mia
-                week 1
-                    1
-                    2
-                    3
-                week 2
-                    4
-    ]]
 
     describe('sync', function()
         test('officer online, up-to-date; non-officer logs on, behind', function()
@@ -851,5 +828,4402 @@ describe('algorithm', function()
             assert.spy(ns1.addon.computeStandings).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
         end)
+
+        test('officer online, up-to-date; non-officer logs on, missing a week', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer online, up-to-date; non-officer logs on, missing first week', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer online, up-to-date; non-officer logs on, missing first week and some of last', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer online, up-to-date; non-officer logs on, missing first week and some of last 2', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer online, up-to-date; non-officer logs on, missing all', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {}
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        -------------------------------------------------------------
+
+        test('officer online, up-to-date; officer logs on, behind', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer online, behind; officer logs on, up-to-date', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyMia, ns1.db.history)
+            assert.same(historyMia, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.called(2)
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+        end)
+
+        test('officer online, up-to-date; officer logs on, up-to-date', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyMia, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+        end)
+
+        test('officer online, up-to-date; officer logs on, missing a week', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer online, up-to-date; officer logs on, missing first week', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer online, up-to-date; officer logs on, missing first week and some of last', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer online, up-to-date; officer logs on, missing first week and some of last 2', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer online, up-to-date; officer logs on, missing all', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {}
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer online; officer logs on; mixed', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns2.Sync:syncInit()
+
+            local expected = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            assert.same(expected, ns1.db.history)
+            assert.same(expected, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.called(2)
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        -------------------------------------------------------------
+
+        test('officer logs on, up-to-date; non-officer online, behind', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer logs on, behind; non-officer online, up-to-date', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyMia, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+        end)
+
+        test('officer logs on, up-to-date; non-officer online, up-to-date', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyMia, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+        end)
+
+        test('officer logs on, up-to-date; non-officer online, missing a week', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer logs on, up-to-date; non-officer online, missing first week', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer logs on, up-to-date; non-officer online, missing first week and some of last', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer logs on, up-to-date; non-officer online, missing first week and some of last 2', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(2)
+        end)
+
+        test('officer logs on, up-to-date; non-officer online, missing all', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {}
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:syncInit()
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
     end)
+
+    describe('new event', function()
+        test('officer sends new event to non-officer', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:sendEventToGuild({
+                {
+                    1696899600,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'both',
+                    -10,
+                    '3:weekly',
+                    true,
+                    100,
+                },
+                678,
+            })
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('officer sends new event to officer', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:sendEventToGuild({
+                {
+                    1696899600,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'both',
+                    -10,
+                    '3:weekly',
+                    true,
+                    100,
+                },
+                678,
+            })
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyTucker, ns2.db.history)
+            assert.same(ns1.db.history, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+        end)
+
+        test('non-officer sends new event to officer', function()
+            ns1.me.officer = false
+            ns2.me.officer = true
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'both',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.Sync:sendEventToGuild({
+                {
+                    1696899600,
+                    '11111111',
+                    {
+                        '11111111',
+                        '22222222',
+                    },
+                    'both',
+                    -10,
+                    '3:weekly',
+                    true,
+                    100,
+                },
+                678,
+            })
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyMia, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+        end)
+    end)
+
+    -- TODO: test lm settings
 end)

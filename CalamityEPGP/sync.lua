@@ -426,6 +426,17 @@ function Sync.handleSync1(message, sender)
         myDailyHashesByWeek:set(weekTs, Dict:new(Sync:getDailyHashes(ns.Lib.b64Decode(weekTs))))
     end
 
+    local parts = {}
+    for weekTs, dayHashes in myDailyHashesByWeek:iter() do
+        local dayHashesParts = {}
+        for dayTs, dayHash in dayHashes:iter() do
+            tinsert(dayHashesParts, ('%s: %s'):format(dayTs, dayHash))
+        end
+        tinsert(parts, tostring(weekTs) .. ': {' .. table.concat(dayHashesParts, ', ') .. '}')
+    end
+    local differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
+    ns.debug('my daily hashes by week: ' .. differingWeeksStr)
+
     -- if they are an officer, check if I need to ask for data
     if ns.Lib.isOfficer(sender) then
         local myMissingDays = {}  -- list of daily timestamps I need from them
@@ -529,7 +540,7 @@ function Sync.handleSync2(message, sender)
 
         if #myMissingEvents > 0 then
             ns.debug(('i\'m missing events (%s), requesting from %s'):format(table.concat(myMissingEvents, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.EVENT, myMissingEvents, false, sender)
+            Sync.sendDataReq(Sync.timeframes.EVENTS, myMissingEvents, false, sender)
         end
     end
 
@@ -602,6 +613,8 @@ function Sync.handleDataSend(message, sender)
             eventAndHash = Sync.decodeEvent(eventAndHash)
             ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
         end
+
+        Sync:computeIndices()
 
         recompute = true
     end
