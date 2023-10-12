@@ -1,6 +1,7 @@
 # 0.17.1
 
 - update to patch 3.4.3
+- add addon out-of-date message
 
 # 0.17.0
 
