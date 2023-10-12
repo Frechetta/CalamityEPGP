@@ -105,6 +105,7 @@ describe('decodeEvent', function()
 end)
 
 
+-- TODO: test standings
 describe('algorithm', function()
     local ns1
     local ns2
