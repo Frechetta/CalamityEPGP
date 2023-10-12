@@ -161,6 +161,10 @@ function Sync:getEventHashesByDay(dayTs)
 
     local i = index
     while true do
+        if i > #ns.db.history then
+            break
+        end
+
         local eventAndHash = ns.db.history[i]
         local event = eventAndHash[1]
         local eventTs = event[1]
@@ -186,7 +190,7 @@ end
 ---@return table
 function Sync:getEvents(timeframe, timestamps)
     assert(timeframe == self.timeframes.WEEKLY or timeframe == self.timeframes.DAILY or timeframe == self.timeframes.EVENTS,
-           ('timeframe must be WEEKLY, DAILY, or EVENTS, not %s'):format(timeframe))
+           ('timeframe must be WEEKLY, DAILY, or EVENTS, not %s'):format(tostring(timeframe)))
 
     local events = {}
 
@@ -524,6 +528,7 @@ function Sync.handleSync2(message, sender)
         end
 
         if #myMissingEvents > 0 then
+            ns.debug(('i\'m missing events (%s), requesting from %s'):format(table.concat(myMissingEvents, ', '), sender))
             Sync.sendDataReq(Sync.timeframes.EVENT, myMissingEvents, false, sender)
         end
     end
@@ -542,7 +547,8 @@ function Sync.handleSync2(message, sender)
         end
 
         if not theirMissingEvents:isEmpty() then
-            Sync:sendDataSend(Sync.timeframes.EVENT, theirMissingEvents, false, sender)
+            ns.debug(('they\'re missing events (%s), sending to %s'):format(table.concat(theirMissingEvents:toTable(), ', '), sender))
+            Sync:sendDataSend(Sync.timeframes.EVENTS, theirMissingEvents, false, sender)
         end
     end
 end
