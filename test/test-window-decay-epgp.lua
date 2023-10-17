@@ -214,8 +214,8 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -10, '2:because', true)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -15, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'ep', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'gp', -15, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
