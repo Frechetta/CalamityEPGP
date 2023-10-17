@@ -140,8 +140,6 @@ describe('algorithm', function()
         ns.addon.versionNum = 1
         ns.minSyncVersion = 1
 
-        -- stub(ns, 'debug')
-
         ns.unitName = function(unit)
             if unit == 'player' then
                 return ns.me.name
