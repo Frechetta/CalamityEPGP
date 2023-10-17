@@ -7,7 +7,8 @@ local Config = {
     altManagementMenuInitialized = false,
     defaults = {
         lmMode = false,
-        defaultDecay = 10,
+        defaultDecayEp = 10,
+        defaultDecayGp = 10,
         syncAltEp = false,
         syncAltGp = true,
         rollDuration = 25,
@@ -61,21 +62,35 @@ function Config:init()
                     get = 'getShowMinimapButton',
                     set = 'setShowMinimapButton',
                 },
-                decay = {
+                defaultDecayEp = {
                     type = 'input',
-                    name = 'Default decay %',
+                    name = 'Default decay % (EP)',
                     width = 'half',
                     pattern = '%d+',
                     order = 3,
-                    get = 'getDefaultDecay',
-                    set = 'setDefaultDecay',
-                    disabled = 'getDefaultDecayDisabled',
+                    get = 'getDefaultDecayEp',
+                    set = 'setDefaultDecayEp',
+                    disabled = 'getDefaultDecayEpDisabled',
                 },
-                linebreak1 = {type = 'description', name = '', order = 4},
+                defaultDecayGp = {
+                    type = 'input',
+                    name = 'Default decay % (GP)',
+                    width = 'half',
+                    pattern = '%d+',
+                    order = 4,
+                    get = 'getDefaultDecayGp',
+                    set = 'setDefaultDecayGp',
+                    disabled = 'getDefaultDecayGpDisabled',
+                },
+                linebreak1 = {
+                    type = 'description',
+                    name = '',
+                    order = 5,
+                },
                 clearData = {
                     type = 'execute',
                     name = 'Clear all data',
-                    order = 5,
+                    order = 6,
                     func = 'clearData',
                 },
             }
@@ -935,12 +950,21 @@ function Config:setLmMode(_, input)
     ns.MainWindow:refresh()
 end
 
-function Config:getDefaultDecay(_)
-    return tostring(ns.cfg.defaultDecay)
+function Config:getDefaultDecayEp(_)
+    return tostring(ns.cfg.defaultDecayEp)
 end
 
-function Config:setDefaultDecay(_, input)
-    ns.cfg.defaultDecay = input
+function Config:setDefaultDecayEp(_, input)
+    ns.cfg.defaultDecayEp = input
+    ns.addon.modifiedLmSettings()
+end
+
+function Config:getDefaultDecayGp(_)
+    return tostring(ns.cfg.defaultDecayGp)
+end
+
+function Config:setDefaultDecayGp(_, input)
+    ns.cfg.defaultDecayGp = input
     ns.addon.modifiedLmSettings()
 end
 
@@ -997,7 +1021,11 @@ function Config:getLmModeDisabled()
     return not ns.Lib.isOfficer()
 end
 
-function Config:getDefaultDecayDisabled()
+function Config:getDefaultDecayEpDisabled()
+    return not ns.cfg.lmMode
+end
+
+function Config:getDefaultDecayGpDisabled()
     return not ns.cfg.lmMode
 end
 

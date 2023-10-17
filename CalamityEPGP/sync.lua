@@ -245,7 +245,8 @@ end
 ---@return table
 function Sync.getLmSettings()
     return {
-        ns.cfg.defaultDecay,
+        ns.cfg.defaultDecayEp,
+        ns.cfg.defaultDecayGp,
         ns.cfg.syncAltEp,
         ns.cfg.syncAltGp,
         ns.cfg.gpBase,
@@ -622,14 +623,15 @@ function Sync.handleDataSend(message, sender)
     if lmSettings ~= nil then
         ns.debug(('received lmSettings from %s'):format(sender))
 
-        ns.cfg.defaultDecay = lmSettings[1]
-        ns.cfg.syncAltEp = lmSettings[2]
-        ns.cfg.syncAltGp = lmSettings[3]
-        ns.cfg.gpBase = lmSettings[4]
-        ns.cfg.gpSlotMods = lmSettings[5]
-        ns.cfg.encounterEp = lmSettings[6]
-        ns.db.altData.mainAltMapping = lmSettings[7]
-        ns.db.lmSettingsLastChange = lmSettings[8]
+        ns.cfg.defaultDecayEp = lmSettings[1]
+        ns.cfg.defaultDecayGp = lmSettings[2]
+        ns.cfg.syncAltEp = lmSettings[3]
+        ns.cfg.syncAltGp = lmSettings[4]
+        ns.cfg.gpBase = lmSettings[5]
+        ns.cfg.gpSlotMods = lmSettings[6]
+        ns.cfg.encounterEp = lmSettings[7]
+        ns.db.altData.mainAltMapping = lmSettings[8]
+        ns.db.lmSettingsLastChange = lmSettings[9]
 
         LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
 

@@ -31,16 +31,27 @@ function DecayEpgpWindow:createWindow()
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
 	mainFrame.title:SetText('Decay EPGP')
 
-    mainFrame.amountLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.amountLabel:SetText('Decay %')
-	mainFrame.amountLabel:SetPoint('TOP', mainFrame, 'TOP', 0, -mainFrame.TitleBg:GetHeight() - 20)
+    mainFrame.amountLabelEp = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.amountLabelEp:SetText('EP Decay %')
+	mainFrame.amountLabelEp:SetPoint('TOPRIGHT', mainFrame, 'TOP', -10, -mainFrame.TitleBg:GetHeight() - 20)
 
-    mainFrame.amountEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
-    mainFrame.amountEditBox:SetText(tostring(ns.Config:getDefaultDecay()))
-    mainFrame.amountEditBox:SetPoint('TOP', mainFrame.amountLabel, 'BOTTOM', 0, -7)
-    mainFrame.amountEditBox:SetHeight(20)
-    mainFrame.amountEditBox:SetWidth(40)
-    mainFrame.amountEditBox:SetAutoFocus(false)
+    mainFrame.amountEditBoxEp = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
+    mainFrame.amountEditBoxEp:SetText(tostring(ns.Config:getDefaultDecayEp()))
+    mainFrame.amountEditBoxEp:SetPoint('TOP', mainFrame.amountLabelEp, 'BOTTOM', 0, -7)
+    mainFrame.amountEditBoxEp:SetHeight(20)
+    mainFrame.amountEditBoxEp:SetWidth(40)
+    mainFrame.amountEditBoxEp:SetAutoFocus(false)
+
+    mainFrame.amountLabelGp = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.amountLabelGp:SetText('GP Decay %')
+	mainFrame.amountLabelGp:SetPoint('TOPLEFT', mainFrame, 'TOP', 10, -mainFrame.TitleBg:GetHeight() - 20)
+
+    mainFrame.amountEditBoxGp = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
+    mainFrame.amountEditBoxGp:SetText(tostring(ns.Config:getDefaultDecayGp()))
+    mainFrame.amountEditBoxGp:SetPoint('TOP', mainFrame.amountLabelGp, 'BOTTOM', 0, -7)
+    mainFrame.amountEditBoxGp:SetHeight(20)
+    mainFrame.amountEditBoxGp:SetWidth(40)
+    mainFrame.amountEditBoxGp:SetAutoFocus(false)
 
     mainFrame.reasonEditBox = CreateFrame('EditBox', nil, mainFrame, 'InputBoxTemplate')
 	mainFrame.reasonEditBox:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 45)
@@ -64,7 +75,6 @@ function DecayEpgpWindow:createWindow()
 
     mainFrame.cancelButton:SetScript('OnClick', function() self:hide() end)
     mainFrame.confirmButton:SetScript('OnClick', function() self:confirm() end)
-    mainFrame.amountEditBox:SetScript('OnEnterPressed', function() self:confirm() end)
 
     tinsert(UISpecialFrames, mainFrameName)
 
@@ -81,7 +91,7 @@ function DecayEpgpWindow:show()
     self:createWindow()
     self.mainFrame:Raise()
     self.mainFrame:Show()
-    self.mainFrame.amountEditBox:SetFocus()
+    self.mainFrame.reasonEditBox:SetFocus()
 end
 
 function DecayEpgpWindow:hide()
@@ -95,17 +105,22 @@ function DecayEpgpWindow:isShown()
 end
 
 function DecayEpgpWindow:confirm()
-    local value = self.mainFrame.amountEditBox:GetText()
+    local valueEp = self.mainFrame.amountEditBoxEp:GetText()
+    local valueGp = self.mainFrame.amountEditBoxGp:GetText()
 
-    if not ns.Lib.validateEpgpValue(value) then
+    if not ns.Lib.validateEpgpValue(valueEp) or not ns.Lib.validateEpgpValue(valueGp) then
         return
     end
 
-    value = tonumber(value)
+    valueEp = tonumber(valueEp)
+    valueGp = tonumber(valueGp)
 
-    if value == 0
-            or value < -1000
-            or value > 100 then
+    if valueEp == 0
+            or valueEp < -1000
+            or valueEp > 100
+            or valueGp == 0
+            or valueGp < -1000
+            or valueGp > 100 then
         return
     end
 
@@ -113,7 +128,8 @@ function DecayEpgpWindow:confirm()
 
     local players = ns.standings:keys():toTable()
 
-    ns.addon:modifyEpgp(players, ns.consts.MODE_BOTH, -value, reason, true)
+    ns.addon:modifyEpgp(players, ns.consts.MODE_EP, -valueEp, reason, true)
+    ns.addon:modifyEpgp(players, ns.consts.MODE_GP, -valueGp, reason, true)
 
     self:hide()
 end
