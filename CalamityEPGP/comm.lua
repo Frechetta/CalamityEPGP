@@ -283,7 +283,8 @@ end
 function Comm.handleLmSettings(message)
     local lmSettings = message.settings
 
-    ns.cfg.defaultDecay = lmSettings.defaultDecay
+    ns.cfg.defaultDecayEp = lmSettings.defaultDecayEp
+    ns.cfg.defaultDecayGp = lmSettings.defaultDecayGp
     ns.cfg.syncAltEp = lmSettings.syncAltEp
     ns.cfg.syncAltGp = lmSettings.syncAltGp
     ns.cfg.gpBase = lmSettings.gpBase
@@ -393,7 +394,8 @@ end
 function Comm:sendLmSettings(distribution, target)
     local toSend = {
         settings = {
-            defaultDecay = ns.cfg.defaultDecay,
+            defaultDecayEp = ns.cfg.defaultDecayEp,
+            defaultDecayGp = ns.cfg.defaultDecayGp,
             syncAltEp = ns.cfg.syncAltEp,
             syncAltGp = ns.cfg.syncAltGp,
             gpBase = ns.cfg.gpBase,
