@@ -1,3 +1,7 @@
+# 0.18.0
+
+- add capability to decay EP and GP independently
+
 # 0.17.1
 
 - update to patch 3.4.3

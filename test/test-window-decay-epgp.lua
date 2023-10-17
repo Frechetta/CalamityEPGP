@@ -5,7 +5,8 @@ describe('confirm', function()
     local ns
     local dew
 
-    local amount
+    local amountEp
+    local amountGp
     local reason
     local validValue
 
@@ -30,13 +31,17 @@ describe('confirm', function()
 
         dew = ns.DecayEpgpWindow
 
-        amount = nil
+        amountEp = nil
+        amountGp = nil
         reason = nil
         validValue = nil
 
         dew.mainFrame = mock({
-            amountEditBox = mock({
-                GetText = function() return amount end
+            amountEditBoxEp = mock({
+                GetText = function() return amountEp end
+            }),
+            amountEditBoxGp = mock({
+                GetText = function() return amountGp end
             }),
             reasonEditBox = mock({
                 GetText = function() return reason end
@@ -52,7 +57,8 @@ describe('confirm', function()
     end)
 
     test('invalid value, value 0', function()
-        amount = '0'
+        amountEp = '0'
+        amountGp = '0'
         reason = 'because'
         validValue = false
 
@@ -63,7 +69,8 @@ describe('confirm', function()
     end)
 
     test('invalid value, value -2000', function()
-        amount = '-2000'
+        amountEp = '-2000'
+        amountGp = '-2000'
         reason = 'because'
         validValue = false
 
@@ -74,7 +81,8 @@ describe('confirm', function()
     end)
 
     test('invalid value, value 150', function()
-        amount = '150'
+        amountEp = '150'
+        amountGp = '150'
         reason = 'because'
         validValue = false
 
@@ -85,7 +93,8 @@ describe('confirm', function()
     end)
 
     test('valid value, value 0', function()
-        amount = '0'
+        amountEp = '0'
+        amountGp = '0'
         reason = 'because'
         validValue = true
 
@@ -96,7 +105,8 @@ describe('confirm', function()
     end)
 
     test('valid value, value -1001', function()
-        amount = '-2000'
+        amountEp = '-2000'
+        amountGp = '-2000'
         reason = 'because'
         validValue = true
 
@@ -107,7 +117,8 @@ describe('confirm', function()
     end)
 
     test('valid value, value 101', function()
-        amount = '150'
+        amountEp = '150'
+        amountGp = '150'
         reason = 'because'
         validValue = true
 
@@ -118,40 +129,61 @@ describe('confirm', function()
     end)
 
     test('valid value, value normal', function()
-        amount = '10'
+        amountEp = '10'
+        amountGp = '10'
         reason = 'because'
         validValue = true
 
         dew:confirm()
 
-        assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called(2)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -10, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
 
     test('valid value, value -1000', function()
-        amount = '-1000'
+        amountEp = '-1000'
+        amountGp = '-1000'
         reason = 'because'
         validValue = true
 
         dew:confirm()
 
-        assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', 1000, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called(2)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', 1000, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', 1000, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
 
     test('valid value, value 100', function()
-        amount = '100'
+        amountEp = '100'
+        amountGp = '100'
         reason = 'because'
         validValue = true
 
         dew:confirm()
 
-        assert.stub(ns.addon.modifyEpgp).was.called(1)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'both', -100, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called(2)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -100, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -100, '2:because', true)
+
+        assert.stub(dew.hide).was.called(1)
+    end)
+
+    test('valid value, valueEp 10, valueGp 15', function()
+        amountEp = '10'
+        amountGp = '15'
+        reason = 'because'
+        validValue = true
+
+        dew:confirm()
+
+        assert.stub(ns.addon.modifyEpgp).was.called(2)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -15, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
