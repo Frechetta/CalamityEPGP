@@ -556,7 +556,7 @@ function HistoryWindow:getRenderedData()
                     valueStr = percent and valueStr .. '%' or valueStr
                     valueStr = value > 0 and '+' .. valueStr or valueStr
 
-                    local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
+                    local actionMode = string.upper(mode)
                     local action = string.format('%s %s', actionMode, valueStr)
 
                     -- get ep, gp, pr deltas
@@ -571,35 +571,26 @@ function HistoryWindow:getRenderedData()
                     local epBefore = epAfter
                     local gpBefore = gpAfter
 
-                    local getDelta = function(m)
-                        if m == 'ep' then
-                            if percent then
-                                local multiplier = (100 - value) / 100
-                                epBefore = epAfter * multiplier
-                            else
-                                epBefore = epBefore - value
-                            end
-
-                            epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
+                    if mode == ns.consts.MODE_EP then
+                        if percent then
+                            local multiplier = (100 - value) / 100
+                            epBefore = epAfter * multiplier
+                        else
+                            epBefore = epBefore - value
                         end
 
-                        if m == 'gp' then
-                            if percent then
-                                local multiplier = (100 - value) / 100
-                                gpBefore = gpAfter * multiplier
-                            else
-                                gpBefore = gpBefore - value
-                            end
-
-                            gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
-                        end
+                        epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
                     end
 
-                    if mode == 'both' then
-                        getDelta('ep')
-                        getDelta('gp')
-                    else
-                        getDelta(mode)
+                    if mode == ns.consts.MODE_GP then
+                        if percent then
+                            local multiplier = (100 - value) / 100
+                            gpBefore = gpAfter * multiplier
+                        else
+                            gpBefore = gpBefore - value
+                        end
+
+                        gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
                     end
 
                     if epDelta == nil then
@@ -667,7 +658,7 @@ function HistoryWindow:getRenderedData()
                 valueStr = percent and valueStr .. '%' or valueStr
                 valueStr = value >= 0 and '+' .. valueStr or valueStr
 
-                local actionMode = mode == 'both' and 'EP/GP' or string.upper(mode)
+                local actionMode = string.upper(mode)
                 local action = string.format('%s %s', actionMode, valueStr)
 
                 local newRow = {

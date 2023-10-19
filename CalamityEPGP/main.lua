@@ -548,36 +548,26 @@ function addon:computeStandingsWithEvents(events, callback)
                 ns.standings:set(guid, playerData)
             end
 
-            local modifyPlayer = function(theMode)
-                local oldValue = playerData[theMode]
-                local newValue
+            local oldValue = playerData[mode]
+            local newValue
 
-                if percent then
-                    -- value is expected to be something like -10, meaning decrease by 10%
-                    local multiplier = (100 + value) / 100
-                    newValue = oldValue * multiplier
-                else
-                    newValue = oldValue + value
-                end
-
-                if theMode == ns.consts.MODE_GP and newValue < minGp then
-                    newValue = minGp
-                end
-
-                playerData[theMode] = newValue
-
-                local diff = newValue - oldValue
-                local playerDiff = playerDiffs:get(guid)
-                playerDiff[theMode] = playerDiff[theMode] + diff
+            if percent then
+                -- value is expected to be something like -10, meaning decrease by 10%
+                local multiplier = (100 + value) / 100
+                newValue = oldValue * multiplier
+            else
+                newValue = oldValue + value
             end
 
-            if mode == ns.consts.MODE_EP or mode == ns.consts.MODE_BOTH then
-                modifyPlayer(ns.consts.MODE_EP)
+            if mode == ns.consts.MODE_GP and newValue < minGp then
+                newValue = minGp
             end
 
-            if mode == ns.consts.MODE_GP or mode == ns.consts.MODE_BOTH then
-                modifyPlayer(ns.consts.MODE_GP)
-            end
+            playerData[mode] = newValue
+
+            local diff = newValue - oldValue
+            local playerDiff = playerDiffs:get(guid)
+            playerDiff[mode] = playerDiff[mode] + diff
         end
     end
 
@@ -740,10 +730,11 @@ end
 
 
 ---@param players table
----@param mode 'ep' | 'gp' | 'both'
+---@param mode 'ep' | 'gp'
 ---@param value number
 ---@param reason string
 ---@param percent boolean?
+---@return table
 function addon.createHistoryEvent(players, mode, value, reason, percent)
     percent = percent or false
 
@@ -767,7 +758,7 @@ end
 
 
 ---@param players table
----@param mode 'ep' | 'gp' | 'both'
+---@param mode 'ep' | 'gp'
 ---@param value number
 ---@param reason string
 ---@param percent boolean?
@@ -777,7 +768,7 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
         return
     end
 
-    if mode ~= ns.consts.MODE_EP and mode ~= ns.consts.MODE_GP and mode ~= ns.consts.MODE_BOTH then
+    if mode ~= ns.consts.MODE_EP and mode ~= ns.consts.MODE_GP then
         error(string.format('Mode (%s) is not one of allowed modes', mode))
         return
     end
@@ -838,18 +829,20 @@ function addon.syncAltEpGp(players)
             if main ~= nil then
                 local alts = ns.db.altData.mainAltMapping[main]
 
-                for _, alt in ipairs(alts) do
-                    if alt ~= player then
-                        local altGuid = ns.Lib.getPlayerGuid(alt)
-                        local altStandings = ns.standings:get(altGuid)
+                if alts ~= nil then
+                    for _, alt in ipairs(alts) do
+                        if alt ~= player then
+                            local altGuid = ns.Lib.getPlayerGuid(alt)
+                            local altStandings = ns.standings:get(altGuid)
 
-                        if altStandings ~= nil then
-                            if ns.cfg.syncAltEp then
-                                altStandings.ep = playerStandings.ep
-                            end
+                            if altStandings ~= nil then
+                                if ns.cfg.syncAltEp then
+                                    altStandings.ep = playerStandings.ep
+                                end
 
-                            if ns.cfg.syncAltGp then
-                                altStandings.gp = playerStandings.gp
+                                if ns.cfg.syncAltGp then
+                                    altStandings.gp = playerStandings.gp
+                                end
                             end
                         end
                     end
