@@ -331,10 +331,15 @@ function Sync:sendDataSend(timeframe, timestamps, sendLmSettings, target)
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'WHISPER', target)
 end
 
----@param eventAndHash table
-function Sync:sendEventToGuild(eventAndHash)
-    eventAndHash = self.encodeEvent(eventAndHash)
-    local toSend = {{eventAndHash}}
+---@param eventAndHashes table
+function Sync:sendEventsToGuild(eventAndHashes)
+    local events = {}
+
+    for _, eventAndHash in ipairs(eventAndHashes) do
+        tinsert(events, self.encodeEvent(eventAndHash))
+    end
+
+    local toSend = {events}
 
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end

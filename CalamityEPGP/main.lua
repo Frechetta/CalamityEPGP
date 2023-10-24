@@ -56,6 +56,9 @@ function addon:OnInitialize()
 
     self.versionNum = ns.Lib.getVersionNum(self.version)
 
+
+    self.initializing = false
+    self.preinitialized = false
     self.initialized = false
     self.minimapButtonInitialized = false
     self.useForRaidPrompted = false
@@ -142,7 +145,13 @@ function addon:handleSlashCommand(input)
 end
 
 function addon:handleGuildRosterUpdate()
-    C_Timer.After(0.1, function() self:init(); ns.MainWindow:refresh() end)
+    C_Timer.After(0.1, function()
+        self:init()
+
+        if self.initialized then
+            self:computeStandings()
+        end
+    end)
 end
 
 function addon.showMainWindow()
@@ -197,7 +206,7 @@ function addon:init()
         return
     end
 
-    if not self.initialized then
+    if not self.initializing and not self.initialized then
         -- Get guild name
         local guildName = GetGuildInfo('player')
 
@@ -210,6 +219,8 @@ function addon:init()
 
             return
         end
+
+        self.initializing = true
 
         local realmName = GetRealmName()
         local guildFullName = guildName .. '-' .. realmName
@@ -227,6 +238,7 @@ function addon:init()
         ns.peers = Dict:new()
         ns.knownPlayers = Dict:new()
         ns.standings = Dict:new()
+        ns.playersLastUpdated = Dict:new()
 
         self.ldb = LibStub('LibDataBroker-1.1', true)
         self.ldbi = LibStub('LibDBIcon-1.0', true)
@@ -278,23 +290,25 @@ function addon:init()
         hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
             self:handleTooltipUpdate(frame)
         end)
+
+        self.preinitialized = true
     end
 
-    -- Load guild data
-    self:loadGuildRoster()
+    if self.preinitialized then
+        -- Load guild data
+        self:loadGuildRoster()
 
-    -- load raid data
-    if IsInRaid() then
-        self:handleEnteredRaid()
+        -- load raid data
+        if IsInRaid() then
+            self:handleEnteredRaid()
+        end
     end
 
-    if not self.initialized then
+    if self.initializing and self.preinitialized and not self.initialized then
         -- Load config module
         ns.Config:init()
 
         self:computeStandings(function()
-            self.syncAltEpGp()
-
             self:initMinimapButton()
 
             ns.Comm:registerHandler(ns.Comm.msgTypes.HEARTBEAT, self.handleHeartbeat)
@@ -303,6 +317,8 @@ function addon:init()
             self.housekeepPeersTimer = self:ScheduleRepeatingTimer(function() self:housekeepPeers() end, 25)
 
             self.initialized = true
+            self.initializing = false
+
             ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
 
             self:sendHeartbeat()
@@ -504,91 +520,213 @@ function addon:loadRaidRoster()
 end
 
 
----@param callback function?
-function addon:computeStandings(callback)
-    ns.standings:clear()
-    self:computeStandingsWithEvents(ns.db.history, callback)
-end
-
-
 ---@param events table
----@param callback function?
----@return Dict
-function addon:computeStandingsWithEvents(events, callback)
+---@param callback function
+function addon.loadPlayersFromEvents(events, callback)
     callback = callback or function() end
 
     local shortToFullGuids = Dict:new()
 
-    local playerDiffs = Dict:new()
+    local uniquePlayersSeen = 0
+    local uniquePlayersLoaded = 0
+
+    local seenAll = false
+    local callbackCalled = false
 
     for _, eventAndHash in ipairs(events) do
         local event = eventAndHash[1]
         local players = event[3]
-        local mode = event[4]
-        local value = event[5]
-        local percent = event[7]
-        local minGp = event[8]
 
         for _, guidShort in ipairs(players) do
             local guid = shortToFullGuids:get(guidShort)
             if guid == nil then
                 guid = ns.Lib.getFullPlayerGuid(guidShort)
                 shortToFullGuids:set(guidShort, guid)
+
+                uniquePlayersSeen = uniquePlayersSeen + 1
+
+                ns.Lib.getPlayerInfo(guid, function()
+                    uniquePlayersLoaded = uniquePlayersLoaded + 1
+                    if seenAll and uniquePlayersLoaded == uniquePlayersSeen then
+                        callback()
+                        callbackCalled = true
+                    end
+                end)
+            end
+        end
+    end
+
+    seenAll = true
+
+    if not callbackCalled and uniquePlayersLoaded == uniquePlayersSeen then
+        callback()
+    end
+end
+
+
+---@param callback function?
+function addon:computeStandings(callback)
+    ns.standings:clear()
+    ns.playersLastUpdated:clear()
+    self:computeStandingsWithEvents(ns.db.history, callback)
+end
+
+
+---@param events table
+---@param callback function?
+function addon:computeStandingsWithEvents(events, callback)
+    callback = callback or function(_) end
+
+    local shortToFullGuids = Dict:new()
+
+    self.loadPlayersFromEvents(events, function()
+        local playerDiffs = Dict:new()
+
+        for _, eventAndHash in ipairs(events) do
+            local event = eventAndHash[1]
+            local ts = event[1]
+            local players = event[3]
+            local mode = event[4]
+            local value = event[5]
+            local percent = event[7]
+            local minGp = event[8]
+
+            local mains = Set:new()
+
+            for _, guidShort in ipairs(players) do
+                local guid = shortToFullGuids:get(guidShort)
+                if guid == nil then
+                    guid = ns.Lib.getFullPlayerGuid(guidShort)
+                    shortToFullGuids:set(guidShort, guid)
+                end
+
+                local lastUpdated = ns.playersLastUpdated:get(guid)
+                if lastUpdated == nil or ts > lastUpdated then
+                    ns.playersLastUpdated:set(guid, ts)
+                end
+
+                if not playerDiffs:contains(guid) then
+                    playerDiffs:set(guid, {ep = 0, gp = 0})
+                end
+
+                local playerStandings = ns.standings:get(guid)
+                if playerStandings == nil then
+                    playerStandings = self.createStandingsEntry(guid)
+                    ns.standings:set(guid, playerStandings)
+                end
+
+                local oldValue = playerStandings[mode]
+                local newValue
+
+                if percent then
+                    -- value is expected to be something like -10, meaning decrease by 10%
+                    local multiplier = (100 + value) / 100
+                    newValue = oldValue * multiplier
+                else
+                    newValue = oldValue + value
+                end
+
+                if mode == ns.consts.MODE_GP and newValue < minGp then
+                    newValue = minGp
+                end
+
+                playerStandings[mode] = newValue
+
+                local diff = newValue - oldValue
+                local playerDiff = playerDiffs:get(guid)
+                playerDiff[mode] = playerDiff[mode] + diff
+
+                local playerData = ns.knownPlayers:get(guid)
+                local playerName = playerData.name
+                local main = ns.db.altData.altMainMapping[playerName]
+                if main ~= nil then
+                    mains:add(main)
+                end
             end
 
-            ns.Lib.getPlayerInfo(guid)
+            -- sync alts
+            if ns.cfg.syncAltEp or ns.cfg.syncAltGp then
+                for main in mains:iter() do
+                    local alts = ns.db.altData.mainAltMapping[main]
+                    if alts ~= nil then
+                        local mainGuid = ns.Lib.getPlayerGuid(main)
 
-            if not playerDiffs:contains(guid) then
-                playerDiffs:set(guid, {ep = 0, gp = 0})
+                        local lastUpdatedGuid = self.getLastUpdatedToon(mainGuid)
+                        local lastUpdatedStandings = ns.standings:get(lastUpdatedGuid)
+                        if lastUpdatedStandings == nil then
+                            lastUpdatedStandings = self.createStandingsEntry(lastUpdatedGuid)
+                            ns.standings:set(lastUpdatedGuid, lastUpdatedStandings)
+                        end
+
+                        for _, alt in ipairs(alts) do
+                            local altGuid = ns.Lib.getPlayerGuid(alt)
+                            local altStandings = ns.standings:get(altGuid)
+                            if altStandings == nil then
+                                altStandings = self.createStandingsEntry(altGuid)
+                                ns.standings:set(altGuid, altStandings)
+                            end
+
+                            if ns.cfg.syncAltEp then
+                                altStandings.ep = lastUpdatedStandings.ep
+                            end
+
+                            if ns.cfg.syncAltGp then
+                                altStandings.gp = lastUpdatedStandings.gp
+                            end
+                        end
+                    end
+                end
             end
+        end
 
-            local playerData = ns.standings:get(guid)
-            if playerData == nil then
+        for guid, playerData in ns.knownPlayers:iter() do
+            if not ns.standings:contains(guid) and playerData.inGuild then
                 playerData = self.createStandingsEntry(guid)
                 ns.standings:set(guid, playerData)
             end
-
-            local oldValue = playerData[mode]
-            local newValue
-
-            if percent then
-                -- value is expected to be something like -10, meaning decrease by 10%
-                local multiplier = (100 + value) / 100
-                newValue = oldValue * multiplier
-            else
-                newValue = oldValue + value
-            end
-
-            if mode == ns.consts.MODE_GP and newValue < minGp then
-                newValue = minGp
-            end
-
-            playerData[mode] = newValue
-
-            local diff = newValue - oldValue
-            local playerDiff = playerDiffs:get(guid)
-            playerDiff[mode] = playerDiff[mode] + diff
         end
-    end
 
-    for guid, playerData in ns.knownPlayers:iter() do
-        if not ns.standings:contains(guid) and playerData.inGuild then
-            playerData = self.createStandingsEntry(guid)
-            ns.standings:set(guid, playerData)
-        end
-    end
-
-    local i = 0
-    for guid in ns.standings:iter() do
-        i = i + 1
-        ns.Lib.getPlayerInfo(guid, function(_)
-            if i >= ns.standings:len() then
-                callback()
+        local function finalize()
+            if not ns.cfg.syncAltEp and not ns.cfg.syncAltGp then
+                return
             end
-        end)
-    end
 
-    return playerDiffs
+            for playerName in pairs(ns.db.altData.mainAltMapping) do
+                local playerGuid = ns.Lib.playerNameToGuid[playerName]
+
+                local mostRecentGuid = self.getLastUpdatedToon(playerGuid)
+
+                for _, toon in ipairs(ns.db.altData.mainAltMapping[playerName]) do
+                    local toonGuid = ns.Lib.playerNameToGuid[toon]
+
+                    if toonGuid ~= mostRecentGuid and ns.standings:contains(toonGuid) and ns.standings:contains(mostRecentGuid) then
+                        local toonStandings = ns.standings:get(toonGuid)
+                        local mostRecentStandings = ns.standings:get(mostRecentGuid)
+
+                        if ns.cfg.syncAltEp then
+                            toonStandings.ep = mostRecentStandings.ep
+                        end
+
+                        if ns.cfg.syncAltGp then
+                            toonStandings.gp = mostRecentStandings.gp
+                        end
+                    end
+                end
+            end
+        end
+
+        local i = 0
+        for guid in ns.standings:iter() do
+            i = i + 1
+            ns.Lib.getPlayerInfo(guid, function(_)
+                if i >= ns.standings:len() then
+                    finalize()
+                    ns.MainWindow:refresh()
+                    callback(playerDiffs)
+                end
+            end)
+        end
+    end)
 end
 
 
@@ -597,8 +735,8 @@ end
 function addon.createStandingsEntry(guid)
     return {
         guid = guid,
-        ep = 0,
-        gp = ns.cfg.gpBase,
+        [ns.consts.MODE_EP] = 0,
+        [ns.consts.MODE_GP] = ns.cfg.gpBase,
     }
 end
 
@@ -778,125 +916,71 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
         return
     end
 
-    self.syncAltEpGp(players)
-
     local event = self.createHistoryEvent(players, mode, value, reason, percent)
     tinsert(ns.db.history, event)
 
-    local playerDiffs = self:computeStandingsWithEvents({event})
+    self:computeStandingsWithEvents({event}, function(playerDiffs)
+        for guid, diffData in playerDiffs:iter() do
+            for theMode, diff in pairs(diffData) do
+                if diff ~= 0 then
+                    local verb = 'gained'
+                    local amount = diff
+
+                    if diff < 0 then
+                        verb = 'lost'
+                        amount = -diff
+                    end
+
+                    local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
+                    local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
+
+                    local playerData = ns.knownPlayers:get(guid)
+
+                    ns.debug(string.format('%s %s %.2f %s (%s)', playerData.name, verb, amount, string.upper(theMode), baseReasonPretty))
+                end
+            end
+        end
+    end)
 
     ns.MainWindow:refresh()
     ns.HistoryWindow:refresh()
 
-    ns.Sync:sendEventToGuild(event)
-
-    for guid, diffData in playerDiffs:iter() do
-        for theMode, diff in pairs(diffData) do
-            if diff ~= 0 then
-                local verb = 'gained'
-                local amount = diff
-
-                if diff < 0 then
-                    verb = 'lost'
-                    amount = -diff
-                end
-
-                local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
-                local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
-
-                local playerData = ns.knownPlayers:get(guid)
-
-                ns.debug(string.format('%s %s %.2f %s (%s)', playerData.name, verb, amount, string.upper(theMode), baseReasonPretty))
-            end
-        end
-    end
+    ns.Sync:sendEventsToGuild({event})
 end
 
 
-function addon.syncAltEpGp(players)
-    if not ns.cfg.syncAltEp and not ns.cfg.syncAltGp then
-        return
-    end
+---@param playerGuid string
+---@return string
+function addon.getLastUpdatedToon(playerGuid)
+    local mostRecentGuid = playerGuid
 
-    if players ~= nil then
-        for _, playerGuid in ipairs(players) do
-            local playerStandings = ns.standings:get(playerGuid)
-            local playerData = ns.knownPlayers:get(playerGuid)
-            local player = playerData.name
+    local playerData = ns.knownPlayers:get(playerGuid)
+    local player = playerData.name
 
-            local main = ns.db.altData.altMainMapping[player]
+    local main = ns.db.altData.altMainMapping[player]
 
-            if main ~= nil then
-                local alts = ns.db.altData.mainAltMapping[main]
+    if main ~= nil then
+        local alts = ns.db.altData.mainAltMapping[main]
 
-                if alts ~= nil then
-                    for _, alt in ipairs(alts) do
-                        if alt ~= player then
-                            local altGuid = ns.Lib.getPlayerGuid(alt)
-                            local altStandings = ns.standings:get(altGuid)
+        if alts ~= nil then
+            local playerLastUpdated = ns.playersLastUpdated:get(playerGuid)
 
-                            if altStandings ~= nil then
-                                if ns.cfg.syncAltEp then
-                                    altStandings.ep = playerStandings.ep
-                                end
+            local mostRecentTs = playerLastUpdated
+            for _, alt in ipairs(alts) do
+                if alt ~= player then
+                    local altGuid = ns.Lib.getPlayerGuid(alt)
 
-                                if ns.cfg.syncAltGp then
-                                    altStandings.gp = playerStandings.gp
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    else
-        local synced = Set:new()
-
-        for _, eventAndHash in ipairs(ns.db.history) do
-            local event = eventAndHash[1]
-            players = event[3]
-
-            for _, playerGuid in ipairs(players) do
-                local playerStandings = ns.standings:get(playerGuid)
-                local playerData = ns.knownPlayers:get(playerGuid)
-
-                if playerData ~= nil then
-                    local player = playerData.name
-
-                    if not synced:contains(player) then
-                        synced:add(player)
-
-                        local main = ns.db.altData.altMainMapping[player]
-
-                        if main ~= nil then
-                            local alts = ns.db.altData.mainAltMapping[main]
-
-                            if alts ~= nil then
-                                for _, alt in ipairs(alts) do
-                                    if alt ~= player then
-                                        local altGuid = ns.Lib.getPlayerGuid(alt)
-                                        local altStandings = ns.standings:get(altGuid)
-
-                                        if altStandings ~= nil then
-                                            if ns.cfg.syncAltEp then
-                                                altStandings.ep = playerStandings.ep
-                                            end
-
-                                            if ns.cfg.syncAltGp then
-                                                altStandings.gp = playerStandings.gp
-                                            end
-                                        end
-
-                                        synced:add(alt)
-                                    end
-                                end
-                            end
-                        end
+                    local altLastUpdated = ns.playersLastUpdated:get(altGuid)
+                    if altLastUpdated ~= nil and (mostRecentTs == nil or altLastUpdated > mostRecentTs) then
+                        mostRecentTs = altLastUpdated
+                        mostRecentGuid = altGuid
                     end
                 end
             end
         end
     end
+
+    return mostRecentGuid
 end
 
 

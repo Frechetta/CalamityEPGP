@@ -42,9 +42,9 @@ function Comm:registerHandler(msgType, func)
         error('func must be a function')
     end
 
-    if self.funcs[msgType] ~= nil then
-        error(('message type %s already has a registered function'):format(self.msgTypeNames[msgType]))
-    end
+    -- if self.funcs[msgType] ~= nil then
+    --     error(('message type %s already has a registered function'):format(self.msgTypeNames[msgType]))
+    -- end
 
     self.funcs[msgType] = func
 end

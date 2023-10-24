@@ -1,5 +1,6 @@
 local addonName, ns = ...  -- Namespace
 
+local Dict = ns.Dict
 local Set = ns.Set
 
 local HistoryWindow = {
@@ -377,7 +378,7 @@ function HistoryWindow:filterData()
         end
 
         if keep then
-            tinsert(self.data.rows, row)
+            tinsert(self.data.rows, 1, row)
         end
     end
 end
@@ -415,13 +416,14 @@ function HistoryWindow:getData(callback)
         local value = event[5]
         local reason = event[6]
         local percent = event[7]
+        local minGp = event[8]
 
         local newPlayers = {}
         for _, guidShort in ipairs(players) do
             tinsert(newPlayers, ns.Lib.getFullPlayerGuid(guidShort))
         end
 
-        self:getFormattedReason(reason, function(reason, prettyReason)
+        self:getFormattedReason(reason, function(reason, prettyReason, reasonType)
             local row = {
                 time,
                 issuedBy,
@@ -429,12 +431,11 @@ function HistoryWindow:getData(callback)
                 value,
                 reason,
                 percent,
-                {baseReason = prettyReason, players = newPlayers}
+                minGp,
+                {baseReason = prettyReason, players = newPlayers, reasonType = reasonType}
             }
 
-            ns.Lib.bininsert(self.data.rowsRaw, row, function(left, right)
-                return left[1] > right[1]
-            end)
+            tinsert(self.data.rowsRaw, row)
 
             eventsProcessed = eventsProcessed + 1
             if eventsProcessed == numEvents then
@@ -449,7 +450,7 @@ end
 ---@param callback function
 function HistoryWindow:getFormattedReason(reason, callback)
     if reason == nil then
-        callback(nil, nil)
+        callback()
         return
     end
 
@@ -472,7 +473,7 @@ function HistoryWindow:getFormattedReason(reason, callback)
         if itemId then
             ns.Lib.getItemInfo(itemId, function(itemInfo)
                 if itemInfo == nil then
-                    callback(nil, nil)
+                    callback()
                     return
                 end
 
@@ -483,7 +484,7 @@ function HistoryWindow:getFormattedReason(reason, callback)
                     reason = reason + ' [BENCH]'
                 end
 
-                callback(reason, prettyReason)
+                callback(reason, prettyReason, reasonType)
             end)
             return
         end
@@ -504,7 +505,7 @@ function HistoryWindow:getFormattedReason(reason, callback)
         reason = reason .. ' [BENCH]'
     end
 
-    callback(reason, prettyReason)
+    callback(reason, prettyReason, reasonType)
 end
 
 
@@ -523,15 +524,7 @@ function HistoryWindow:getRenderedData()
             {'PR Delta', 'RIGHT'},
         }
 
-        local playerValsTracker = {}
-        for guid, playerData in ns.standings:iter() do
-            if playerValsTracker[guid] == nil then
-                playerValsTracker[guid] = {}
-            end
-
-            playerValsTracker[guid]['EP'] = playerData.ep
-            playerValsTracker[guid]['GP'] = playerData.gp
-        end
+        local mockStandings = Dict:new()
 
         for _, row in ipairs(self.data.rowsRaw) do
             local time = row[1]
@@ -540,16 +533,25 @@ function HistoryWindow:getRenderedData()
             local value = row[4]
             local reason = row[5]
             local percent = row[6]
+            local minGp = row[7]
 
-            local metadata = row[7]
+            local metadata = row[8]
             local baseReason = metadata.baseReason
             local players = metadata.players
+
+            local mains = Set:new()
 
             for _, playerGuid in ipairs(players) do
                 local playerData = ns.knownPlayers:get(playerGuid)
 
                 if playerData ~= nil then
                     local player = playerData.name
+
+                    local playerStandings = mockStandings:get(player)
+                    if playerStandings == nil then
+                        playerStandings = ns.addon.createStandingsEntry()
+                        mockStandings:set(player, playerStandings)
+                    end
 
                     -- get action
                     local valueStr = tostring(value)
@@ -560,45 +562,44 @@ function HistoryWindow:getRenderedData()
                     local action = string.format('%s %s', actionMode, valueStr)
 
                     -- get ep, gp, pr deltas
-                    local standings = playerValsTracker[playerGuid]
+                    local epBefore = playerStandings[ns.consts.MODE_EP]
+                    local gpBefore = playerStandings[ns.consts.MODE_GP]
+
+                    local epAfter
+                    local gpAfter
 
                     local epDelta
                     local gpDelta
 
-                    local epAfter = standings['EP']
-                    local gpAfter = standings['GP']
+                    local oldValue = playerStandings[mode]
+                    local newValue
 
-                    local epBefore = epAfter
-                    local gpBefore = gpAfter
+                    if percent then
+                        -- value is expected to be something like -10, meaning decrease by 10%
+                        local multiplier = (100 + value) / 100
+                        newValue = oldValue * multiplier
+                    else
+                        newValue = oldValue + value
+                    end
+
+                    if mode == ns.consts.MODE_GP and newValue < minGp then
+                        newValue = minGp
+                    end
+
+                    playerStandings[mode] = newValue
 
                     if mode == ns.consts.MODE_EP then
-                        if percent then
-                            local multiplier = (100 - value) / 100
-                            epBefore = epAfter * multiplier
-                        else
-                            epBefore = epBefore - value
-                        end
+                        epAfter = newValue
+                        gpAfter = gpBefore
 
-                        epDelta = string.format('%.2f -> %.2f', epBefore, epAfter)
-                    end
+                        epDelta = ('%.2f -> %.2f'):format(oldValue, newValue)
+                        gpDelta = ('%.2f'):format(gpBefore)
+                    elseif mode == ns.consts.MODE_GP then
+                        epAfter = epBefore
+                        gpAfter = newValue
 
-                    if mode == ns.consts.MODE_GP then
-                        if percent then
-                            local multiplier = (100 - value) / 100
-                            gpBefore = gpAfter * multiplier
-                        else
-                            gpBefore = gpBefore - value
-                        end
-
-                        gpDelta = string.format('%.2f -> %.2f', gpBefore, gpAfter)
-                    end
-
-                    if epDelta == nil then
-                        epDelta = string.format('%.2f', epAfter)
-                    end
-
-                    if gpDelta == nil then
-                        gpDelta = string.format('%.2f', gpAfter)
+                        epDelta = ('%.2f'):format(epBefore)
+                        gpDelta = ('%.2f -> %.2f'):format(oldValue, newValue)
                     end
 
                     local prAfter = epAfter / gpAfter
@@ -619,8 +620,35 @@ function HistoryWindow:getRenderedData()
 
                     tinsert(self.data.rowsRendered, newRow)
 
-                    standings['EP'] = epBefore
-                    standings['GP'] = gpBefore
+                    local main = ns.db.altData.altMainMapping[player]
+                    if main ~= nil then
+                        mains:add(main)
+                    end
+                end
+            end
+
+            -- sync alts
+            if ns.cfg.syncAltEp or ns.cfg.syncAltGp then
+                for main in mains:iter() do
+                    local mainStandings = mockStandings:get(main)
+                    local alts = ns.db.altData.mainAltMapping[main]
+                    if alts ~= nil then
+                        for _, alt in ipairs(alts) do
+                            local altStandings = mockStandings:get(alt)
+                            if altStandings == nil then
+                                altStandings = ns.addon.createStandingsEntry()
+                                mockStandings:set(alt, altStandings)
+                            end
+
+                            if ns.cfg.syncAltEp then
+                                altStandings.ep = mainStandings.ep
+                            end
+
+                            if ns.cfg.syncAltGp then
+                                altStandings.gp = mainStandings.gp
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -641,7 +669,7 @@ function HistoryWindow:getRenderedData()
             local reason = row[5]
             local percent = row[6]
 
-            local metadata = row[7]
+            local metadata = row[8]
             local baseReason = metadata.baseReason
             local players = metadata.players
 
