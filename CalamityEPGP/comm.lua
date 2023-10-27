@@ -1,7 +1,7 @@
 local _, ns = ...  -- Namespace
 
 local Comm = {
-    prefix = 'calepgp',
+    prefix = 'calee',
     msgTypes = {
         HEARTBEAT = 0,
         ROLL_PASS = 1,

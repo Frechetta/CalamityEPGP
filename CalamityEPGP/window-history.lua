@@ -435,7 +435,13 @@ function HistoryWindow:getData(callback)
                 {baseReason = prettyReason, players = newPlayers, reasonType = reasonType}
             }
 
-            tinsert(self.data.rowsRaw, row)
+            ns.Lib.bininsert(self.data.rowsRaw, row, function(left, right)
+                if left[1] ~= right[1] then
+                    return left[1] < right[1]
+                end
+
+                return left[3] > right[3]
+            end)
 
             eventsProcessed = eventsProcessed + 1
             if eventsProcessed == numEvents then
@@ -618,7 +624,17 @@ function HistoryWindow:getRenderedData()
                         {baseReason = baseReason}
                     }
 
-                    tinsert(self.data.rowsRendered, newRow)
+                    ns.Lib.bininsert(self.data.rowsRendered, newRow, function(left, right)
+                        if left[1] ~= right[1] then
+                            return left[1] < right[1]
+                        end
+
+                        if left[5] ~= right[5] then
+                            return left[5] > right[5]
+                        end
+
+                        return left[3] > right[3]
+                    end)
 
                     local main = ns.db.altData.altMainMapping[player]
                     if main ~= nil then
