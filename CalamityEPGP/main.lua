@@ -712,21 +712,23 @@ function addon:computeStandingsWithEvents(events, callback)
             for playerName in pairs(ns.db.altData.mainAltMapping) do
                 local playerGuid = ns.Lib.playerNameToGuid[playerName]
 
-                local mostRecentGuid = self.getLastUpdatedToon(playerGuid)
+                if playerGuid ~= nil then
+                    local mostRecentGuid = self.getLastUpdatedToon(playerGuid)
 
-                for _, toon in ipairs(ns.db.altData.mainAltMapping[playerName]) do
-                    local toonGuid = ns.Lib.playerNameToGuid[toon]
+                    for _, toon in ipairs(ns.db.altData.mainAltMapping[playerName]) do
+                        local toonGuid = ns.Lib.playerNameToGuid[toon]
 
-                    if toonGuid ~= mostRecentGuid and ns.standings:contains(toonGuid) and ns.standings:contains(mostRecentGuid) then
-                        local toonStandings = ns.standings:get(toonGuid)
-                        local mostRecentStandings = ns.standings:get(mostRecentGuid)
+                        if toonGuid ~= mostRecentGuid and ns.standings:contains(toonGuid) and ns.standings:contains(mostRecentGuid) then
+                            local toonStandings = ns.standings:get(toonGuid)
+                            local mostRecentStandings = ns.standings:get(mostRecentGuid)
 
-                        if ns.cfg.syncAltEp then
-                            toonStandings.ep = mostRecentStandings.ep
-                        end
+                            if ns.cfg.syncAltEp then
+                                toonStandings.ep = mostRecentStandings.ep
+                            end
 
-                        if ns.cfg.syncAltGp then
-                            toonStandings.gp = mostRecentStandings.gp
+                            if ns.cfg.syncAltGp then
+                                toonStandings.gp = mostRecentStandings.gp
+                            end
                         end
                     end
                 end
