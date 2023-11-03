@@ -691,6 +691,19 @@ function addon:computeStandingsWithEvents(events, callback)
             end
         end
 
+        -- remove players with 0 EP and min GP that aren't in the guild
+        local toRemove = Set:new()
+        for guid, playerStandings in ns.standings:iter() do
+            local playerData = ns.knownPlayers:get(guid)
+
+            if playerData == nil or (playerStandings[ns.consts.MODE_EP] == 0 and playerStandings[ns.consts.MODE_GP] == ns.cfg.gpBase and not playerData.inGuild) then
+                toRemove:add(guid)
+            end
+        end
+        for guid in toRemove:iter() do
+            ns.standings:remove(guid)
+        end
+
         local function finalize()
             if not ns.cfg.syncAltEp and not ns.cfg.syncAltGp then
                 return
