@@ -309,33 +309,40 @@ function LootDistWindow:handleRoll(roller, roll, rollType)
     end
 
     local rollerGuid = ns.Lib.getPlayerGuid(roller)
-    local charData = ns.db.standings[rollerGuid]
-    local priority = tonumber(string.format("%.3f", charData.ep / charData.gp))
 
-    -- local newRoll = false
+    ns.Lib.getPlayerInfo(rollerGuid, function(playerData)
+        local playerStandings = ns.standings:get(rollerGuid)
+        if playerStandings == nil then
+            playerStandings = ns.addon.createStandingsEntry(rollerGuid)
+        end
+        local priority = tonumber(string.format("%.3f", playerStandings.ep / playerStandings.gp))
+        local inGuild = playerData.inGuild
 
-    if self.data.rolls[roller] == nil then
-        self.data.rolls[roller] = {}
-        -- newRoll = true
-    end
+        -- local newRoll = false
 
-    local rollerData = self.data.rolls[roller]
+        if self.data.rolls[roller] == nil then
+            self.data.rolls[roller] = {}
+            -- newRoll = true
+        end
 
-    if rollerData[rollType] == nil then
-        rollerData[rollType] = roll
-    end
+        local rollerData = self.data.rolls[roller]
 
-    roll = rollerData[rollType]
+        if rollerData[rollType] == nil then
+            rollerData[rollType] = roll
+        end
 
-    rollerData.guid = rollerGuid
-    rollerData.type = rollType
-    rollerData.pr = priority
-    rollerData.inGuild = charData.inGuild
+        roll = rollerData[rollType]
 
-    -- TODO: don't print if roll is already there unless response is changed
-    ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
+        rollerData.guid = rollerGuid
+        rollerData.type = rollType
+        rollerData.pr = priority
+        rollerData.inGuild = inGuild
 
-    self:setData()
+        -- TODO: don't print if roll is already there unless response is changed
+        ns.printPublic(roller .. ': ' .. rollType .. ', PR: ' .. priority .. ', Roll: ' .. roll)
+
+        self:setData()
+    end)
 end
 
 
@@ -479,7 +486,7 @@ function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
 			ns.print('Could\'nt award ' .. itemLink .. ' to ' .. awardee .. ' as they are not eligible')
             return
 		end
-    elseif awardee == UnitName('player') then
+    elseif awardee == ns.unitName('player') then
         -- item is in inventory and was awarded to me
         self:successfulAward(itemLink, awardee)
     else
@@ -531,7 +538,7 @@ function LootDistWindow:handleLootReceived(itemLink, player)
     -- I received the item
     if player == 'You' then
         ns.debug('i received ' .. itemLink)
-        local myName = UnitName('player')
+        local myName = ns.unitName('player')
 
         -- iterate over awarded items for ones that haven't been collected
         for awardedPlayer, awardedItem in pairs(awardedData) do
@@ -584,7 +591,7 @@ end
 
 
 function LootDistWindow:handleTradeShow()
-	local player, _ = UnitName('npc')
+	local player, _ = ns.unitName('npc')
 
 	self.trading.player = player
 

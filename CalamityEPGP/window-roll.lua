@@ -72,7 +72,7 @@ function RollWindow:createWindow()
     mainFrame.passButton:SetScript('OnClick', function()
         RollWindow:hide()
 
-        ns.LootDistWindow:handlePass(UnitName('player'))
+        ns.LootDistWindow:handlePass(ns.unitName('player'))
 
         ns.Comm:sendRollPass()
     end)

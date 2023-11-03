@@ -8,6 +8,41 @@ local Lib = {
 ns.Lib = Lib
 
 
+---@param o1 any|table First object to compare
+---@param o2 any|table Second object to compare
+---@param ignore_mt boolean True to ignore metatables (a recursive function to tests tables inside tables)
+function Lib.equals(o1, o2, ignore_mt)
+    if o1 == o2 then return true end
+    local o1Type = type(o1)
+    local o2Type = type(o2)
+    if o1Type ~= o2Type then return false end
+    if o1Type ~= 'table' then return false end
+
+    if not ignore_mt then
+        local mt1 = getmetatable(o1)
+        if mt1 and mt1.__eq then
+            --compare using built in method
+            return o1 == o2
+        end
+    end
+
+    local keySet = {}
+
+    for key1, value1 in pairs(o1) do
+        local value2 = o2[key1]
+        if value2 == nil or Lib.equals(value1, value2, ignore_mt) == false then
+            return false
+        end
+        keySet[key1] = true
+    end
+
+    for key2, _ in pairs(o2) do
+        if not keySet[key2] then return false end
+    end
+    return true
+end
+
+
 ---@param container table | string
 ---@param value any
 ---@return number
@@ -22,7 +57,7 @@ function Lib.find(container, value)
 
     if type(container) == 'table' then
         for i, v in ipairs(container) do
-            if v == value then
+            if Lib.equals(v, value, false) then
                 return i
             end
         end
@@ -48,7 +83,7 @@ function Lib.contains(container, value)
     if type(container) == 'table' and #container == 0 then
         -- dict or empty list
         for k in pairs(container) do
-            if k == value then
+            if Lib.equals(k, value, false) then
                 return true
             end
         end
@@ -129,7 +164,7 @@ function Lib.getPlayerGuid(playerName)
     local guid = Lib.playerNameToGuid[playerName]
 
     if guid == nil then
-        guid = UnitGUID(playerName)
+        guid = ns.unitGuid(playerName)
         Lib.playerNameToGuid[playerName] = guid
     end
 
@@ -390,9 +425,9 @@ function Lib.bininsert(t, value, fcomp)
 
 function Lib.getPlayerClassColor(player)
     local playerGuid = Lib.getPlayerGuid(player)
-    local playerData = ns.db.standings[playerGuid]
+    local playerData = ns.knownPlayers:get(playerGuid)
 
-    return RAID_CLASS_COLORS[playerData.classFileName]
+    return RAID_CLASS_COLORS[playerData.classFilename]
 end
 
 
@@ -541,7 +576,7 @@ end
 ---@return boolean
 function Lib.isOfficer(player)
     if player == nil then
-        player = UnitName('player')
+        player = ns.unitName('player')
     end
 
     local playerGuid = Lib.getPlayerGuid(player)
@@ -549,12 +584,12 @@ function Lib.isOfficer(player)
         return false
     end
 
-    local charData = ns.db.standings[playerGuid]
-    if charData == nil then
+    local playerData = ns.knownPlayers:get(playerGuid)
+    if playerData == nil then
         return false
     end
 
-    local rankIndex = charData.rankIndex
+    local rankIndex = playerData.rankIndex
     if rankIndex == nil then
         return false
     end
@@ -786,4 +821,52 @@ function Lib.getSpecName(class, specIndex)
     assert(type(specIndex) == 'number' and specIndex > 0 and specIndex < 4, 'specIndex is not a valid number (1-3)')
 
     return specs[specIndex]
+end
+
+
+---@param guid string
+---@param callback function?
+function Lib.getPlayerInfo(guid, callback)
+    callback = callback or function(_) end
+
+    local playerData = ns.knownPlayers:get(guid)
+    if playerData ~= nil then
+        callback(playerData)
+        return
+    end
+
+    local _, classFilename, _, _, _, name, _ = GetPlayerInfoByGUID(guid)
+    if name ~= nil and #name > 0 then
+        playerData = Lib.createKnownPlayer(guid, name, classFilename, false, nil)
+        callback(playerData)
+        return
+    elseif name == nil then
+        C_Timer.After(0.2, function() Lib.getPlayerInfo(guid, callback) end)
+        return
+    end
+
+    callback(nil)
+end
+
+
+---@param guid string
+---@param name string
+---@param classFilename string
+---@param inGuild boolean
+---@param rankIndex integer?
+---@return table
+function Lib.createKnownPlayer(guid, name, classFilename, inGuild, rankIndex)
+    local playerData = {
+        guid = guid,
+        name = name,
+        classFilename = classFilename,
+        inGuild = inGuild,
+        rankIndex = rankIndex,
+    }
+
+    ns.knownPlayers:set(guid, playerData)
+
+    Lib.playerNameToGuid[name] = guid
+
+    return playerData
 end

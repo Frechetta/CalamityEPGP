@@ -27,9 +27,6 @@ sed -i "s/calepgp/calee/g" "$build_addon_dir/comm.lua"
 
 version=$(grep '## Version:' "$toc_file" | grep -oP '\d+\.\d+\.\d+')
 
-api_version=$(grep '## Interface:' "$toc_file" | grep -oP '\d+')
-game_version=$(curl -H "X-Api-Token: $CURSEFORGE_API_TOKEN" "https://wow.curseforge.com/api/game/versions" 2>/dev/null | jq -r ".[] | select(.apiVersion == \"$api_version\").id")
-
 zip_file="$build_dir/$experimental_addon_name-$version.zip"
 
 cd "$root_dir"
@@ -61,11 +58,13 @@ done < CHANGELOG.md
 changelog=$(sed -e '/[^[:space:]]/,$!d' -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' "$changelog_file")
 echo "$changelog" > "$changelog_file"
 
+game_versions="9641,9894,10272"
+
 # CURSEFORGE
 metadata=$(jq -n \
                 --arg changelog "$changelog" \
-                --arg gameVersion "$game_version" \
-                '{changelog: $changelog, changelogType: "markdown", gameVersions: [$gameVersion | tonumber], releaseType: "beta"}')
+                --arg game_versions "$game_versions" \
+                '{changelog: $changelog, changelogType: "markdown", gameVersions: $game_versions | split(",") | map(tonumber), releaseType: "beta"}')
 
 curl --http1.1 \
     -H "X-Api-Token: $CURSEFORGE_API_TOKEN" \

@@ -1,5 +1,38 @@
 loadfile('test/setup.lua')(spy, stub, mock)
 
+local match = require('luassert.match')
+
+local function unordered_table(state, arguments)
+    local expected = arguments[1]
+
+    local expectedMap = {}
+    for _, item in ipairs(expected) do
+        expectedMap[item] = true
+    end
+
+    assert(type(expected) == 'table')
+
+    return function(actual)
+        if type(actual) ~= 'table' then
+            return false
+        end
+
+        if #expected ~= #actual then
+            return false
+        end
+
+        for _, item in ipairs(actual) do
+            if expectedMap[item] == nil then
+                return false
+            end
+        end
+
+        return true
+    end
+end
+
+assert:register('matcher', 'unordered_table', unordered_table)
+
 
 describe('confirm', function()
     local ns
@@ -13,13 +46,6 @@ describe('confirm', function()
     before_each(function()
         ns = {
             cfg = {},
-            db = {
-                standings = {
-                    {guid = 'p1_guid'},
-                    {guid = 'p2_guid'},
-                    {guid = 'p3_guid'},
-                },
-            },
         }
 
         Util:loadModule('constants', ns)
@@ -28,6 +54,12 @@ describe('confirm', function()
         Util:loadModule('datatypes', ns)
         Util:loadModule('window-decay-epgp', ns)
         Util:loadModule('main', ns)
+
+        ns.standings = ns.Dict:new({
+            p1_guid = {guid = 'p1_guid'},
+            p2_guid = {guid = 'p2_guid'},
+            p3_guid = {guid = 'p3_guid'},
+        })
 
         dew = ns.DecayEpgpWindow
 
@@ -137,8 +169,8 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -10, '2:because', true)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'ep', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'gp', -10, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
@@ -152,8 +184,8 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', 1000, '2:because', true)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', 1000, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'ep', 1000, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'gp', 1000, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
@@ -167,8 +199,8 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -100, '2:because', true)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -100, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'ep', -100, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'gp', -100, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)
@@ -182,8 +214,8 @@ describe('confirm', function()
         dew:confirm()
 
         assert.stub(ns.addon.modifyEpgp).was.called(2)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'ep', -10, '2:because', true)
-        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, {'p1_guid', 'p2_guid', 'p3_guid'}, 'gp', -15, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'ep', -10, '2:because', true)
+        assert.stub(ns.addon.modifyEpgp).was.called_with(ns.addon, match.unordered_table({'p1_guid', 'p2_guid', 'p3_guid'}), 'gp', -15, '2:because', true)
 
         assert.stub(dew.hide).was.called(1)
     end)

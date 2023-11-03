@@ -17,6 +17,78 @@ describe('lib', function()
         Lib = nil
     end)
 
+    describe('equals', function()
+        describe('number', function()
+            test('same not ignore', function()
+                assert.is_true(Lib.equals(23, 23, false))
+            end)
+
+            test('same ignore', function()
+                assert.is_true(Lib.equals(23, 23, true))
+            end)
+
+            test('different not ignore', function()
+                assert.is_false(Lib.equals(23, 59, false))
+            end)
+
+            test('different ignore', function()
+                assert.is_false(Lib.equals(23, 59, true))
+            end)
+        end)
+
+        describe('string', function()
+            test('same not ignore', function()
+                assert.is_true(Lib.equals('hello', 'hello', false))
+            end)
+
+            test('same ignore', function()
+                assert.is_true(Lib.equals('hello', 'hello', true))
+            end)
+
+            test('different not ignore', function()
+                assert.is_false(Lib.equals('hello', 'hola', false))
+            end)
+
+            test('different ignore', function()
+                assert.is_false(Lib.equals('hello', 'hola', true))
+            end)
+        end)
+
+        describe('table', function()
+            test('basic same not ignore', function()
+                assert.is_true(Lib.equals({5, 6, 7}, {5, 6, 7}, false))
+            end)
+
+            test('basic same ignore', function()
+                assert.is_true(Lib.equals({5, 6, 7}, {5, 6, 7}, true))
+            end)
+
+            test('basic different not ignore', function()
+                assert.is_false(Lib.equals({5, 6, 7}, {7, 8}, false))
+            end)
+
+            test('basic different ignore', function()
+                assert.is_false(Lib.equals({5, 6, 7}, {7, 8}, true))
+            end)
+
+            test('complex same not ignore', function()
+                assert.is_true(Lib.equals({five = 5, six = 'six', seven = {7}}, {five = 5, six = 'six', seven = {7}}, false))
+            end)
+
+            test('complex same ignore', function()
+                assert.is_true(Lib.equals({five = 5, six = 'six', seven = {7}}, {five = 5, six = 'six', seven = {7}}, true))
+            end)
+
+            test('complex different not ignore', function()
+                assert.is_false(Lib.equals({five = 5, six = 'six', seven = {7}}, {five = 5, seven = {7}}, false))
+            end)
+
+            test('complex different ignore', function()
+                assert.is_false(Lib.equals({five = 5, six = 'six', seven = {7}}, {five = 5, seven = {7}}, true))
+            end)
+        end)
+    end)
+
     describe('find', function()
         test('container valid; value nil', function()
             assert.has_error(function() Lib.find({1, 2}, nil) end, 'value argument must not be nil')
@@ -675,6 +747,58 @@ describe('lib', function()
 
         test('unknown', function()
             assert.has.errors(function() Lib.getEventReason(5, 'derp') end)
+        end)
+    end)
+
+    describe('createKnownPlayer', function()
+        before_each(function()
+            ns.knownPlayers = ns.Dict:new()
+            Lib.playerNameToGuid = {}
+        end)
+
+        after_each(function()
+            ns.knownPlayers = nil
+            Lib.playerNameToGuid = nil
+        end)
+
+        test('empty knownPlayers new', function()
+            local playerData = Lib.createKnownPlayer('p1_guid', 'p1', 'DERP', true, 5)
+
+            local expectedPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = true, rankIndex = 5}
+
+            assert.same(expectedPlayerData, playerData)
+            assert.same({p1_guid = expectedPlayerData}, ns.knownPlayers._dict)
+            assert.same({p1 = 'p1_guid'}, Lib.playerNameToGuid)
+        end)
+
+        test('populated knownPlayers new', function()
+            local existingPlayerData = {guid = 'p2_guid', name = 'p2', classFilename = 'HERP', inGuild = true, rankIndex = 4}
+
+            ns.knownPlayers:set('p2_guid', existingPlayerData)
+            Lib.playerNameToGuid.p2 = 'p2_guid'
+
+            local playerData = Lib.createKnownPlayer('p1_guid', 'p1', 'DERP', true, 5)
+
+            local expectedPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = true, rankIndex = 5}
+
+            assert.same(expectedPlayerData, playerData)
+            assert.same({p1_guid = expectedPlayerData, p2_guid = existingPlayerData}, ns.knownPlayers._dict)
+            assert.same({p1 = 'p1_guid', p2 = 'p2_guid'}, Lib.playerNameToGuid)
+        end)
+
+        test('populated knownPlayers overwrite', function()
+            local existingPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = false, rankIndex = nil}
+
+            ns.knownPlayers:set('p1_guid', existingPlayerData)
+            Lib.playerNameToGuid.p1 = 'p1_guid'
+
+            local playerData = Lib.createKnownPlayer('p1_guid', 'p1', 'DERP', true, 5)
+
+            local expectedPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = true, rankIndex = 5}
+
+            assert.same(expectedPlayerData, playerData)
+            assert.same({p1_guid = expectedPlayerData}, ns.knownPlayers._dict)
+            assert.same({p1 = 'p1_guid'}, Lib.playerNameToGuid)
         end)
     end)
 end)
