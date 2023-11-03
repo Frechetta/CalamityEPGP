@@ -56,7 +56,6 @@ function addon:OnInitialize()
 
     self.versionNum = ns.Lib.getVersionNum(self.version)
 
-
     self.initializing = false
     self.preinitialized = false
     self.initialized = false
@@ -68,7 +67,7 @@ function addon:OnInitialize()
         INFO = '!ceinfo',
     }
 
-    ns.minSyncVersion = ns.Lib.getVersionNum('0.18.0')
+    ns.minSyncVersion = ns.Lib.getVersionNum('0.19.0')
 
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
 
