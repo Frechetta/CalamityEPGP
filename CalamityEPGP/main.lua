@@ -445,6 +445,12 @@ function addon.migrateData()
         ns.db.historyVersion = 3
     end
 
+    if ns.db.historyVersion == 3 then
+        ns.debug('migrating history to v4 (removing history)')
+        ns.db.history = {}
+        ns.db.historyVersion = 4
+    end
+
     -- GP SLOT MODIFIERS
     if not ns.db.slotModifiersVersion then
         ns.debug('migrating slot modifiers to v1')
