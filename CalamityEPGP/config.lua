@@ -4,6 +4,7 @@ local List = ns.List
 local Set = ns.Set
 
 local Config = {
+    initialized = false,
     altManagementMenuInitialized = false,
     defaults = {
         lmMode = false,
@@ -39,6 +40,10 @@ Config.aceConfigDialog = LibStub("AceConfigDialog-3.0")
 
 
 function Config:init()
+    if self.initialized then
+        return
+    end
+
     local menus = {
         root = {
             name = addonName,
@@ -162,6 +167,8 @@ function Config:init()
     self:addOptionsMenu(addonName .. '_LootDistribution', menus.lootDistribution, addonName)
     self:addOptionsMenu(addonName .. '_GpManagement', menus.gpManagement, addonName)
     self:addOptionsMenu(addonName .. '_Advanced', menus.advanced, addonName)
+
+    self.initialized = true
 end
 
 
@@ -313,26 +320,30 @@ function Config:setAltManagementData()
         rows = {}
     }
 
-    for _, playerData in pairs(ns.db.standings) do
-        local player = playerData.name
+    for guid in ns.standings:iter() do
+        local playerData = ns.knownPlayers:get(guid)
 
-        local main_alt = 'Unknown'
-        if self.mains:contains(player) then
-            main_alt = 'Main'
+        if playerData ~= nil then
+            local player = playerData.name
+
+            local main_alt = 'Unknown'
+            if self.mains:contains(player) then
+                main_alt = 'Main'
+            end
+            if self.alts:contains(player) then
+                main_alt = 'Alt'
+            end
+
+            local row = {
+                player,
+                main_alt,
+                {color = RAID_CLASS_COLORS[playerData.classFilename]}
+            }
+
+            ns.Lib.bininsert(data.rows, row, function(left, right)
+                return left[1] < right[1]
+            end)
         end
-        if self.alts:contains(player) then
-            main_alt = 'Alt'
-        end
-
-        local row = {
-            player,
-            main_alt,
-            {color = RAID_CLASS_COLORS[playerData.classFileName]}
-        }
-
-        ns.Lib.bininsert(data.rows, row, function(left, right)
-            return left[1] < right[1]
-        end)
     end
 
     self.data = data
@@ -765,7 +776,8 @@ function Config:showAltSelector(player)
         local alt = addAltWindow.altEditBox:GetText()
 
         local allPlayers = Set:new()
-        for _, playerData in pairs(ns.db.standings) do
+        for guid in ns.standings:iter() do
+            local playerData = ns.knownPlayers:get(guid)
             allPlayers:add(playerData.name)
         end
 

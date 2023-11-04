@@ -42,6 +42,11 @@ function List:len()
     return #self._list
 end
 
+---@return boolean
+function List:isEmpty()
+    return self:len() == 0
+end
+
 ---@param reverse? boolean
 ---@param enumerate? boolean
 ---@return function
@@ -195,6 +200,11 @@ function Set:len()
     return self._len
 end
 
+---@return boolean
+function Set:isEmpty()
+    return self:len() == 0
+end
+
 ---@param item any
 function Set:add(item)
     if self:contains(item) then
@@ -243,6 +253,28 @@ function Set:difference(...)
             newSet:remove(item)
         end
     end
+    return newSet
+end
+
+---@return Set
+function Set:intersection(...)
+    local others = {...}
+
+    local newSet = Set:new()
+
+    for item in self:iter() do
+        local add = true
+        for _, other in ipairs(others) do
+            if not other:contains(item) then
+                add = false
+                break
+            end
+        end
+        if add then
+            newSet:add(item)
+        end
+    end
+
     return newSet
 end
 

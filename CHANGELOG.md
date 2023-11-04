@@ -1,3 +1,10 @@
+# 0.19.0
+
+- treat history as source of truth
+- calculate standings based on history
+- sync history only
+- sync all history, not just most recent events
+
 # 0.18.0
 
 - add capability to decay EP and GP independently

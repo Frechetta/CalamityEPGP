@@ -89,6 +89,23 @@ describe('List', function()
         end)
     end)
 
+    describe('isEmpty', function()
+        test('empty', function()
+            local l = List:new()
+            assert.is_true(l:isEmpty())
+        end)
+
+        test('one element', function()
+            local l = List:new({1})
+            assert.is_false(l:isEmpty())
+        end)
+
+        test('multiple elements', function()
+            local l = List:new({1, 2, 3})
+            assert.is_false(l:isEmpty())
+        end)
+    end)
+
     describe('iter', function()
         test('empty', function()
             local l = List:new()
@@ -718,6 +735,23 @@ describe('Set', function()
         end)
     end)
 
+    describe('len', function()
+        test('empty', function()
+            local s = Set:new()
+            assert.is_true(s:isEmpty())
+        end)
+
+        test('one element', function()
+            local s = Set:new({1})
+            assert.is_false(s:isEmpty())
+        end)
+
+        test('multiple elements', function()
+            local s = Set:new({1, 2, 3})
+            assert.is_false(s:isEmpty())
+        end)
+    end)
+
     describe('add', function()
         test('empty', function()
             local s = Set:new()
@@ -1022,6 +1056,86 @@ describe('Set', function()
             assert.same({
                 [5] = true,
                 [6] = true,
+            }, s._set)
+        end)
+
+        test('multiple others', function()
+            local s1 = Set:new({5, 6, 7, 8})
+            local s2 = Set:new({4, 5, 7, 9})
+            local s3 = Set:new({3, 6, 7, 9})
+            local s = s1:difference(s2, s3)
+            assert.same({
+                [8] = true,
+            }, s._set)
+        end)
+    end)
+
+    describe('intersection', function()
+        test('both empty', function()
+            local s1 = Set:new()
+            local s2 = Set:new()
+            local s = s1:intersection(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('second empty', function()
+            local s1 = Set:new({5, 6, 7})
+            local s2 = Set:new()
+            local s = s1:intersection(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('first empty', function()
+            local s1 = Set:new()
+            local s2 = Set:new({5, 6, 7})
+            local s = s1:intersection(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('first contains second', function()
+            local s1 = Set:new({5, 6, 7, 8})
+            local s2 = Set:new({5, 7})
+            local s = s1:intersection(s2)
+            assert.same({
+                [5] = true,
+                [7] = true,
+            }, s._set)
+        end)
+
+        test('second contains first', function()
+            local s1 = Set:new({5, 7})
+            local s2 = Set:new({5, 6, 7, 8})
+            local s = s1:intersection(s2)
+            assert.same({
+                [5] = true,
+                [7] = true,
+            }, s._set)
+        end)
+
+        test('some elements in common', function()
+            local s1 = Set:new({5, 6, 7, 8})
+            local s2 = Set:new({4, 5, 7, 9})
+            local s = s1:intersection(s2)
+            assert.same({
+                [5] = true,
+                [7] = true,
+            }, s._set)
+        end)
+
+        test('no elements in common', function()
+            local s1 = Set:new({5, 6})
+            local s2 = Set:new({7, 8})
+            local s = s1:intersection(s2)
+            assert.same({}, s._set)
+        end)
+
+        test('multiple others', function()
+            local s1 = Set:new({5, 6, 7, 8})
+            local s2 = Set:new({4, 5, 7, 9})
+            local s3 = Set:new({6, 7, 4, 10})
+            local s = s1:intersection(s2, s3)
+            assert.same({
+                [7] = true,
             }, s._set)
         end)
     end)

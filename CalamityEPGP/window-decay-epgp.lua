@@ -126,11 +126,7 @@ function DecayEpgpWindow:confirm()
 
     local reason = ns.Lib.getEventReason(ns.values.epgpReasons.DECAY, self.mainFrame.reasonEditBox:GetText())
 
-    local players = {}
-
-    for _, charData in pairs(ns.db.standings) do
-        tinsert(players, charData.guid)
-    end
+    local players = ns.standings:keys():toTable()
 
     ns.addon:modifyEpgp(players, ns.consts.MODE_EP, -valueEp, reason, true)
     ns.addon:modifyEpgp(players, ns.consts.MODE_GP, -valueGp, reason, true)
