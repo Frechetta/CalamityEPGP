@@ -74,6 +74,11 @@ function MainWindow:createWindow()
     mainFrame.benchButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 8)
     mainFrame.benchButton:SetWidth(97)
 
+    mainFrame.raidButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.raidButton:SetText('Raid')
+    mainFrame.raidButton:SetPoint('RIGHT', mainFrame.benchButton, 'LEFT', -2, 0)
+    mainFrame.raidButton:SetWidth(97)
+
     mainFrame.tableFrame = ns.Table:new(mainFrame, nil, true, true, nil, self.handleHeaderClick, self.handleRowClick)
     mainFrame.tableFrame:SetPoint('TOP', mainFrame.raidOnlyLabel, 'BOTTOM', 0, -20)
     mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
@@ -90,6 +95,7 @@ function MainWindow:createWindow()
     end)
     mainFrame.mainsOnlyButton:SetScript('OnClick', function() self:filterData(); self:setData() end)
     mainFrame.benchButton:SetScript('OnClick', function() ns.BenchWindow:show() end)
+    mainFrame.raidButton:SetScript('OnClick', function() ns.RaidWindow:show() end)
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 
@@ -193,7 +199,7 @@ function MainWindow:handleAddEpClick()
     ns.ModifyEpgpWindow:hide()
     ns.DecayEpgpWindow:hide()
 
-    ns.AddEpWindow:show()
+    ns.AddEpWindow:show(self:getRaidOnly())
 
     ns.Lib.remove(UISpecialFrames, self.mainFrame:GetName(), true)
 end

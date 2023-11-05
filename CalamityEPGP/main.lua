@@ -418,6 +418,7 @@ function addon:loadRaidRoster()
     end
 
     ns.MainWindow:refresh()
+    ns.RaidWindow:refresh()
 end
 
 
@@ -638,6 +639,7 @@ function addon:computeStandingsWithEvents(events, callback)
                 if i >= ns.standings:len() then
                     finalize()
                     ns.MainWindow:refresh()
+                    ns.RaidWindow:refresh()
                     callback(playerDiffs)
                 end
             end)
@@ -859,6 +861,7 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     end)
 
     ns.MainWindow:refresh()
+    ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
     ns.Sync:sendEventsToGuild({event})
@@ -967,6 +970,7 @@ function addon:clearData()
     self:computeStandings()
 
     ns.MainWindow:refresh()
+    ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
     if IsInGuild() then
