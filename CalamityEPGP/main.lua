@@ -636,8 +636,8 @@ function addon:computeStandingsWithEvents(events, callback)
 
         local i = 0
         for guid in ns.standings:iter() do
-            i = i + 1
             ns.Lib.getPlayerInfo(guid, function(_)
+                i = i + 1
                 if i >= ns.standings:len() then
                     finalize()
                     ns.MainWindow:refresh()
