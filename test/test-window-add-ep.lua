@@ -64,6 +64,7 @@ describe('confirm', function()
         })
 
         aew = ns.AddEpWindow
+        aew.raidOnly = false
 
         amount = nil
         reason = nil
@@ -143,7 +144,7 @@ describe('confirm', function()
         amount = 'hi'
         reason = 'because'
         validValue = false
-        ns.MainWindow:setRaidOnly(true)
+        aew.raidOnly = true
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -188,7 +189,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow:setRaidOnly(true)
+        aew.raidOnly = true
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {}
 
@@ -205,7 +206,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow:setRaidOnly(true)
+        aew.raidOnly = true
         ns.addon.useForRaid = true
         ns.db.benchedPlayers = {}
 
@@ -224,7 +225,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow:setRaidOnly(true)
+        aew.raidOnly = true
         ns.addon.useForRaid = false
         ns.db.benchedPlayers = {'p3'}
 
@@ -242,7 +243,7 @@ describe('confirm', function()
         amount = '45'
         reason = 'because'
         validValue = true
-        ns.MainWindow:setRaidOnly(true)
+        aew.raidOnly = true
         ns.addon.useForRaid = true
         ns.db.benchedPlayers = {'p3'}
 

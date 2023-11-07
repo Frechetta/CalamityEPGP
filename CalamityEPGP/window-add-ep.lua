@@ -1,6 +1,8 @@
 local addonName, ns = ...  -- Namespace
 
-local AddEpWindow = {}
+local AddEpWindow = {
+    raidOnly = false,
+}
 
 ns.AddEpWindow = AddEpWindow
 
@@ -70,15 +72,18 @@ function AddEpWindow:createWindow()
     mainFrame:HookScript('OnHide', function()
         C_Timer.After(0.1, function()
             tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
+            tinsert(UISpecialFrames, ns.RaidWindow.mainFrame:GetName())
         end)
     end)
 
     return mainFrame
 end
 
-function AddEpWindow:show()
+function AddEpWindow:show(raidOnly)
     self:createWindow()
     self.mainFrame:Show()
+
+    self.raidOnly = raidOnly
 
     self.mainFrame.amountEditBox:SetFocus()
 end
@@ -114,14 +119,14 @@ function AddEpWindow:confirm()
         return
     end
 
-    ns.debug(string.format('add %d EP to %s', value, ns.MainWindow:getRaidOnly() and 'raid' or 'everyone'))
+    ns.debug(string.format('add %d EP to %s', value, self.raidOnly and 'raid' or 'everyone'))
 
     local reason = ns.Lib.getEventReason(ns.values.epgpReasons.MANUAL_MULTIPLE, enteredReason)
 
     local proceedFunc
     local numPlayers
 
-    if ns.MainWindow:getRaidOnly() then
+    if self.raidOnly then
         local players = {}
 
         for player in ns.addon.raidRoster:iter() do

@@ -418,6 +418,7 @@ function addon:loadRaidRoster()
     end
 
     ns.MainWindow:refresh()
+    ns.RaidWindow:refresh()
 end
 
 
@@ -561,18 +562,20 @@ function addon:computeStandingsWithEvents(events, callback)
 
                         for _, alt in ipairs(alts) do
                             local altGuid = ns.Lib.getPlayerGuid(alt)
-                            local altStandings = ns.standings:get(altGuid)
-                            if altStandings == nil then
-                                altStandings = self.createStandingsEntry(altGuid)
-                                ns.standings:set(altGuid, altStandings)
-                            end
+                            if altGuid ~= nil then
+                                local altStandings = ns.standings:get(altGuid)
+                                if altStandings == nil then
+                                    altStandings = self.createStandingsEntry(altGuid)
+                                    ns.standings:set(altGuid, altStandings)
+                                end
 
-                            if ns.cfg.syncAltEp then
-                                altStandings.ep = lastUpdatedStandings.ep
-                            end
+                                if ns.cfg.syncAltEp then
+                                    altStandings.ep = lastUpdatedStandings.ep
+                                end
 
-                            if ns.cfg.syncAltGp then
-                                altStandings.gp = lastUpdatedStandings.gp
+                                if ns.cfg.syncAltGp then
+                                    altStandings.gp = lastUpdatedStandings.gp
+                                end
                             end
                         end
                     end
@@ -633,11 +636,12 @@ function addon:computeStandingsWithEvents(events, callback)
 
         local i = 0
         for guid in ns.standings:iter() do
-            i = i + 1
             ns.Lib.getPlayerInfo(guid, function(_)
+                i = i + 1
                 if i >= ns.standings:len() then
                     finalize()
                     ns.MainWindow:refresh()
+                    ns.RaidWindow:refresh()
                     callback(playerDiffs)
                 end
             end)
@@ -859,8 +863,10 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     end)
 
     ns.MainWindow:refresh()
+    ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
+    ns.Sync:computeIndices()
     ns.Sync:sendEventsToGuild({event})
 end
 
@@ -967,6 +973,7 @@ function addon:clearData()
     self:computeStandings()
 
     ns.MainWindow:refresh()
+    ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
     if IsInGuild() then

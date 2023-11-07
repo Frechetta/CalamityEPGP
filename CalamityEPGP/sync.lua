@@ -138,16 +138,13 @@ function Sync.processTimeframeEvent(event, timeframeSeconds, timeframes)
 
     for _, player in ipairs(players) do
         if timeframeData[player] == nil then
-            timeframeData[player] = {ep = 0, gp = 0}
+            timeframeData[player] = {
+                [ns.consts.MODE_EP] = 0,
+                [ns.consts.MODE_GP] = 0
+            }
         end
 
-        if mode == ns.consts.MODE_EP or mode == ns.consts.MODE_BOTH then
-            timeframeData[player].ep = timeframeData[player].ep + value
-        end
-
-        if mode == ns.consts.MODE_GP or mode == ns.consts.MODE_BOTH then
-            timeframeData[player].gp = timeframeData[player].gp + value
-        end
+        timeframeData[player][mode] = timeframeData[player][mode] + value
     end
 end
 
@@ -365,6 +362,20 @@ function Sync.handleSync0(message, sender)
     local myWeeklyHashes = Dict:new(Sync:getWeeklyHashes())
     local myLmSettingsLastChange = ns.db.lmSettingsLastChange
 
+    local parts = {}
+    for weekTs, weekHash in theirWeeklyHashes:iter() do
+        tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
+    end
+    local differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
+    ns.debug('their weekly hashes by week: ' .. differingWeeksStr)
+
+    parts = {}
+    for weekTs, weekHash in myWeeklyHashes:iter() do
+        tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
+    end
+    differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
+    ns.debug('my weekly hashes by week: ' .. differingWeeksStr)
+
     -- if they are an officer, check if I need to ask for data
     if ns.Lib.isOfficer(sender) then
         -- list of weekly timestamps I need from them
@@ -381,9 +392,11 @@ function Sync.handleSync0(message, sender)
     -- if I am an officer, check if I need to send data
     if ns.Lib.isOfficer() then
         -- list of weekly timestamps they need from me
+        local theirMissingWeeksEncoded = Set:new()
         local theirMissingWeeks = Set:new()
         for myWeekTs in myWeeklyHashes:iter() do
             if not theirWeeklyHashes:contains(myWeekTs) then
+                theirMissingWeeksEncoded:add(myWeekTs)
                 theirMissingWeeks:add(ns.Lib.b64Decode(myWeekTs))
             end
         end
@@ -391,7 +404,7 @@ function Sync.handleSync0(message, sender)
         local theyNeedLmSettings = myLmSettingsLastChange > theirLmSettingsLastChange
 
         if not theirMissingWeeks:isEmpty() or theyNeedLmSettings then
-            ns.debug(('they\'re missing weeks (%s), sending to %s'):format(table.concat(theirMissingWeeks:toTable(), ', '), sender))
+            ns.debug(('they\'re missing weeks (%s), sending to %s'):format(table.concat(theirMissingWeeksEncoded:toTable(), ', '), sender))
             Sync:sendDataSend(Sync.timeframes.WEEKLY, theirMissingWeeks, theyNeedLmSettings, sender)
         end
     end
