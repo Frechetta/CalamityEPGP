@@ -1,3 +1,7 @@
+# 0.19.1
+
+- minor bug fixes
+
 # 0.19.0
 
 - treat history as source of truth
