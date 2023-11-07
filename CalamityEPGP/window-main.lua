@@ -130,12 +130,24 @@ function MainWindow:show()
 
         self.mainFrame.decayEpgpButton:Disable()
         self.mainFrame.decayEpgpButton:Hide()
+
+        self.mainFrame.benchButton:Disable()
+        self.mainFrame.benchButton:Hide()
+
+        self.mainFrame.raidButton:Disable()
+        self.mainFrame.raidButton:Hide()
     else
         self.mainFrame.addEpButton:Enable()
         self.mainFrame.addEpButton:Show()
 
         self.mainFrame.decayEpgpButton:Enable()
         self.mainFrame.decayEpgpButton:Show()
+
+        self.mainFrame.benchButton:Enable()
+        self.mainFrame.benchButton:Show()
+
+        self.mainFrame.raidButton:Enable()
+        self.mainFrame.raidButton:Show()
     end
 
     self.mainFrame:Show()

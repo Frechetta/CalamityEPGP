@@ -39,7 +39,7 @@ function Comm:registerHandler(msgType, func)
     end
 
     if type(func) ~= 'function' then
-        error('func must be a function')
+        -- error(('func must be a function, not "%s"'):format(type(func)))
     end
 
     -- if self.funcs[msgType] ~= nil then

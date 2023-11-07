@@ -562,18 +562,20 @@ function addon:computeStandingsWithEvents(events, callback)
 
                         for _, alt in ipairs(alts) do
                             local altGuid = ns.Lib.getPlayerGuid(alt)
-                            local altStandings = ns.standings:get(altGuid)
-                            if altStandings == nil then
-                                altStandings = self.createStandingsEntry(altGuid)
-                                ns.standings:set(altGuid, altStandings)
-                            end
+                            if altGuid ~= nil then
+                                local altStandings = ns.standings:get(altGuid)
+                                if altStandings == nil then
+                                    altStandings = self.createStandingsEntry(altGuid)
+                                    ns.standings:set(altGuid, altStandings)
+                                end
 
-                            if ns.cfg.syncAltEp then
-                                altStandings.ep = lastUpdatedStandings.ep
-                            end
+                                if ns.cfg.syncAltEp then
+                                    altStandings.ep = lastUpdatedStandings.ep
+                                end
 
-                            if ns.cfg.syncAltGp then
-                                altStandings.gp = lastUpdatedStandings.gp
+                                if ns.cfg.syncAltGp then
+                                    altStandings.gp = lastUpdatedStandings.gp
+                                end
                             end
                         end
                     end
@@ -864,6 +866,7 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
+    ns.Sync:computeIndices()
     ns.Sync:sendEventsToGuild({event})
 end
 

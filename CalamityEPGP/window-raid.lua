@@ -1,13 +1,12 @@
 local addonName, ns = ...  -- Namespace
 
-local Dict = ns.Dict
-local Set = ns.Set
-
 local RaidWindow = {
     data = {},
 }
 
 ns.RaidWindow = RaidWindow
+
+local Raid = ns.db.raid
 
 
 function RaidWindow:createWindow()
@@ -32,22 +31,34 @@ function RaidWindow:createWindow()
 	mainFrame.title:SetPoint('LEFT', mainFrame.TitleBg, 'LEFT', 5, 0)
 	mainFrame.title:SetText(('%s Raid'):format(addonName))
 
-    mainFrame.addEpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.addEpButton:SetText('Add EP')
-    mainFrame.addEpButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 10, 8)
-    mainFrame.addEpButton:SetWidth(90)
+    mainFrame.startButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.startButton:SetText('Start')
+    mainFrame.startButton:SetPoint('TOP', mainFrame.TitleBg, 'BOTTOM', 0, -10)
+    mainFrame.startButton:SetPoint('RIGHT', mainFrame, 'RIGHT', -10, 0)
+    mainFrame.startButton:SetWidth(70)
+
+    mainFrame.stopButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.stopButton:SetText('Stop')
+    mainFrame.stopButton:SetPoint('TOP', mainFrame.startButton, 'BOTTOM', 0, -3)
+    mainFrame.stopButton:SetWidth(70)
+    mainFrame.stopButton:Disable()
 
     mainFrame.benchButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.benchButton:SetText('Bench')
-    mainFrame.benchButton:SetPoint('BOTTOMRIGHT', mainFrame, 'BOTTOMRIGHT', -15, 8)
-    mainFrame.benchButton:SetWidth(97)
+    mainFrame.benchButton:SetPoint('TOP', mainFrame.stopButton, 'BOTTOM', 0, -3)
+    mainFrame.benchButton:SetWidth(70)
+
+    mainFrame.addEpButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.addEpButton:SetText('Add EP')
+    mainFrame.addEpButton:SetPoint('TOP', mainFrame.benchButton, 'BOTTOM', 0, -3)
+    mainFrame.addEpButton:SetWidth(70)
 
     mainFrame.tableFrame = ns.Table:new(mainFrame, nil, true, true, nil, self.handleHeaderClick, self.handleRowClick)
-    mainFrame.tableFrame:SetPoint('TOP', mainFrame.title, 'BOTTOM', 0, -20)
-    mainFrame.tableFrame:SetPoint('LEFT', mainFrame, 'LEFT', 10, 0)
-    mainFrame.tableFrame:SetPoint('RIGHT', mainFrame, 'RIGHT', -8, 0)
-    mainFrame.tableFrame:SetPoint('BOTTOMLEFT', mainFrame.addEpButton, 'TOPLEFT', 0, 2)
+    mainFrame.tableFrame:SetPoint('TOPRIGHT', mainFrame.startButton, 'TOPLEFT', -10, -3)
+    mainFrame.tableFrame:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 10, 10)
 
+    mainFrame.startButton:SetScript('OnClick', function() self:handleStartClick() end)
+    mainFrame.stopButton:SetScript('OnClick', function() self:handleStopClick() end)
     mainFrame.addEpButton:SetScript('OnClick', function() self:handleAddEpClick() end)
     mainFrame.benchButton:SetScript('OnClick', function() ns.BenchWindow:show() end)
 
@@ -103,6 +114,37 @@ function RaidWindow.handleRowClick(button, row)
     ns.ModifyEpgpWindow:show(name, guid)
 
     ns.Lib.remove(UISpecialFrames, RaidWindow.mainFrame:GetName(), true)
+end
+
+
+function RaidWindow:handleStartClick()
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
+        return
+    end
+
+    self.mainFrame.startButton:Disable()
+    self.mainFrame.stopButton:Enable()
+
+    -- TODO: popup window asking to use current time or custom time, also verify on-time value
+    -- callback: Raid.active = true, Raid.startTs = <startTs>, Raid.onTimeTs = <onTimeTs>
+    --           if onTimeTs hasn't been reached, start a timer to award on-time EP
+    --               else, determine who was online at that time and award on-time EP
+    -- while raid is active, award attendance EP to anyone who has killed at least one boss
+    -- all EP is also awarded to bench players
+end
+
+
+function RaidWindow:handleStopClick()
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
+        return
+    end
+
+    self.mainFrame.startButton:Enable()
+    self.mainFrame.stopButton:Disable()
+
+    -- TODO: popup window asking to use current time or custom time, verify end-of-raid awardees
+    -- callback: Raid.active = false, Raid.startTs = nil, Raid.onTimeTs = nil, Raid.bench = {}
+    --           award end-of-raid EP
 end
 
 

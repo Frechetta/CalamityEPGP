@@ -196,7 +196,22 @@ describe('algorithm', function()
             refresh = function() end,
         }
 
+        ns.RaidWindow = {
+            refresh = function() end,
+        }
+
         spy.on(ns.addon, 'computeStandings')
+
+        spy.on(ns.Sync, 'sendSync0')
+        spy.on(ns.Sync, 'sendSync1')
+        spy.on(ns.Sync, 'sendSync2')
+        spy.on(ns.Sync, 'sendDataReq')
+        spy.on(ns.Sync, 'sendDataSend')
+        spy.on(ns.Sync, 'handleSync0')
+        spy.on(ns.Sync, 'handleSync1')
+        spy.on(ns.Sync, 'handleSync2')
+        spy.on(ns.Sync, 'handleDataReq')
+        spy.on(ns.Sync, 'handleDataSend')
     end
 
     before_each(function()
@@ -1015,6 +1030,28 @@ describe('algorithm', function()
             assert.spy(ns2.addon.computeStandings).was.not_called()
 
             assert.same(ns1.standings, ns2.standings)
+
+            assert.spy(ns1.Sync.handleSync0).was.called(1)
+            assert.spy(ns1.Sync.handleSync1).was.not_called()
+            assert.spy(ns1.Sync.handleSync2).was.not_called()
+            assert.spy(ns1.Sync.handleDataReq).was.not_called()
+            assert.spy(ns1.Sync.handleDataSend).was.not_called()
+            assert.spy(ns1.Sync.sendSync0).was.not_called()
+            assert.spy(ns1.Sync.sendSync1).was.not_called()
+            assert.spy(ns1.Sync.sendSync2).was.not_called()
+            assert.spy(ns1.Sync.sendDataReq).was.not_called()
+            assert.spy(ns1.Sync.sendDataSend).was.not_called()
+
+            assert.spy(ns2.Sync.handleSync0).was.not_called()
+            assert.spy(ns2.Sync.handleSync1).was.not_called()
+            assert.spy(ns2.Sync.handleSync2).was.not_called()
+            assert.spy(ns2.Sync.handleDataReq).was.not_called()
+            assert.spy(ns2.Sync.handleDataSend).was.not_called()
+            assert.spy(ns2.Sync.sendSync0).was.called(1)
+            assert.spy(ns2.Sync.sendSync1).was.not_called()
+            assert.spy(ns2.Sync.sendSync2).was.not_called()
+            assert.spy(ns2.Sync.sendDataReq).was.not_called()
+            assert.spy(ns2.Sync.sendDataSend).was.not_called()
         end)
 
         test('officer online, up-to-date; non-officer logs on, missing a week', function()
