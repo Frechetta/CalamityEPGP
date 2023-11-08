@@ -194,7 +194,7 @@ function Sync:getEvents(timeframe, timestamps)
     if timeframe == self.timeframes.EVENTS then
         for _, eventAndHash in ipairs(ns.db.history) do
             if timestamps:contains(eventAndHash[1][1]) then
-                tinsert(events, Sync.encodeEvent(eventAndHash))
+                tinsert(events, self.encodeEvent(eventAndHash))
             end
         end
     else
@@ -227,7 +227,7 @@ function Sync:getEvents(timeframe, timestamps)
                         break
                     end
 
-                    tinsert(events, Sync.encodeEvent(eventAndHash))
+                    tinsert(events, self.encodeEvent(eventAndHash))
 
                     i = i + 1
                 end
