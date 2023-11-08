@@ -6,8 +6,6 @@ local RaidWindow = {
 
 ns.RaidWindow = RaidWindow
 
-local Raid = ns.db.raid
-
 
 function RaidWindow:createWindow()
     if self.mainFrame ~= nil then
