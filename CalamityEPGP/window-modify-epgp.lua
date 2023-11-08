@@ -93,7 +93,10 @@ function ModifyEpgpWindow:createWindow()
     mainFrame:HookScript('OnHide', function()
         C_Timer.After(0.1, function()
             tinsert(UISpecialFrames, ns.MainWindow.mainFrame:GetName())
-            tinsert(UISpecialFrames, ns.RaidWindow.mainFrame:GetName())
+
+            if ns.RaidWindow.mainFrame ~= nil then
+                tinsert(UISpecialFrames, ns.RaidWindow.mainFrame:GetName())
+            end
         end)
     end)
 
