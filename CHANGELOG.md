@@ -1,3 +1,7 @@
+# 0.19.2
+
+- bug fix
+
 # 0.19.1
 
 - minor bug fixes
