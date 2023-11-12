@@ -1,3 +1,7 @@
+# 0.19.4
+
+- fix sync
+
 # 0.19.3
 
 - bandaid fix for duplicate events
