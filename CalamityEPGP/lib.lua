@@ -870,3 +870,10 @@ function Lib.createKnownPlayer(guid, name, classFilename, inGuild, rankIndex)
 
     return playerData
 end
+
+
+---@param eventAndHash table
+---@return string
+function Lib.getEventAndHashId(eventAndHash)
+    return ('%s:%s'):format(eventAndHash[1][1], eventAndHash[2])
+end

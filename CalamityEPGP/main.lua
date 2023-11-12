@@ -239,8 +239,8 @@ function addon:init()
         ns.standings = Dict:new()
         ns.playersLastUpdated = Dict:new()
 
-        self.ldb = LibStub('LibDataBroker-1.1', true)
-        self.ldbi = LibStub('LibDBIcon-1.0', true)
+        self.ldb = LibStub('LibDataBroker-1.1')
+        self.ldbi = LibStub('LibDBIcon-1.0')
 
         self.candy = LibStub('LibCandyBar-3.0')
 
@@ -249,9 +249,29 @@ function addon:init()
 
         self.migrateData()
 
-        table.sort(ns.db.history, function(left, right)
-            return left[1][1] < right[1][1]
-        end)
+        local newHistory = {}
+        local eventsSeen = {}
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local id = ns.Lib.getEventAndHashId(eventAndHash)
+            if not eventsSeen[id] then
+                eventsSeen[id] = true
+
+                ns.Lib.bininsert(newHistory, eventAndHash, function(left, right)
+                    if left[1][1] ~= right[1][1] then
+                        return left[1][1] < right[1][1]
+                    end
+
+                    if left[1][4] ~= right[1][4] then
+                        return left[1][4] < right[1][4]
+                    end
+
+                    return left[2] < right[2]
+                end)
+            end
+        end
+
+        ns.db.history = newHistory
 
         -- TODO: prune history
 
@@ -427,7 +447,7 @@ end
 function addon.loadPlayersFromEvents(events, callback)
     callback = callback or function() end
 
-    local shortToFullGuids = Dict:new()
+    local shortGuids = Set:new()
 
     local uniquePlayersSeen = 0
     local uniquePlayersLoaded = 0
@@ -440,18 +460,18 @@ function addon.loadPlayersFromEvents(events, callback)
         local players = event[3]
 
         for _, guidShort in ipairs(players) do
-            local guid = shortToFullGuids:get(guidShort)
-            if guid == nil then
-                guid = ns.Lib.getFullPlayerGuid(guidShort)
-                shortToFullGuids:set(guidShort, guid)
+            if not shortGuids:contains(guidShort) then
+                shortGuids:add(guidShort)
+
+                local guid = ns.Lib.getFullPlayerGuid(guidShort)
 
                 uniquePlayersSeen = uniquePlayersSeen + 1
 
                 ns.Lib.getPlayerInfo(guid, function()
                     uniquePlayersLoaded = uniquePlayersLoaded + 1
-                    if seenAll and uniquePlayersLoaded == uniquePlayersSeen then
-                        callback()
+                    if not callbackCalled and seenAll and uniquePlayersLoaded == uniquePlayersSeen then
                         callbackCalled = true
+                        callback()
                     end
                 end)
             end
@@ -461,6 +481,7 @@ function addon.loadPlayersFromEvents(events, callback)
     seenAll = true
 
     if not callbackCalled and uniquePlayersLoaded == uniquePlayersSeen then
+        callbackCalled = true
         callback()
     end
 end
@@ -508,7 +529,10 @@ function addon:computeStandingsWithEvents(events, callback)
                 end
 
                 if not playerDiffs:contains(guid) then
-                    playerDiffs:set(guid, {ep = 0, gp = 0})
+                    playerDiffs:set(guid, {
+                        [ns.consts.MODE_EP] = 0,
+                        [ns.consts.MODE_GP] = 0
+                    })
                 end
 
                 local playerStandings = ns.standings:get(guid)
@@ -908,7 +932,7 @@ end
 
 function addon:initMinimapButton()
     local minimapButton = self.ldb:NewDataObject(addonName, {
-        type = 'launcher',
+        type = 'data source',
         text = addonName,
         icon = 'Interface\\AddOns\\' ..  addonName .. '\\Assets\\icon',
         OnClick = function(_, button)
@@ -944,10 +968,10 @@ function addon:initMinimapButton()
         end,
         OnLeave = function()
             GameTooltip:Hide()
-        end
+        end,
     })
 
-    self.ldbi:Register(addonName, minimapButton, ns.cfg.minimap)
+    self.ldbi:Register(addonName, minimapButton, ns.db.cfg.minimap)
 
     self.minimapButtonInitialized = true
 end

@@ -1,3 +1,7 @@
+# 0.19.3
+
+- bandaid fix for duplicate events
+
 # 0.19.2
 
 - bug fix

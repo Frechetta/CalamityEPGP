@@ -11,6 +11,7 @@ local Sync = {
     },
     weekTsIndex = Dict:new(),
     dayTsIndex = Dict:new(),
+    eventIds = Set:new(),
 }
 
 ns.Sync = Sync
@@ -33,6 +34,7 @@ end
 function Sync:computeIndices()
     self.weekTsIndex:clear()
     self.dayTsIndex:clear()
+    self.eventIds:clear()
 
     for i, eventAndHash in ipairs(ns.db.history) do
         local event = eventAndHash[1]
@@ -47,6 +49,9 @@ function Sync:computeIndices()
         if not self.dayTsIndex:contains(dayTs) then
             self.dayTsIndex:set(dayTs, i)
         end
+
+        local id = ns.Lib.getEventAndHashId(eventAndHash)
+        self.eventIds:add(id)
     end
 
     local weekTsIndexParts = {}
@@ -194,7 +199,7 @@ function Sync:getEvents(timeframe, timestamps)
     if timeframe == self.timeframes.EVENTS then
         for _, eventAndHash in ipairs(ns.db.history) do
             if timestamps:contains(eventAndHash[1][1]) then
-                tinsert(events, Sync.encodeEvent(eventAndHash))
+                tinsert(events, self.encodeEvent(eventAndHash))
             end
         end
     else
@@ -227,7 +232,7 @@ function Sync:getEvents(timeframe, timestamps)
                         break
                     end
 
-                    tinsert(events, Sync.encodeEvent(eventAndHash))
+                    tinsert(events, self.encodeEvent(eventAndHash))
 
                     i = i + 1
                 end
@@ -627,10 +632,27 @@ function Sync.handleDataSend(message, sender)
     if numEvents > 0 then
         ns.debug(('received %d events from %s'):format(numEvents, sender))
 
-        local fcomp = function(left, right) return left[1][1] < right[1][1] end
+        local fcomp = function(left, right)
+            if left[1][1] ~= right[1][1] then
+                return left[1][1] < right[1][1]
+            end
+
+            if left[1][4] ~= right[1][4] then
+                return left[1][4] < right[1][4]
+            end
+
+            return left[2] < right[2]
+        end
+
         for _, eventAndHash in ipairs(events) do
             eventAndHash = Sync.decodeEvent(eventAndHash)
-            ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
+
+            local id = ns.Lib.getEventAndHashId(eventAndHash)
+
+            if not Sync.eventIds:contains(id) then
+                ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
+                Sync.eventIds:add(id)
+            end
         end
 
         Sync:computeIndices()

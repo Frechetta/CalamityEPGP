@@ -193,7 +193,6 @@ function RaidWindow:getData()
         local inGuild = playerData.inGuild
 
         local standings = ns.standings:get(guid)
-
         if standings == nil then
             standings = ns.addon.createStandingsEntry(guid)
             ns.standings:set(guid, standings)

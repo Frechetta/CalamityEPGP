@@ -74,7 +74,7 @@ function RollWindow:createWindow()
 
         ns.LootDistWindow:handlePass(ns.unitName('player'))
 
-        ns.Comm:sendRollPass()
+        ns.addon.sendRollPass()
     end)
 
     return mainFrame
