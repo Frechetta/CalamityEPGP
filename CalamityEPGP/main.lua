@@ -249,9 +249,29 @@ function addon:init()
 
         self.migrateData()
 
-        table.sort(ns.db.history, function(left, right)
-            return left[1][1] < right[1][1]
-        end)
+        local newHistory = {}
+        local eventsSeen = {}
+
+        for _, eventAndHash in ipairs(ns.db.history) do
+            local id = ns.Lib.getEventAndHashId(eventAndHash)
+            if not eventsSeen[id] then
+                eventsSeen[id] = true
+
+                ns.Lib.bininsert(newHistory, eventAndHash, function(left, right)
+                    if left[1][1] ~= right[1][1] then
+                        return left[1][1] < right[1][1]
+                    end
+
+                    if left[1][4] ~= right[1][4] then
+                        return left[1][4] < right[1][4]
+                    end
+
+                    return left[2] < right[2]
+                end)
+            end
+        end
+
+        ns.db.history = newHistory
 
         -- TODO: prune history
 
