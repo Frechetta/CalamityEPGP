@@ -299,13 +299,13 @@ function Sync.sendSync1(differingWeeks, target)
     local differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
     ns.debug('sending differing weeks: ' .. differingWeeksStr)
 
-    ns.Comm:send(ns.Comm.msgTypes.SYNC_1, differingWeeks, target)
+    ns.Comm:send(ns.Comm.msgTypes.SYNC_1, differingWeeks, 'WHISPER', target)
 end
 
 ---@param differingDays table
 ---@param target string
 function Sync.sendSync2(differingDays, target)
-    ns.Comm:send(ns.Comm.msgTypes.SYNC_2, differingDays, target)
+    ns.Comm:send(ns.Comm.msgTypes.SYNC_2, differingDays, 'WHISPER', target)
 end
 
 ---@param timeframe number
