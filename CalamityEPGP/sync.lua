@@ -367,19 +367,21 @@ function Sync.handleSync0(message, sender)
     local myWeeklyHashes = Dict:new(Sync:getWeeklyHashes())
     local myLmSettingsLastChange = ns.db.lmSettingsLastChange
 
-    local parts = {}
-    for weekTs, weekHash in theirWeeklyHashes:iter() do
-        tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
-    end
-    local differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
-    ns.debug('their weekly hashes by week: ' .. differingWeeksStr)
+    if ns.cfg.debugMode then
+        local parts = {}
+        for weekTs, weekHash in theirWeeklyHashes:iter() do
+            tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
+        end
+        local differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
+        ns.debug('their weekly hashes by week: ' .. differingWeeksStr)
 
-    parts = {}
-    for weekTs, weekHash in myWeeklyHashes:iter() do
-        tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
+        parts = {}
+        for weekTs, weekHash in myWeeklyHashes:iter() do
+            tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
+        end
+        differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
+        ns.debug('my weekly hashes by week: ' .. differingWeeksStr)
     end
-    differingWeeksStr = '{' .. table.concat(parts, ', ') .. '}'
-    ns.debug('my weekly hashes by week: ' .. differingWeeksStr)
 
     -- if they are an officer, check if I need to ask for data
     if ns.Lib.isOfficer(sender) then
@@ -626,7 +628,7 @@ function Sync.handleDataSend(message, sender)
     ---@type table?
     local lmSettings = data[2]
 
-    local recompute = false
+    local decodedEvents = {}
 
     local numEvents = #events
     if numEvents > 0 then
@@ -651,14 +653,15 @@ function Sync.handleDataSend(message, sender)
 
             if not Sync.eventIds:contains(id) then
                 ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
+                ns.Lib.bininsert(decodedEvents, eventAndHash, fcomp)
                 Sync.eventIds:add(id)
             end
         end
 
         Sync:computeIndices()
-
-        recompute = true
     end
+
+    local recompute = false
 
     if lmSettings ~= nil then
         ns.debug(('received lmSettings from %s'):format(sender))
@@ -680,6 +683,8 @@ function Sync.handleDataSend(message, sender)
 
     if recompute then
         ns.addon:computeStandings()
+    elseif #decodedEvents > 0 then
+        ns.addon:computeStandingsWithEvents(decodedEvents)
     end
 end
 
