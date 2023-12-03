@@ -1,3 +1,7 @@
+# 0.19.5
+
+- lessen frequency of freezes due to computing standings
+
 # 0.19.4
 
 - fix sync

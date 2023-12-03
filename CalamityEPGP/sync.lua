@@ -627,6 +627,10 @@ function Sync.handleDataSend(message, sender)
     local lmSettings = data[2]
 
     local recompute = false
+    local sortedEvents = {}
+
+    local latestEvent = ns.db.history[#ns.db.history]
+    local latestTsBeforeInsert = latestEvent and latestEvent[1][1] or -1
 
     local numEvents = #events
     if numEvents > 0 then
@@ -651,35 +655,50 @@ function Sync.handleDataSend(message, sender)
 
             if not Sync.eventIds:contains(id) then
                 ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
+                ns.Lib.bininsert(sortedEvents, eventAndHash, fcomp)
                 Sync.eventIds:add(id)
             end
         end
 
         Sync:computeIndices()
-
-        recompute = true
     end
 
     if lmSettings ~= nil then
         ns.debug(('received lmSettings from %s'):format(sender))
 
+        local newSyncAltEp = lmSettings[3]
+        local newSyncAltGp = lmSettings[4]
+        local newGpBase = lmSettings[5]
+        local newMainAltMapping = lmSettings[8]
+
+        if ns.cfg.syncAltEp ~= newSyncAltEp or
+                ns.cfg.syncAltGp ~= newSyncAltGp or
+                ns.cfg.gpBase ~= newGpBase or
+                ns.db.altData.mainAltMapping ~= newMainAltMapping then
+            recompute = true
+        end
+
         ns.cfg.defaultDecayEp = lmSettings[1]
         ns.cfg.defaultDecayGp = lmSettings[2]
-        ns.cfg.syncAltEp = lmSettings[3]
-        ns.cfg.syncAltGp = lmSettings[4]
-        ns.cfg.gpBase = lmSettings[5]
+        ns.cfg.syncAltEp = newSyncAltEp
+        ns.cfg.syncAltGp = newSyncAltGp
+        ns.cfg.gpBase = newGpBase
         ns.cfg.gpSlotMods = lmSettings[6]
         ns.cfg.encounterEp = lmSettings[7]
-        ns.db.altData.mainAltMapping = lmSettings[8]
+        ns.db.altData.mainAltMapping = newMainAltMapping
         ns.db.lmSettingsLastChange = lmSettings[9]
 
         LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
-
-        recompute = true
     end
 
     if recompute then
         ns.addon:computeStandings()
+    elseif #sortedEvents > 0 then
+        if latestTsBeforeInsert ~= -1 and sortedEvents[1][1][1] >= latestTsBeforeInsert then
+            ns.addon:computeStandingsWithEvents(sortedEvents)
+        else
+            ns.addon:computeStandings()
+        end
     end
 end
 

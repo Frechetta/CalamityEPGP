@@ -58,6 +58,7 @@ function addon:OnInitialize()
 
     self.initializing = false
     self.preinitialized = false
+    self.initialComputing = false
     self.initialized = false
     self.minimapButtonInitialized = false
     self.useForRaidPrompted = false
@@ -147,9 +148,9 @@ function addon:handleGuildRosterUpdate()
     C_Timer.After(0.1, function()
         self:init()
 
-        if self.initialized then
-            self:computeStandings()
-        end
+        -- if self.initialized then
+        --     self:computeStandings()
+        -- end
     end)
 end
 
@@ -313,19 +314,23 @@ function addon:init()
         self.preinitialized = true
     end
 
-    if self.preinitialized then
-        -- Load guild data
-        self:loadGuildRoster()
+    if not self.preinitialized then
+        return
+    end
 
+    -- Load guild data
+    self:loadGuildRoster()
+
+    if self.initializing and not self.initialComputing and not self.initialized then
         -- load raid data
         if IsInRaid() then
             self:handleEnteredRaid()
         end
-    end
 
-    if self.initializing and self.preinitialized and not self.initialized then
         -- Load config module
         ns.Config:init()
+
+        self.initialComputing = true
 
         self:computeStandings(function()
             self:initMinimapButton()
@@ -337,6 +342,7 @@ function addon:init()
 
             self.initialized = true
             self.initializing = false
+            self.initialComputing = false
 
             ns.print(string.format('v%s by %s loaded. Type /ce to get started!', addon.version, addon.author))
 
@@ -403,6 +409,11 @@ function addon:loadGuildRoster()
 
             ns.Lib.createKnownPlayer(guid, name, classFilename, true, rankIndex)
             guildMembers:add(guid)
+
+            if not ns.standings:contains(guid) then
+                local playerStandings = self.createStandingsEntry(guid)
+                ns.standings:set(guid, playerStandings)
+            end
         end
     end
 
@@ -489,6 +500,7 @@ end
 
 ---@param callback function?
 function addon:computeStandings(callback)
+    -- ns.debug(debug.traceback())
     ns.standings:clear()
     ns.playersLastUpdated:clear()
     self:computeStandingsWithEvents(ns.db.history, callback)
@@ -609,8 +621,8 @@ function addon:computeStandingsWithEvents(events, callback)
 
         for guid, playerData in ns.knownPlayers:iter() do
             if not ns.standings:contains(guid) and playerData.inGuild then
-                playerData = self.createStandingsEntry(guid)
-                ns.standings:set(guid, playerData)
+                local playerStandings = self.createStandingsEntry(guid)
+                ns.standings:set(guid, playerStandings)
             end
         end
 

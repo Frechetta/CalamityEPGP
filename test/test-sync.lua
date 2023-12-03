@@ -201,6 +201,7 @@ describe('algorithm', function()
         }
 
         spy.on(ns.addon, 'computeStandings')
+        spy.on(ns.addon, 'computeStandingsWithEvents')
 
         spy.on(ns.Sync, 'sendSync0')
         spy.on(ns.Sync, 'sendSync1')
@@ -483,13 +484,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -498,7 +501,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -724,13 +729,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -738,7 +745,9 @@ describe('algorithm', function()
             assert.same(historyMia, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.not_same(ns1.standings, ns2.standings)
         end)
@@ -1012,13 +1021,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -1027,7 +1038,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.same(ns1.standings, ns2.standings)
 
@@ -1259,13 +1272,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -1274,7 +1289,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -1484,13 +1501,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -1499,7 +1518,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -1677,13 +1698,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -1692,7 +1715,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -1886,13 +1911,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -1901,7 +1928,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -2046,13 +2075,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -2061,7 +2092,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -2289,13 +2322,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -2304,7 +2339,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -2530,13 +2567,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -2544,8 +2583,10 @@ describe('algorithm', function()
             assert.same(historyMia, ns2.db.history)
             assert.same(ns1.db.history, ns2.db.history)
 
-            assert.spy(ns1.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.called(2)
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -2819,13 +2860,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -2834,7 +2877,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -3044,13 +3089,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -3059,7 +3106,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -3269,13 +3318,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -3284,7 +3335,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -3462,13 +3515,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -3477,7 +3532,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -3671,13 +3728,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -3686,7 +3745,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -3831,13 +3892,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -3846,7 +3909,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -4024,13 +4089,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -4169,8 +4236,10 @@ describe('algorithm', function()
             assert.same(expected, ns2.db.history)
             assert.same(ns1.db.history, ns2.db.history)
 
-            assert.spy(ns1.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.called(2)
             assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -4398,13 +4467,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -4413,7 +4484,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -4639,13 +4712,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -4653,7 +4728,9 @@ describe('algorithm', function()
             assert.same(historyMia, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.not_same(ns1.standings, ns2.standings)
         end)
@@ -4927,13 +5004,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -4942,7 +5021,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -5152,13 +5233,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -5167,7 +5250,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -5377,13 +5462,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -5392,7 +5479,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -5570,13 +5659,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -5585,7 +5676,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -5779,13 +5872,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -5794,7 +5889,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(2)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(2)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -5939,13 +6036,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:syncInit()
 
@@ -5954,7 +6053,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -6182,13 +6283,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns2.Sync:syncInit()
 
@@ -6196,7 +6299,9 @@ describe('algorithm', function()
             assert.same(historyMia, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.not_same(ns1.standings, ns2.standings)
         end)
@@ -6440,13 +6545,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:sendEventsToGuild({
                 {
@@ -6488,7 +6595,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -6730,13 +6839,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:sendEventsToGuild({
                 {
@@ -6778,7 +6889,9 @@ describe('algorithm', function()
             assert.same(ns1.db.history, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
-            assert.spy(ns2.addon.computeStandings).was.called(1)
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.called(1)
 
             assert.same(ns1.standings, ns2.standings)
         end)
@@ -7020,13 +7133,15 @@ describe('algorithm', function()
             ns1.db.history = ns1.Lib.deepcopy(historyTucker)
             ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
             ns1.addon:computeStandings()
             ns2.addon:computeStandings()
             ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
             ns2.addon.computeStandings:clear()
-
-            ns1.Sync:computeIndices()
-            ns2.Sync:computeIndices()
+            ns2.addon.computeStandingsWithEvents:clear()
 
             ns1.Sync:sendEventsToGuild({
                 {
@@ -7067,7 +7182,9 @@ describe('algorithm', function()
             assert.same(historyMia, ns2.db.history)
 
             assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
             assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
             assert.not_same(ns1.standings, ns2.standings)
         end)
@@ -7310,13 +7427,15 @@ describe('algorithm', function()
         ns1.db.history = ns1.Lib.deepcopy(historyTucker)
         ns2.db.history = ns2.Lib.deepcopy(historyMia)
 
+        ns1.Sync:computeIndices()
+        ns2.Sync:computeIndices()
+
         ns1.addon:computeStandings()
         ns2.addon:computeStandings()
         ns1.addon.computeStandings:clear()
+        ns1.addon.computeStandingsWithEvents:clear()
         ns2.addon.computeStandings:clear()
-
-        ns1.Sync:computeIndices()
-        ns2.Sync:computeIndices()
+        ns2.addon.computeStandingsWithEvents:clear()
 
         ns1.Sync:sendEventsToGuild({
             {
@@ -7357,7 +7476,9 @@ describe('algorithm', function()
         assert.same(historyMia, ns2.db.history)
 
         assert.spy(ns1.addon.computeStandings).was.not_called()
+        assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
         assert.spy(ns2.addon.computeStandings).was.not_called()
+        assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
 
         assert.not_same(ns1.standings, ns2.standings)
     end)
