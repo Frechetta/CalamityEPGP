@@ -500,6 +500,7 @@ end
 
 ---@param callback function?
 function addon:computeStandings(callback)
+    -- ns.debug(debug.traceback())
     ns.standings:clear()
     ns.playersLastUpdated:clear()
     self:computeStandingsWithEvents(ns.db.history, callback)
