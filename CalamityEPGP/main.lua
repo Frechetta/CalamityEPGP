@@ -590,28 +590,30 @@ function addon:computeStandingsWithEvents(events, callback)
                     if alts ~= nil then
                         local mainGuid = ns.Lib.getPlayerGuid(main)
 
-                        local lastUpdatedGuid = self.getLastUpdatedToon(mainGuid)
-                        local lastUpdatedStandings = ns.standings:get(lastUpdatedGuid)
-                        if lastUpdatedStandings == nil then
-                            lastUpdatedStandings = self.createStandingsEntry(lastUpdatedGuid)
-                            ns.standings:set(lastUpdatedGuid, lastUpdatedStandings)
-                        end
+                        if mainGuid ~= nil then
+                            local lastUpdatedGuid = self.getLastUpdatedToon(mainGuid)
+                            local lastUpdatedStandings = ns.standings:get(lastUpdatedGuid)
+                            if lastUpdatedStandings == nil then
+                                lastUpdatedStandings = self.createStandingsEntry(lastUpdatedGuid)
+                                ns.standings:set(lastUpdatedGuid, lastUpdatedStandings)
+                            end
 
-                        for _, alt in ipairs(alts) do
-                            local altGuid = ns.Lib.getPlayerGuid(alt)
-                            if altGuid ~= nil then
-                                local altStandings = ns.standings:get(altGuid)
-                                if altStandings == nil then
-                                    altStandings = self.createStandingsEntry(altGuid)
-                                    ns.standings:set(altGuid, altStandings)
-                                end
+                            for _, alt in ipairs(alts) do
+                                local altGuid = ns.Lib.getPlayerGuid(alt)
+                                if altGuid ~= nil then
+                                    local altStandings = ns.standings:get(altGuid)
+                                    if altStandings == nil then
+                                        altStandings = self.createStandingsEntry(altGuid)
+                                        ns.standings:set(altGuid, altStandings)
+                                    end
 
-                                if ns.cfg.syncAltEp then
-                                    altStandings.ep = lastUpdatedStandings.ep
-                                end
+                                    if ns.cfg.syncAltEp then
+                                        altStandings.ep = lastUpdatedStandings.ep
+                                    end
 
-                                if ns.cfg.syncAltGp then
-                                    altStandings.gp = lastUpdatedStandings.gp
+                                    if ns.cfg.syncAltGp then
+                                        altStandings.gp = lastUpdatedStandings.gp
+                                    end
                                 end
                             end
                         end
