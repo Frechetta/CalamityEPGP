@@ -1,3 +1,8 @@
+# 0.20.0
+
+- fix minimum GP controls
+- add EP/GP filters to history window
+
 # 0.19.5
 
 - lessen frequency of freezes due to computing standings

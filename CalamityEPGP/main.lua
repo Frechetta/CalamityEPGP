@@ -524,7 +524,8 @@ function addon:computeStandingsWithEvents(events, callback)
             local mode = event[4]
             local value = event[5]
             local percent = event[7]
-            local minGp = event[8]
+            -- local minGp = event[8]
+            local minGp = ns.cfg.gpBase
 
             local mains = Set:new()
 
@@ -589,28 +590,30 @@ function addon:computeStandingsWithEvents(events, callback)
                     if alts ~= nil then
                         local mainGuid = ns.Lib.getPlayerGuid(main)
 
-                        local lastUpdatedGuid = self.getLastUpdatedToon(mainGuid)
-                        local lastUpdatedStandings = ns.standings:get(lastUpdatedGuid)
-                        if lastUpdatedStandings == nil then
-                            lastUpdatedStandings = self.createStandingsEntry(lastUpdatedGuid)
-                            ns.standings:set(lastUpdatedGuid, lastUpdatedStandings)
-                        end
+                        if mainGuid ~= nil then
+                            local lastUpdatedGuid = self.getLastUpdatedToon(mainGuid)
+                            local lastUpdatedStandings = ns.standings:get(lastUpdatedGuid)
+                            if lastUpdatedStandings == nil then
+                                lastUpdatedStandings = self.createStandingsEntry(lastUpdatedGuid)
+                                ns.standings:set(lastUpdatedGuid, lastUpdatedStandings)
+                            end
 
-                        for _, alt in ipairs(alts) do
-                            local altGuid = ns.Lib.getPlayerGuid(alt)
-                            if altGuid ~= nil then
-                                local altStandings = ns.standings:get(altGuid)
-                                if altStandings == nil then
-                                    altStandings = self.createStandingsEntry(altGuid)
-                                    ns.standings:set(altGuid, altStandings)
-                                end
+                            for _, alt in ipairs(alts) do
+                                local altGuid = ns.Lib.getPlayerGuid(alt)
+                                if altGuid ~= nil then
+                                    local altStandings = ns.standings:get(altGuid)
+                                    if altStandings == nil then
+                                        altStandings = self.createStandingsEntry(altGuid)
+                                        ns.standings:set(altGuid, altStandings)
+                                    end
 
-                                if ns.cfg.syncAltEp then
-                                    altStandings.ep = lastUpdatedStandings.ep
-                                end
+                                    if ns.cfg.syncAltEp then
+                                        altStandings.ep = lastUpdatedStandings.ep
+                                    end
 
-                                if ns.cfg.syncAltGp then
-                                    altStandings.gp = lastUpdatedStandings.gp
+                                    if ns.cfg.syncAltGp then
+                                        altStandings.gp = lastUpdatedStandings.gp
+                                    end
                                 end
                             end
                         end
@@ -631,7 +634,7 @@ function addon:computeStandingsWithEvents(events, callback)
         for guid, playerStandings in ns.standings:iter() do
             local playerData = ns.knownPlayers:get(guid)
 
-            if playerData == nil or (playerStandings[ns.consts.MODE_EP] == 0 and playerStandings[ns.consts.MODE_GP] == ns.cfg.gpBase and not playerData.inGuild) then
+            if playerData == nil or (playerStandings[ns.consts.MODE_EP] == 0 and playerStandings[ns.consts.MODE_GP] <= ns.cfg.gpBase and not playerData.inGuild) then
                 toRemove:add(guid)
             end
         end

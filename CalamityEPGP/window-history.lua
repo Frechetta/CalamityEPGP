@@ -87,6 +87,29 @@ function HistoryWindow:createWindow()
         end
     end
 
+    local lastCheckFrame = mainFrame.reasonChecks[#mainFrame.reasonChecks]
+    local extraOffset = lastCheckFrame.textWidth
+
+    mainFrame.epGpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+    mainFrame.epGpLabel:SetText('EP/GP:')
+    mainFrame.epGpLabel:SetPoint('LEFT', lastCheckFrame, 'RIGHT', 22 + extraOffset, 0)
+
+    local epCheckLabel = mainFrame:GetName() .. 'CheckEp'
+    mainFrame.epCheck = CreateFrame('CheckButton', epCheckLabel, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.epCheck:SetPoint('LEFT', mainFrame.epGpLabel, 'RIGHT', 2, 0)
+    mainFrame.epCheck:SetChecked(true)
+    local epCheckFontString = _G[epCheckLabel .. 'Text']
+    epCheckFontString:SetText('EP')
+    mainFrame.epCheck:SetScript('OnClick', function() HistoryWindow:filterData(); HistoryWindow:setTableData() end)
+
+    local gpCheckLabel = mainFrame:GetName() .. 'CheckGp'
+    mainFrame.gpCheck = CreateFrame('CheckButton', gpCheckLabel, mainFrame, 'UICheckButtonTemplate')
+    mainFrame.gpCheck:SetPoint('LEFT', mainFrame.epCheck, 'RIGHT', 2 + epCheckFontString:GetWidth(), 0)
+    mainFrame.gpCheck:SetChecked(true)
+    local gpCheckFontString = _G[gpCheckLabel .. 'Text']
+    gpCheckFontString:SetText('GP')
+    mainFrame.gpCheck:SetScript('OnClick', function() HistoryWindow:filterData(); HistoryWindow:setTableData() end)
+
     mainFrame.detailLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
     mainFrame.detailLabel:SetText('Detail:')
     mainFrame.detailLabel:SetPoint('TOPLEFT', mainFrame.reasonsLabel, 'BOTTOMLEFT', 0, -20)
@@ -344,7 +367,11 @@ function HistoryWindow:filterData()
         local metadata = row[#row]
         local baseReason = metadata.baseReason
 
-        if self.detail then
+        if metadata.mode == ns.consts.MODE_EP and not self.mainFrame.epCheck:GetChecked() then
+            keep = false
+        elseif metadata.mode == ns.consts.MODE_GP and not self.mainFrame.gpCheck:GetChecked() then
+            keep = false
+        elseif self.detail then
             local player = row[3]
 
             if (self.selectedPlayer ~= 'All' and player ~= self.selectedPlayer)
@@ -539,7 +566,8 @@ function HistoryWindow:getRenderedData()
             local value = row[4]
             local reason = row[5]
             local percent = row[6]
-            local minGp = row[7]
+            -- local minGp = row[7]
+            local minGp = ns.cfg.gpBase
 
             local metadata = row[8]
             local baseReason = metadata.baseReason
@@ -621,7 +649,7 @@ function HistoryWindow:getRenderedData()
                         epDelta,
                         gpDelta,
                         prDelta,
-                        {baseReason = baseReason}
+                        {baseReason = baseReason, mode = mode}
                     }
 
                     ns.Lib.bininsert(self.data.rowsRendered, newRow, function(left, right)
@@ -711,7 +739,7 @@ function HistoryWindow:getRenderedData()
                     player,
                     reason,
                     action,
-                    {baseReason = baseReason, players = players}
+                    {baseReason = baseReason, players = players, mode = mode}
                 }
 
                 tinsert(self.data.rowsRendered, newRow)
