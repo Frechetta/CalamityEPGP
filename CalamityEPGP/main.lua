@@ -524,7 +524,8 @@ function addon:computeStandingsWithEvents(events, callback)
             local mode = event[4]
             local value = event[5]
             local percent = event[7]
-            local minGp = event[8]
+            -- local minGp = event[8]
+            local minGp = ns.cfg.gpBase
 
             local mains = Set:new()
 
@@ -631,7 +632,7 @@ function addon:computeStandingsWithEvents(events, callback)
         for guid, playerStandings in ns.standings:iter() do
             local playerData = ns.knownPlayers:get(guid)
 
-            if playerData == nil or (playerStandings[ns.consts.MODE_EP] == 0 and playerStandings[ns.consts.MODE_GP] == ns.cfg.gpBase and not playerData.inGuild) then
+            if playerData == nil or (playerStandings[ns.consts.MODE_EP] == 0 and playerStandings[ns.consts.MODE_GP] <= ns.cfg.gpBase and not playerData.inGuild) then
                 toRemove:add(guid)
             end
         end

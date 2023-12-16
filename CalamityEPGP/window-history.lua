@@ -539,7 +539,8 @@ function HistoryWindow:getRenderedData()
             local value = row[4]
             local reason = row[5]
             local percent = row[6]
-            local minGp = row[7]
+            -- local minGp = row[7]
+            local minGp = ns.cfg.gpBase
 
             local metadata = row[8]
             local baseReason = metadata.baseReason
