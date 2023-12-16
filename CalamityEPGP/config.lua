@@ -291,12 +291,14 @@ function Config:createAltManagementMenu()
     panel.synchroniseEpCheck:SetScript('OnClick', function()
         ns.cfg.syncAltEp = panel.synchroniseEpCheck:GetChecked()
         ns.addon.modifiedLmSettings()
+        ns.addon:computeStandings()
     end)
 
     panel.synchroniseGpCheck:SetChecked(ns.cfg.syncAltGp)
     panel.synchroniseGpCheck:SetScript('OnClick', function()
         ns.cfg.syncAltGp = panel.synchroniseGpCheck:GetChecked()
         ns.addon.modifiedLmSettings()
+        ns.addon:computeStandings()
     end)
 end
 
@@ -1015,7 +1017,7 @@ end
 function Config:setBaseGp(_, input)
     ns.cfg.gpBase = tonumber(input)
     ns.addon.modifiedLmSettings()
-    ns.addon.fixGp()
+    ns.addon:computeStandings()
 end
 
 function Config:setDebugMode(_, input)
