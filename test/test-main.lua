@@ -29,6 +29,7 @@ describe('modifyEpgp', function()
                     altMainMapping = {},
                     mainAltMapping = {},
                 },
+                knownPlayers = {},
             },
         }
 
@@ -39,7 +40,6 @@ describe('modifyEpgp', function()
         Util:loadModule('window-history', ns)
         Util:loadModule('main', ns)
 
-        ns.knownPlayers = ns.Dict:new()
         ns.standings = ns.Dict:new()
         ns.playersLastUpdated = ns.Dict:new()
 
@@ -58,7 +58,7 @@ describe('modifyEpgp', function()
         end
         ns.Lib.getPlayerInfo = function(guid, callback)
             callback = callback or function() end
-            ns.knownPlayers:set(guid, {name = 'p' .. guid})
+            ns.db.knownPlayers[guid] = {name = 'p' .. guid}
             callback()
         end
 

@@ -752,12 +752,14 @@ describe('lib', function()
 
     describe('createKnownPlayer', function()
         before_each(function()
-            ns.knownPlayers = ns.Dict:new()
+            ns.db = {
+                knownPlayers = {}
+            }
             Lib.playerNameToGuid = {}
         end)
 
         after_each(function()
-            ns.knownPlayers = nil
+            ns.db = nil
             Lib.playerNameToGuid = nil
         end)
 
@@ -767,14 +769,14 @@ describe('lib', function()
             local expectedPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = true, rankIndex = 5}
 
             assert.same(expectedPlayerData, playerData)
-            assert.same({p1_guid = expectedPlayerData}, ns.knownPlayers._dict)
+            assert.same({p1_guid = expectedPlayerData}, ns.db.knownPlayers)
             assert.same({p1 = 'p1_guid'}, Lib.playerNameToGuid)
         end)
 
         test('populated knownPlayers new', function()
             local existingPlayerData = {guid = 'p2_guid', name = 'p2', classFilename = 'HERP', inGuild = true, rankIndex = 4}
 
-            ns.knownPlayers:set('p2_guid', existingPlayerData)
+            ns.db.knownPlayers['p2_guid'] = existingPlayerData
             Lib.playerNameToGuid.p2 = 'p2_guid'
 
             local playerData = Lib.createKnownPlayer('p1_guid', 'p1', 'DERP', true, 5)
@@ -782,14 +784,14 @@ describe('lib', function()
             local expectedPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = true, rankIndex = 5}
 
             assert.same(expectedPlayerData, playerData)
-            assert.same({p1_guid = expectedPlayerData, p2_guid = existingPlayerData}, ns.knownPlayers._dict)
+            assert.same({p1_guid = expectedPlayerData, p2_guid = existingPlayerData}, ns.db.knownPlayers)
             assert.same({p1 = 'p1_guid', p2 = 'p2_guid'}, Lib.playerNameToGuid)
         end)
 
         test('populated knownPlayers overwrite', function()
             local existingPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = false, rankIndex = nil}
 
-            ns.knownPlayers:set('p1_guid', existingPlayerData)
+            ns.db.knownPlayers['p1_guid'] = existingPlayerData
             Lib.playerNameToGuid.p1 = 'p1_guid'
 
             local playerData = Lib.createKnownPlayer('p1_guid', 'p1', 'DERP', true, 5)
@@ -797,7 +799,7 @@ describe('lib', function()
             local expectedPlayerData = {guid = 'p1_guid', name = 'p1', classFilename = 'DERP', inGuild = true, rankIndex = 5}
 
             assert.same(expectedPlayerData, playerData)
-            assert.same({p1_guid = expectedPlayerData}, ns.knownPlayers._dict)
+            assert.same({p1_guid = expectedPlayerData}, ns.db.knownPlayers)
             assert.same({p1 = 'p1_guid'}, Lib.playerNameToGuid)
         end)
     end)
