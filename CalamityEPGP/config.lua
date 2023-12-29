@@ -323,7 +323,7 @@ function Config:setAltManagementData()
     }
 
     for guid in ns.standings:iter() do
-        local playerData = ns.knownPlayers:get(guid)
+        local playerData = ns.db.knownPlayers[guid]
 
         if playerData ~= nil then
             local player = playerData.name
@@ -779,7 +779,7 @@ function Config:showAltSelector(player)
 
         local allPlayers = Set:new()
         for guid in ns.standings:iter() do
-            local playerData = ns.knownPlayers:get(guid)
+            local playerData = ns.db.knownPlayers[guid]
             allPlayers:add(playerData.name)
         end
 

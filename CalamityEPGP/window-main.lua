@@ -293,7 +293,7 @@ function MainWindow:getData()
     }
 
     for guid, playerStandings in ns.standings:iter() do
-        local playerData = ns.knownPlayers:get(guid)
+        local playerData = ns.db.knownPlayers[guid]
 
         local name = playerData.name
         local classFilename = playerData.classFilename

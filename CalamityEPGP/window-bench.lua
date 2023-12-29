@@ -114,7 +114,7 @@ function BenchWindow:setData()
     local playersBenched = ns.db.benchedPlayers
 
     for guid in ns.standings:iter() do
-        local playerData = ns.knownPlayers:get(guid)
+        local playerData = ns.db.knownPlayers[guid]
         local player = playerData.name
 
         if not ns.Lib.contains(playersBenched, player) then

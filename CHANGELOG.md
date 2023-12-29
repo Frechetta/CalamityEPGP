@@ -1,3 +1,8 @@
+# 0.20.1
+
+- move knownPlayers to db
+- fix knownPlayers bug
+
 # 0.20.0
 
 - fix minimum GP controls

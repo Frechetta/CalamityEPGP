@@ -180,6 +180,7 @@ describe('algorithm', function()
                 altMainMapping = {},
                 mainAltMapping = {},
             },
+            knownPlayers = {}
         }
 
         ns.standings = ns.Dict:new()
@@ -241,8 +242,8 @@ describe('algorithm', function()
             },
         }
 
-        ns1.knownPlayers = ns1.Dict:new(knownPlayers)
-        ns2.knownPlayers = ns2.Dict:new(knownPlayers)
+        ns1.db.knownPlayers = ns1.Lib.deepcopy(knownPlayers)
+        ns2.db.knownPlayers = ns2.Lib.deepcopy(knownPlayers)
 
         ns1.addon.SendCommMessage = function(_, prefix, message, distribution, target)
             ns2.Comm.handleMessage(prefix, message, nil, ns1.me.name)

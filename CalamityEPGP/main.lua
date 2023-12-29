@@ -46,6 +46,7 @@ local dbDefaults = {
         },
         lmSettingsLastChange = -1,
         benchedPlayers = {},
+        knownPlayers = {},
     }
 }
 
@@ -233,10 +234,10 @@ function addon:init()
         ns.cfg = ns.db.cfg
 
         ns.db.realmId = GetRealmID()
+        ns.db.knownPlayers = {}
 
         ns.guild = guildFullName
         ns.peers = Dict:new()
-        ns.knownPlayers = Dict:new()
         ns.standings = Dict:new()
         ns.playersLastUpdated = Dict:new()
 
@@ -417,7 +418,7 @@ function addon:loadGuildRoster()
         end
     end
 
-    for guid, playerData in ns.knownPlayers:iter() do
+    for guid, playerData in pairs(ns.db.knownPlayers) do
         if playerData.inGuild and not guildMembers:contains(guid) then
             playerData.inGuild = false
             playerData.rankIndex = nil
@@ -441,7 +442,7 @@ function addon:loadRaidRoster()
 
                 local guid = ns.Lib.getPlayerGuid(name)
 
-                if not ns.knownPlayers:contains(guid) then
+                if ns.db.knownPlayers[guid] == nil then
                     ns.Lib.createKnownPlayer(guid, name, classFilename, false, nil)
                 end
             end
@@ -575,11 +576,14 @@ function addon:computeStandingsWithEvents(events, callback)
                 local playerDiff = playerDiffs:get(guid)
                 playerDiff[mode] = playerDiff[mode] + diff
 
-                local playerData = ns.knownPlayers:get(guid)
-                local playerName = playerData.name
-                local main = ns.db.altData.altMainMapping[playerName]
-                if main ~= nil then
-                    mains:add(main)
+                local playerData = ns.db.knownPlayers[guid]
+
+                if playerData ~= nil then
+                    local playerName = playerData.name
+                    local main = ns.db.altData.altMainMapping[playerName]
+                    if main ~= nil then
+                        mains:add(main)
+                    end
                 end
             end
 
@@ -622,7 +626,7 @@ function addon:computeStandingsWithEvents(events, callback)
             end
         end
 
-        for guid, playerData in ns.knownPlayers:iter() do
+        for guid, playerData in pairs(ns.db.knownPlayers) do
             if not ns.standings:contains(guid) and playerData.inGuild then
                 local playerStandings = self.createStandingsEntry(guid)
                 ns.standings:set(guid, playerStandings)
@@ -632,7 +636,7 @@ function addon:computeStandingsWithEvents(events, callback)
         -- remove players with 0 EP and min GP that aren't in the guild
         local toRemove = Set:new()
         for guid, playerStandings in ns.standings:iter() do
-            local playerData = ns.knownPlayers:get(guid)
+            local playerData = ns.db.knownPlayers[guid]
 
             if playerData == nil or (playerStandings[ns.consts.MODE_EP] == 0 and playerStandings[ns.consts.MODE_GP] <= ns.cfg.gpBase and not playerData.inGuild) then
                 toRemove:add(guid)
@@ -893,7 +897,7 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
                     local baseReason = tonumber(ns.Lib.split(reason, ':')[1])
                     local baseReasonPretty = ns.HistoryWindow.epgpReasonsPretty[baseReason]
 
-                    local playerData = ns.knownPlayers:get(guid)
+                    local playerData = ns.db.knownPlayers[guid]
 
                     ns.debug(string.format('%s %s %.2f %s (%s)', playerData.name, verb, amount, string.upper(theMode), baseReasonPretty))
                 end
@@ -915,7 +919,7 @@ end
 function addon.getLastUpdatedToon(playerGuid)
     local mostRecentGuid = playerGuid
 
-    local playerData = ns.knownPlayers:get(playerGuid)
+    local playerData = ns.db.knownPlayers[playerGuid]
     local player = playerData.name
 
     local main = ns.db.altData.altMainMapping[player]
@@ -1112,7 +1116,7 @@ function addon:handleChatMsgWhisper(_, message, playerFullName)
 
         local sortedStandings = List:new()
         for g, standings in ns.standings:iter() do
-            local playerData = ns.knownPlayers:get(g)
+            local playerData = ns.db.knownPlayers[g]
 
             local combined = ns.Lib.deepcopy(standings)
             combined.name = playerData.name

@@ -266,7 +266,7 @@ function HistoryWindow:setDropDownData()
     local dropDown = self.mainFrame.dropDown
 
     local players = {}
-    for _, playerData in ns.knownPlayers:iter() do
+    for _, playerData in pairs(ns.db.knownPlayers) do
         local playerName = playerData.name
         -- filter if mainsOnly == true
         if not self.mainsOnly or ns.db.altData.altMainMapping[playerName] == playerName then
@@ -385,7 +385,7 @@ function HistoryWindow:filterData()
 
             local hasMain = false
             for _, playerGuid in ipairs(playerGuids) do
-                local playerData = ns.knownPlayers:get(playerGuid)
+                local playerData = ns.db.knownPlayers[playerGuid]
 
                 if playerData ~= nil then
                     local player = playerData.name
@@ -419,7 +419,7 @@ function HistoryWindow:getData(callback)
 
     local playerGuidToName = {}
     local playerValsTracker = {}
-    for guid, playerData in ns.knownPlayers:iter() do
+    for guid, playerData in pairs(ns.db.knownPlayers) do
         playerGuidToName[guid] = playerData.name
 
         if playerValsTracker[guid] == nil then
@@ -576,7 +576,7 @@ function HistoryWindow:getRenderedData()
             local mains = Set:new()
 
             for _, playerGuid in ipairs(players) do
-                local playerData = ns.knownPlayers:get(playerGuid)
+                local playerData = ns.db.knownPlayers[playerGuid]
 
                 if playerData ~= nil then
                     local player = playerData.name
@@ -723,7 +723,7 @@ function HistoryWindow:getRenderedData()
                     player = string.format('Multiple (%d)', #players)
                 else
                     local guid = players[1]
-                    player = ns.knownPlayers:get(guid).name
+                    player = ns.db.knownPlayers[guid].name
                 end
 
                 local valueStr = tostring(value)
