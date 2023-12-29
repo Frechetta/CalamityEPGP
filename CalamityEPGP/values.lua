@@ -280,6 +280,8 @@ for _, expansion in ipairs(ns.values.epDefaults) do
             ns.values.encounters[encounterId] = {
                 name = encounterName,
                 defaultEp = encounterEp,
+                instance = instance[1],
+                expansion = expansion[1],
             }
         end
     end
