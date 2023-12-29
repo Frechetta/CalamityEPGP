@@ -187,7 +187,7 @@ function RaidWindow:getData()
     for name, info in ns.addon.raidRoster:iter() do
         local guid = ns.Lib.getPlayerGuid(name)
         local online = info.online
-        local playerData = ns.knownPlayers:get(guid)
+        local playerData = ns.db.knownPlayers[guid]
 
         local classFilename = playerData.classFilename
         local inGuild = playerData.inGuild

@@ -116,7 +116,7 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
 
     ns.Lib.getItemInfo(itemLink, function(itemInfo)
         local playerGuid = ns.Lib.getPlayerGuid(player)
-        local classFilename = ns.knownPlayers:get(playerGuid).classFilename
+        local classFilename = ns.db.knownPlayers[playerGuid].classFilename
 
         self.baseGp = ns.Lib.getGpWithInfo(itemInfo)
         self.baseClassGp = ns.Lib.getGpWithInfo(itemInfo, classFilename)

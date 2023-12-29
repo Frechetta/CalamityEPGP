@@ -425,7 +425,7 @@ function Lib.bininsert(t, value, fcomp)
 
 function Lib.getPlayerClassColor(player)
     local playerGuid = Lib.getPlayerGuid(player)
-    local playerData = ns.knownPlayers:get(playerGuid)
+    local playerData = ns.db.knownPlayers[playerGuid]
 
     return RAID_CLASS_COLORS[playerData.classFilename]
 end
@@ -584,7 +584,7 @@ function Lib.isOfficer(player)
         return false
     end
 
-    local playerData = ns.knownPlayers:get(playerGuid)
+    local playerData = ns.db.knownPlayers[playerGuid]
     if playerData == nil then
         return false
     end
@@ -829,7 +829,7 @@ end
 function Lib.getPlayerInfo(guid, callback)
     callback = callback or function(_) end
 
-    local playerData = ns.knownPlayers:get(guid)
+    local playerData = ns.db.knownPlayers[guid]
     if playerData ~= nil then
         callback(playerData)
         return
@@ -864,7 +864,7 @@ function Lib.createKnownPlayer(guid, name, classFilename, inGuild, rankIndex)
         rankIndex = rankIndex,
     }
 
-    ns.knownPlayers:set(guid, playerData)
+    ns.db.knownPlayers[guid] = playerData
 
     Lib.playerNameToGuid[name] = guid
 
