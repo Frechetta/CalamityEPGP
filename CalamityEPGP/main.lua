@@ -297,6 +297,7 @@ function addon:init()
         self:RegisterEvent('TRADE_PLAYER_ITEM_CHANGED', 'handleTradePlayerItemChanged')
         self:RegisterEvent('RAID_INSTANCE_WELCOME', 'handleEnteredRaid')
         self:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
+        self:RegisterEvent('GROUP_ROSTER_UPDATE', 'handleEnteredRaid')
         self:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
         self:RegisterEvent('LOOT_READY', 'handleLootReady')
         self:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
@@ -352,7 +353,11 @@ function addon:init()
 
             ns.Sync:computeIndices()
             ns.Sync:syncInit()
+
+            self:loadRaidRoster()
         end)
+    else
+        self:loadRaidRoster()
     end
 end
 
@@ -444,6 +449,11 @@ function addon:loadRaidRoster()
 
                 if ns.db.knownPlayers[guid] == nil then
                     ns.Lib.createKnownPlayer(guid, name, classFilename, false, nil)
+                end
+
+                if not ns.standings:contains(guid) then
+                    local playerStandings = self.createStandingsEntry(guid)
+                    ns.standings:set(guid, playerStandings)
                 end
             end
         end

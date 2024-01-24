@@ -91,7 +91,7 @@ function HistoryWindow:createWindow()
     local extraOffset = lastCheckFrame.textWidth
 
     mainFrame.epGpLabel = mainFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
-    mainFrame.epGpLabel:SetText('EP/GP:')
+    mainFrame.epGpLabel:SetText('Action:')
     mainFrame.epGpLabel:SetPoint('LEFT', lastCheckFrame, 'RIGHT', 22 + extraOffset, 0)
 
     local epCheckLabel = mainFrame:GetName() .. 'CheckEp'

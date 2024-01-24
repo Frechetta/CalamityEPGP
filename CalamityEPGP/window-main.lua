@@ -150,6 +150,12 @@ function MainWindow:show()
         self.mainFrame.raidButton:Show()
     end
 
+    if not IsInRaid() then
+        self:setRaidOnly(false)
+        self:filterData()
+        self:setData()
+    end
+
     self.mainFrame:Show()
 end
 
