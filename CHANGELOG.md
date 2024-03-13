@@ -1,3 +1,8 @@
+# 0.20.2
+
+- fix issue where only portion of raid shows in roster
+- minor improvements for integration with CalamityWeb
+
 # 0.20.1
 
 - move knownPlayers to db
