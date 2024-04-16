@@ -47,6 +47,9 @@ local dbDefaults = {
         lmSettingsLastChange = -1,
         benchedPlayers = {},
         knownPlayers = {},
+        raid = {
+            rosterHistory = {},
+        },
     }
 }
 
@@ -433,6 +436,8 @@ end
 
 
 function addon:loadRaidRoster()
+    local prevPlayers = self.raidRoster:len()
+
     self.raidRoster:clear()
 
     if IsInRaid() then
@@ -461,6 +466,15 @@ function addon:loadRaidRoster()
 
     ns.MainWindow:refresh()
     ns.RaidWindow:refresh()
+
+    if prevPlayers ~= self.raidRoster:len() and ns.Lib.isOfficer() then
+        local ts = time()
+        local players = ns.Lib.deepcopy(self.raidRoster:keys())
+
+        tinsert(ns.db.raid.rosterHistory, {ts, players})
+
+        -- TODO: sync to officers
+    end
 end
 
 

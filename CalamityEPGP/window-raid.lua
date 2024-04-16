@@ -57,8 +57,8 @@ function RaidWindow:createWindow()
 
     mainFrame.startButton:SetScript('OnClick', function() self:handleStartClick() end)
     mainFrame.stopButton:SetScript('OnClick', function() self:handleStopClick() end)
-    mainFrame.addEpButton:SetScript('OnClick', function() self:handleAddEpClick() end)
     mainFrame.benchButton:SetScript('OnClick', function() ns.BenchWindow:show() end)
+    mainFrame.addEpButton:SetScript('OnClick', function() self:handleAddEpClick() end)
 
     tinsert(UISpecialFrames, mainFrame:GetName())
 
@@ -123,7 +123,7 @@ function RaidWindow:handleStartClick()
     self.mainFrame.startButton:Disable()
     self.mainFrame.stopButton:Enable()
 
-    -- TODO: popup window asking to use current time or custom time, also verify on-time value
+    -- TODO: popup window asking to use current time or custom time, also verify on-time value and bench
     -- callback: Raid.active = true, Raid.startTs = <startTs>, Raid.onTimeTs = <onTimeTs>
     --           if onTimeTs hasn't been reached, start a timer to award on-time EP
     --               else, determine who was online at that time and award on-time EP
