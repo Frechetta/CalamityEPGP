@@ -3,7 +3,7 @@ local addonName, ns = ...  -- Namespace
 local Set = ns.Set
 local Dict = ns.Dict
 
-local Sync = {
+local SyncHistory = {
     timeframes = {
         DAILY = 0,
         WEEKLY = 1,
@@ -14,13 +14,13 @@ local Sync = {
     eventIds = Set:new(),
 }
 
-ns.Sync = Sync
+ns.SyncHistory = SyncHistory
 
 local secondsDay = 86400
 local secondsWeek = 604800
 
 
-function Sync:init()
+function SyncHistory:init()
     local msgTypes = ns.Comm.msgTypes
 
     ns.Comm:registerHandler(msgTypes.DATA_REQ, self.handleDataReq)
@@ -31,7 +31,7 @@ function Sync:init()
 end
 
 
-function Sync:computeIndices()
+function SyncHistory:computeIndices()
     self.weekTsIndex:clear()
     self.dayTsIndex:clear()
     self.eventIds:clear()
@@ -69,7 +69,7 @@ end
 
 
 ---@return table
-function Sync:getWeeklyHashes()
+function SyncHistory:getWeeklyHashes()
     local weeks = {}
 
     for _, eventAndHash in ipairs(ns.db.history) do
@@ -89,7 +89,7 @@ end
 
 ---@param weekTs number
 ---@return table
-function Sync:getDailyHashes(weekTs)
+function SyncHistory:getDailyHashes(weekTs)
     local days = {}
 
     local index = self.weekTsIndex:get(weekTs)
@@ -127,7 +127,7 @@ function Sync:getDailyHashes(weekTs)
 end
 
 
-function Sync.processTimeframeEvent(event, timeframeSeconds, timeframes)
+function SyncHistory.processTimeframeEvent(event, timeframeSeconds, timeframes)
     local ts = event[1]
     local players = event[3]
     local mode = event[4]
@@ -156,7 +156,7 @@ end
 
 ---@param dayTs number
 ---@return table
-function Sync:getEventHashesByDay(dayTs)
+function SyncHistory:getEventHashesByDay(dayTs)
     local events = {}
 
     local index = self.dayTsIndex:get(dayTs)
@@ -190,7 +190,7 @@ end
 ---@param timeframe number
 ---@param timestamps Set
 ---@return table
-function Sync:getEvents(timeframe, timestamps)
+function SyncHistory:getEvents(timeframe, timestamps)
     assert(timeframe == self.timeframes.WEEKLY or timeframe == self.timeframes.DAILY or timeframe == self.timeframes.EVENTS,
            ('timeframe must be WEEKLY, DAILY, or EVENTS, not %s'):format(tostring(timeframe)))
 
@@ -245,7 +245,7 @@ end
 
 
 ---@return table
-function Sync.getLmSettings()
+function SyncHistory.getLmSettings()
     return {
         ns.cfg.defaultDecayEp,
         ns.cfg.defaultDecayGp,
@@ -260,7 +260,7 @@ function Sync.getLmSettings()
 end
 
 
-function Sync:syncInit()
+function SyncHistory:syncInit()
     ns.debug('initializing sync')
 
     local weeklyHashes = self:getWeeklyHashes()
@@ -272,7 +272,7 @@ end
 
 ---@param weeklyHashes table
 ---@param lmSettingsLastChange number
-function Sync.sendSync0(weeklyHashes, lmSettingsLastChange)
+function SyncHistory.sendSync0(weeklyHashes, lmSettingsLastChange)
     local parts = {}
     for weekTs, weekHash in pairs(weeklyHashes) do
         tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
@@ -287,7 +287,7 @@ end
 
 ---@param differingWeeks table
 ---@param target string
-function Sync.sendSync1(differingWeeks, target)
+function SyncHistory.sendSync1(differingWeeks, target)
     local parts = {}
     for weekTs, dayHashes in pairs(differingWeeks) do
         local dayHashesParts = {}
@@ -304,7 +304,7 @@ end
 
 ---@param differingDays table
 ---@param target string
-function Sync.sendSync2(differingDays, target)
+function SyncHistory.sendSync2(differingDays, target)
     ns.Comm:send(ns.Comm.msgTypes.SYNC_2, differingDays, 'WHISPER', target)
 end
 
@@ -312,7 +312,7 @@ end
 ---@param timestamps table
 ---@param lmSettings boolean
 ---@param target string
-function Sync.sendDataReq(timeframe, timestamps, lmSettings, target)
+function SyncHistory.sendDataReq(timeframe, timestamps, lmSettings, target)
     local toSend = {timeframe, timestamps, lmSettings}
     ns.Comm:send(ns.Comm.msgTypes.DATA_REQ, toSend, 'WHISPER', target)
 end
@@ -321,7 +321,7 @@ end
 ---@param timestamps Set
 ---@param sendLmSettings boolean
 ---@param target string
-function Sync:sendDataSend(timeframe, timestamps, sendLmSettings, target)
+function SyncHistory:sendDataSend(timeframe, timestamps, sendLmSettings, target)
     local toSend = {}
 
     tinsert(toSend, self:getEvents(timeframe, timestamps))
@@ -334,7 +334,7 @@ function Sync:sendDataSend(timeframe, timestamps, sendLmSettings, target)
 end
 
 ---@param eventAndHashes table
-function Sync:sendEventsToGuild(eventAndHashes)
+function SyncHistory:sendEventsToGuild(eventAndHashes)
     local events = {}
 
     for _, eventAndHash in ipairs(eventAndHashes) do
@@ -346,14 +346,14 @@ function Sync:sendEventsToGuild(eventAndHashes)
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end
 
-function Sync:sendLmSettingsToGuild()
+function SyncHistory:sendLmSettingsToGuild()
     local toSend = {{}, self:getLmSettings()}
 
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end
 
 
-function Sync.handleSync0(message, sender)
+function SyncHistory.handleSync0(message, sender)
     -- if we are both guildies, drop the message
     if not ns.Lib.isOfficer() and not ns.Lib.isOfficer(sender) then
         return
@@ -364,7 +364,7 @@ function Sync.handleSync0(message, sender)
     local theirWeeklyHashes = Dict:new(data[1])
     local theirLmSettingsLastChange = ns.Lib.b64Decode(data[2])
 
-    local myWeeklyHashes = Dict:new(Sync:getWeeklyHashes())
+    local myWeeklyHashes = Dict:new(SyncHistory:getWeeklyHashes())
     local myLmSettingsLastChange = ns.db.lmSettingsLastChange
 
     local parts = {}
@@ -390,7 +390,7 @@ function Sync.handleSync0(message, sender)
 
         if #myMissingWeeks > 0 or iNeedLmSettings then
             ns.debug(('i\'m missing weeks (%s), requesting from %s'):format(table.concat(myMissingWeeks, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.WEEKLY, myMissingWeeks, iNeedLmSettings, sender)
+            SyncHistory.sendDataReq(SyncHistory.timeframes.WEEKLY, myMissingWeeks, iNeedLmSettings, sender)
         end
     end
 
@@ -410,7 +410,7 @@ function Sync.handleSync0(message, sender)
 
         if not theirMissingWeeks:isEmpty() or theyNeedLmSettings then
             ns.debug(('they\'re missing weeks (%s), sending to %s'):format(table.concat(theirMissingWeeksEncoded:toTable(), ', '), sender))
-            Sync:sendDataSend(Sync.timeframes.WEEKLY, theirMissingWeeks, theyNeedLmSettings, sender)
+            SyncHistory:sendDataSend(SyncHistory.timeframes.WEEKLY, theirMissingWeeks, theyNeedLmSettings, sender)
         end
     end
 
@@ -424,17 +424,17 @@ function Sync.handleSync0(message, sender)
         local theirWeekHash = theirWeeklyHashes:get(weekTs)
 
         if myWeekHash ~= theirWeekHash then
-            differingWeeks[weekTs] = Sync:getDailyHashes(ns.Lib.b64Decode(weekTs))
+            differingWeeks[weekTs] = SyncHistory:getDailyHashes(ns.Lib.b64Decode(weekTs))
             shouldSend = true
         end
     end
 
     if shouldSend then
-        Sync.sendSync1(differingWeeks, sender)
+        SyncHistory.sendSync1(differingWeeks, sender)
     end
 end
 
-function Sync.handleSync1(message, sender)
+function SyncHistory.handleSync1(message, sender)
     -- if we are both guildies, drop the message
     if not ns.Lib.isOfficer() and not ns.Lib.isOfficer(sender) then
         return
@@ -447,7 +447,7 @@ function Sync.handleSync1(message, sender)
 
     for weekTs, theirDailyHashes in pairs(data) do
         theirDailyHashesByWeek:set(weekTs, Dict:new(theirDailyHashes))
-        myDailyHashesByWeek:set(weekTs, Dict:new(Sync:getDailyHashes(ns.Lib.b64Decode(weekTs))))
+        myDailyHashesByWeek:set(weekTs, Dict:new(SyncHistory:getDailyHashes(ns.Lib.b64Decode(weekTs))))
     end
 
     local parts = {}
@@ -476,7 +476,7 @@ function Sync.handleSync1(message, sender)
 
         if #myMissingDays > 0 then
             ns.debug(('i\'m missing days (%s), requesting from %s'):format(table.concat(myMissingDays, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.DAILY, myMissingDays, false, sender)
+            SyncHistory.sendDataReq(SyncHistory.timeframes.DAILY, myMissingDays, false, sender)
         end
     end
 
@@ -495,7 +495,7 @@ function Sync.handleSync1(message, sender)
 
         if not theirMissingDays:isEmpty() then
             ns.debug(('they\'re missing days (%s), sending to %s'):format(table.concat(theirMissingDays:toTable(), ', '), sender))
-            Sync:sendDataSend(Sync.timeframes.DAILY, theirMissingDays, false, sender)
+            SyncHistory:sendDataSend(SyncHistory.timeframes.DAILY, theirMissingDays, false, sender)
         end
     end
 
@@ -512,7 +512,7 @@ function Sync.handleSync1(message, sender)
             local theirDayHash = theirDailyHashes:get(dayTs)
 
             if myDayHash ~= theirDayHash then
-                differingDays[dayTs] = Sync:getEventHashesByDay(ns.Lib.b64Decode(dayTs))
+                differingDays[dayTs] = SyncHistory:getEventHashesByDay(ns.Lib.b64Decode(dayTs))
                 shouldSend = true
             end
         end
@@ -529,11 +529,11 @@ function Sync.handleSync1(message, sender)
         end
         local differingDaysStr = '{' .. table.concat(parts, ', ') .. '}'
         ns.debug('sending differing days: ' .. differingDaysStr)
-        Sync.sendSync2(differingDays, sender)
+        SyncHistory.sendSync2(differingDays, sender)
     end
 end
 
-function Sync.handleSync2(message, sender)
+function SyncHistory.handleSync2(message, sender)
     -- if we are both guildies, drop the message
     if not ns.Lib.isOfficer() and not ns.Lib.isOfficer(sender) then
         return
@@ -546,7 +546,7 @@ function Sync.handleSync2(message, sender)
 
     for dayTs, theirEventHashes in pairs(data) do
         theirEventHashesByDay:set(dayTs, Dict:new(theirEventHashes))
-        myEventHashesByDay:set(dayTs, Dict:new(Sync:getEventHashesByDay(ns.Lib.b64Decode(dayTs))))
+        myEventHashesByDay:set(dayTs, Dict:new(SyncHistory:getEventHashesByDay(ns.Lib.b64Decode(dayTs))))
     end
 
     -- if they are an officer, check if I need to ask for data
@@ -564,7 +564,7 @@ function Sync.handleSync2(message, sender)
 
         if #myMissingEvents > 0 then
             ns.debug(('i\'m missing events (%s), requesting from %s'):format(table.concat(myMissingEvents, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.EVENTS, myMissingEvents, false, sender)
+            SyncHistory.sendDataReq(SyncHistory.timeframes.EVENTS, myMissingEvents, false, sender)
         end
     end
 
@@ -583,12 +583,12 @@ function Sync.handleSync2(message, sender)
 
         if not theirMissingEvents:isEmpty() then
             ns.debug(('they\'re missing events (%s), sending to %s'):format(table.concat(theirMissingEvents:toTable(), ', '), sender))
-            Sync:sendDataSend(Sync.timeframes.EVENTS, theirMissingEvents, false, sender)
+            SyncHistory:sendDataSend(SyncHistory.timeframes.EVENTS, theirMissingEvents, false, sender)
         end
     end
 end
 
-function Sync.handleDataReq(message, sender)
+function SyncHistory.handleDataReq(message, sender)
     -- if I am not an officer, drop the message
     if not ns.Lib.isOfficer() then
         return
@@ -610,10 +610,10 @@ function Sync.handleDataReq(message, sender)
         timestampsDecoded:add(ns.Lib.b64Decode(timestamp))
     end
 
-    Sync:sendDataSend(timeframe, timestampsDecoded, lmSettings, sender)
+    SyncHistory:sendDataSend(timeframe, timestampsDecoded, lmSettings, sender)
 end
 
-function Sync.handleDataSend(message, sender)
+function SyncHistory.handleDataSend(message, sender)
     -- if they are not an officer, drop the message
     if not ns.Lib.isOfficer(sender) then
         return
@@ -649,18 +649,18 @@ function Sync.handleDataSend(message, sender)
         end
 
         for _, eventAndHash in ipairs(events) do
-            eventAndHash = Sync.decodeEvent(eventAndHash)
+            eventAndHash = SyncHistory.decodeEvent(eventAndHash)
 
             local id = ns.Lib.getEventAndHashId(eventAndHash)
 
-            if not Sync.eventIds:contains(id) then
+            if not SyncHistory.eventIds:contains(id) then
                 ns.Lib.bininsert(ns.db.history, eventAndHash, fcomp)
                 ns.Lib.bininsert(sortedEvents, eventAndHash, fcomp)
-                Sync.eventIds:add(id)
+                SyncHistory.eventIds:add(id)
             end
         end
 
-        Sync:computeIndices()
+        SyncHistory:computeIndices()
     end
 
     if lmSettings ~= nil then
@@ -705,7 +705,7 @@ end
 
 ---@param eventAndHash table
 ---@return table
-function Sync.encodeEvent(eventAndHash)
+function SyncHistory.encodeEvent(eventAndHash)
     eventAndHash = ns.Lib.deepcopy(eventAndHash)
 
     local event = eventAndHash[1]
@@ -720,7 +720,7 @@ end
 
 ---@param eventAndHash table
 ---@return table
-function Sync.decodeEvent(eventAndHash)
+function SyncHistory.decodeEvent(eventAndHash)
     eventAndHash = ns.Lib.deepcopy(eventAndHash)
 
     local event = eventAndHash[1]

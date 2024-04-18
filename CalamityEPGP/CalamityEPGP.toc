@@ -18,7 +18,7 @@ values.lua
 lib.lua
 Table.lua
 comm.lua
-sync.lua
+sync-history.lua
 window-confirm.lua
 window-confirm-award.lua
 window-roll.lua
