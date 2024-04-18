@@ -281,7 +281,7 @@ function addon:init()
         -- TODO: prune history
 
         ns.Comm:init()
-        ns.SyncHistory:init()
+        ns.Sync:init()
 
         self.clearAwarded()
         self.clearAwardedTimer = self:ScheduleRepeatingTimer(function() self.clearAwarded() end, 60)
@@ -354,8 +354,8 @@ function addon:init()
             self:sendHeartbeat()
             self.heartbeatTimer = self:ScheduleRepeatingTimer(function() self:sendHeartbeat() end, 60)
 
-            ns.SyncHistory:computeIndices()
-            ns.SyncHistory:syncInit()
+            ns.Sync:computeIndices()
+            ns.Sync:syncInit()
 
             self:loadRaidRoster()
         end)
@@ -933,8 +933,8 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
-    ns.SyncHistory:computeIndices()
-    ns.SyncHistory:sendEventsToGuild({event})
+    ns.Sync:computeIndices()
+    ns.Sync:sendEventsToGuild({event})
 end
 
 
@@ -1051,7 +1051,7 @@ end
 
 function addon.modifiedLmSettings()
     ns.db.lmSettingsLastChange = time()
-    ns.SyncHistory:sendLmSettingsToGuild()
+    ns.Sync:sendLmSettingsToGuild()
 end
 
 
