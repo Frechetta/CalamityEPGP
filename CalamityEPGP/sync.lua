@@ -352,6 +352,15 @@ function Sync:sendLmSettingsToGuild()
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end
 
+---@param ts number
+---@param players table
+function Sync:sendRosterHistoryEventToOfficers(ts, players)
+    local event = {ts, players}
+    local toSend = {{}, {}, {event}}
+
+    ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
+end
+
 
 function Sync.handleSync0(message, sender)
     -- if we are both guildies, drop the message
@@ -625,6 +634,8 @@ function Sync.handleDataSend(message, sender)
     local events = data[1]
     ---@type table?
     local lmSettings = data[2]
+    ---@type table?
+    local raidRosterHistoryEvents = data[3]
 
     local recompute = false
     local sortedEvents = {}
@@ -663,7 +674,7 @@ function Sync.handleDataSend(message, sender)
         Sync:computeIndices()
     end
 
-    if lmSettings ~= nil then
+    if lmSettings ~= nil and #lmSettings > 0 then
         ns.debug(('received lmSettings from %s'):format(sender))
 
         local newSyncAltEp = lmSettings[3]
@@ -699,6 +710,30 @@ function Sync.handleDataSend(message, sender)
         else
             ns.addon:computeStandings()
         end
+    end
+
+    if ns.Lib.isOfficer() and raidRosterHistoryEvents ~= nil and #raidRosterHistoryEvents > 0 then
+        local fcomp = function(left, right)
+            return left[1] < right[1]
+        end
+
+        for _, newEvent in ipairs(raidRosterHistoryEvents) do
+            ns.Lib.bininsert(ns.db.raid.rosterHistory, newEvent, fcomp)
+        end
+
+        -- initialize with first event
+        local newHistory = {ns.db.raid.rosterHistory[1]}
+
+        for i = 2, #ns.db.raid.rosterHistory do
+            local prevEvent = ns.db.raid.rosterHistory[i - 1]
+            local thisEvent = ns.db.raid.rosterHistory[i]
+
+            if prevEvent[2] ~= thisEvent[2] then
+                tinsert(newHistory, thisEvent)
+            end
+        end
+
+        ns.db.raid.rosterHistory = newHistory
     end
 end
 

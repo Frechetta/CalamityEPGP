@@ -286,6 +286,13 @@ function addon:init()
         self.clearAwarded()
         self.clearAwardedTimer = self:ScheduleRepeatingTimer(function() self.clearAwarded() end, 60)
 
+        self:housekeepRaidRosterHistory()
+        self.housekeepRaidRosterHistoryTimer = self:ScheduleRepeatingTimer(function() self:housekeepRaidRosterHistory() end, 600)
+
+        table.sort(ns.db.raid.rosterHistory, function(left, right)
+            return left[1] < right[1]
+        end)
+
         self:RegisterChatCommand('ce', 'handleSlashCommand')
         self:RegisterEvent('CHAT_MSG_SYSTEM', 'handleChatMsg')
         self:RegisterEvent('CHAT_MSG_PARTY', 'handleChatMsg')
@@ -467,13 +474,17 @@ function addon:loadRaidRoster()
     ns.MainWindow:refresh()
     ns.RaidWindow:refresh()
 
-    if prevPlayers ~= self.raidRoster:len() and ns.Lib.isOfficer() then
+    if ns.Lib.isOfficer() and prevPlayers ~= self.raidRoster:len() then
         local ts = time()
-        local players = ns.Lib.deepcopy(self.raidRoster:keys())
+
+        local players = {}
+        for player in self.raidRoster:iter() do
+            ns.Lib.bininsert(players, player)
+        end
 
         tinsert(ns.db.raid.rosterHistory, {ts, players})
 
-        -- TODO: sync to officers
+        ns.Sync:sendRosterHistoryEventToOfficers(ts, players)
     end
 end
 
@@ -851,6 +862,21 @@ function addon:housekeepPeers()
     for guid in toRemove:iter() do
         ns.peers:remove(guid)
     end
+end
+
+
+function addon:housekeepRaidRosterHistory()
+    local threshold = time() - 86400  -- 24 hours old
+
+    local newRaidRosterHistory = {}
+
+    for _, event in ipairs(ns.db.raid.rosterHistory) do
+        if event[1] > threshold then
+            tinsert(newRaidRosterHistory, event)
+        end
+    end
+
+    ns.db.raid.rosterHistory = newRaidRosterHistory
 end
 
 
