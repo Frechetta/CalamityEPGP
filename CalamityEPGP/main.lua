@@ -866,12 +866,12 @@ end
 
 
 function addon:housekeepRaidRosterHistory()
-    local threshold = time() - 86400  -- 24 hours old
+    local oneDayAgo = time() - 86400  -- 24 hours old
 
     local newRaidRosterHistory = {}
 
     for _, event in ipairs(ns.db.raid.rosterHistory) do
-        if event[1] > threshold then
+        if event[1] > oneDayAgo then
             tinsert(newRaidRosterHistory, event)
         end
     end
