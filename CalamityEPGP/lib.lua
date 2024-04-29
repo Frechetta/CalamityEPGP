@@ -11,6 +11,7 @@ ns.Lib = Lib
 ---@param o1 any|table First object to compare
 ---@param o2 any|table Second object to compare
 ---@param ignore_mt boolean True to ignore metatables (a recursive function to tests tables inside tables)
+---@return boolean
 function Lib.equals(o1, o2, ignore_mt)
     if o1 == o2 then return true end
     local o1Type = type(o1)

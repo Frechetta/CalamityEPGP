@@ -484,6 +484,7 @@ function addon:loadRaidRoster()
 
         tinsert(ns.db.raid.rosterHistory, {ts, players})
 
+        ns.Sync:computeRaidRosterHistoryHashes()
         ns.Sync:sendRosterHistoryEventToOfficers(ts, players)
     end
 end
@@ -959,7 +960,7 @@ function addon:modifyEpgp(players, mode, value, reason, percent)
     ns.RaidWindow:refresh()
     ns.HistoryWindow:refresh()
 
-    ns.Sync:computeIndices()
+    ns.Sync:computeIndices(false)
     ns.Sync:sendEventsToGuild({event})
 end
 
