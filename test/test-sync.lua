@@ -180,7 +180,10 @@ describe('algorithm', function()
                 altMainMapping = {},
                 mainAltMapping = {},
             },
-            knownPlayers = {}
+            knownPlayers = {},
+            raid = {
+                rosterHistory = {},
+            },
         }
 
         ns.standings = ns.Dict:new()
@@ -263,7 +266,7 @@ describe('algorithm', function()
         ns2 = nil
     end)
 
-    describe('sync', function()
+    describe('sync history', function()
         test('officer online, up-to-date; non-officer logs on, behind', function()
             ns1.me.officer = true
             ns2.me.officer = false
@@ -7189,299 +7192,706 @@ describe('algorithm', function()
 
             assert.not_same(ns1.standings, ns2.standings)
         end)
+
+        test('non-officer sends new event to non-officer', function()
+            ns1.me.officer = false
+            ns2.me.officer = false
+
+            local historyTucker = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    346,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    679,
+                },
+            }
+
+            local historyMia = {
+                {
+                    {
+                        1696208400,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    123,
+                },
+                {
+                    {
+                        1696212000,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    234,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    345,
+                },
+                {
+                    {
+                        1696294800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    346,
+                },
+                {
+                    {
+                        1696813200,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        100,
+                        '1:stuff',
+                        false,
+                        100,
+                    },
+                    456,
+                },
+                {
+                    {
+                        1696816800,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        75,
+                        '2:boss',
+                        false,
+                        100,
+                    },
+                    567,
+                },
+            }
+
+            ns1.db.history = ns1.Lib.deepcopy(historyTucker)
+            ns2.db.history = ns2.Lib.deepcopy(historyMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            ns1.addon:computeStandings()
+            ns2.addon:computeStandings()
+            ns1.addon.computeStandings:clear()
+            ns1.addon.computeStandingsWithEvents:clear()
+            ns2.addon.computeStandings:clear()
+            ns2.addon.computeStandingsWithEvents:clear()
+
+            ns1.Sync:sendEventsToGuild({
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'ep',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    678,
+                },
+                {
+                    {
+                        1696899600,
+                        '11111111',
+                        {
+                            '11111111',
+                            '22222222',
+                        },
+                        'gp',
+                        -10,
+                        '3:weekly',
+                        true,
+                        100,
+                    },
+                    679,
+                }
+            })
+
+            assert.same(historyTucker, ns1.db.history)
+            assert.same(historyMia, ns2.db.history)
+
+            assert.spy(ns1.addon.computeStandings).was.not_called()
+            assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
+            assert.spy(ns2.addon.computeStandings).was.not_called()
+            assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
+
+            assert.not_same(ns1.standings, ns2.standings)
+        end)
     end)
 
-    test('non-officer sends new event to non-officer', function()
-        ns1.me.officer = false
-        ns2.me.officer = false
+    describe('sync raid roster history', function()
+        test('officer online; non-officer logs on', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
 
-        local historyTucker = {
-            {
+            local raidRosterHistoryTucker = {
                 {
-                    1696208400,
-                    '11111111',
+                    1,
                     {
-                        '11111111',
-                        '22222222',
+                        "p1",
                     },
-                    'ep',
-                    100,
-                    '1:stuff',
-                    false,
-                    100,
                 },
-                123,
-            },
-            {
                 {
-                    1696212000,
-                    '11111111',
+                    2,
                     {
-                        '11111111',
-                        '22222222',
+                        "p1",
+                        "p2",
                     },
-                    'gp',
-                    75,
-                    '2:boss',
-                    false,
-                    100,
                 },
-                234,
-            },
-            {
-                {
-                    1696294800,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                345,
-            },
-            {
-                {
-                    1696294800,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                346,
-            },
-            {
-                {
-                    1696813200,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    100,
-                    '1:stuff',
-                    false,
-                    100,
-                },
-                456,
-            },
-            {
-                {
-                    1696816800,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    75,
-                    '2:boss',
-                    false,
-                    100,
-                },
-                567,
-            },
-            {
-                {
-                    1696899600,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                678,
-            },
-            {
-                {
-                    1696899600,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                679,
-            },
-        }
-
-        local historyMia = {
-            {
-                {
-                    1696208400,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    100,
-                    '1:stuff',
-                    false,
-                    100,
-                },
-                123,
-            },
-            {
-                {
-                    1696212000,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    75,
-                    '2:boss',
-                    false,
-                    100,
-                },
-                234,
-            },
-            {
-                {
-                    1696294800,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                345,
-            },
-            {
-                {
-                    1696294800,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                346,
-            },
-            {
-                {
-                    1696813200,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    100,
-                    '1:stuff',
-                    false,
-                    100,
-                },
-                456,
-            },
-            {
-                {
-                    1696816800,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    75,
-                    '2:boss',
-                    false,
-                    100,
-                },
-                567,
-            },
-        }
-
-        ns1.db.history = ns1.Lib.deepcopy(historyTucker)
-        ns2.db.history = ns2.Lib.deepcopy(historyMia)
-
-        ns1.Sync:computeIndices()
-        ns2.Sync:computeIndices()
-
-        ns1.addon:computeStandings()
-        ns2.addon:computeStandings()
-        ns1.addon.computeStandings:clear()
-        ns1.addon.computeStandingsWithEvents:clear()
-        ns2.addon.computeStandings:clear()
-        ns2.addon.computeStandingsWithEvents:clear()
-
-        ns1.Sync:sendEventsToGuild({
-            {
-                {
-                    1696899600,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'ep',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                678,
-            },
-            {
-                {
-                    1696899600,
-                    '11111111',
-                    {
-                        '11111111',
-                        '22222222',
-                    },
-                    'gp',
-                    -10,
-                    '3:weekly',
-                    true,
-                    100,
-                },
-                679,
             }
-        })
 
-        assert.same(historyTucker, ns1.db.history)
-        assert.same(historyMia, ns2.db.history)
+            -- non-officers should never have a history; just for the sake of this test
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+            }
 
-        assert.spy(ns1.addon.computeStandings).was.not_called()
-        assert.spy(ns1.addon.computeStandingsWithEvents).was.not_called()
-        assert.spy(ns2.addon.computeStandings).was.not_called()
-        assert.spy(ns2.addon.computeStandingsWithEvents).was.not_called()
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
 
-        assert.not_same(ns1.standings, ns2.standings)
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(0, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns2.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(raidRosterHistoryMia, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer online; non-officer logs on', function()
+            ns1.me.officer = true
+            ns2.me.officer = false
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            -- non-officers should never have a history; just for the sake of this test
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+            }
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(0, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns2.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(raidRosterHistoryMia, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer online, up-to-date; officer logs on, behind', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+            }
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(1, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns2.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer online, behind; officer logs on, up-to-date', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+            }
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(1, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns1.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer online, up-to-date; officer logs on, up-to-date', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(2, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns1.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer online, up-to-date; officer logs on, up-to-date, different timestamps', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    3,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(2, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns2.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer logs on, up-to-date; officer online, up-to-date, different timestamps', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    3,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(2, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns1.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer online, up-to-date; officer logs on, has nothing', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {}
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(0, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns2.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
+
+        test('officer logs on, up-to-date; officer online, has nothing', function()
+            ns1.me.officer = true
+            ns2.me.officer = true
+
+            local raidRosterHistoryTucker = {
+                {
+                    1,
+                    {
+                        "p1",
+                    },
+                },
+                {
+                    2,
+                    {
+                        "p1",
+                        "p2",
+                    },
+                },
+            }
+
+            local raidRosterHistoryMia = {}
+
+            ns1.db.raid.rosterHistory = ns1.Lib.deepcopy(raidRosterHistoryTucker)
+            ns2.db.raid.rosterHistory = ns2.Lib.deepcopy(raidRosterHistoryMia)
+
+            ns1.Sync:computeIndices()
+            ns2.Sync:computeIndices()
+
+            assert.same(2, ns1.Sync.raidRosterHistoryHashMap:len())
+            assert.same(0, ns2.Sync.raidRosterHistoryHashMap:len())
+
+            ns1.Sync:syncInit()
+
+            assert.same(raidRosterHistoryTucker, ns1.db.raid.rosterHistory)
+            assert.same(ns1.db.raid.rosterHistory, ns2.db.raid.rosterHistory)
+        end)
     end)
 
     -- TODO: test lm settings

@@ -12,6 +12,7 @@ local Sync = {
     weekTsIndex = Dict:new(),
     dayTsIndex = Dict:new(),
     eventIds = Set:new(),
+    raidRosterHistoryHashMap = Dict:new(),
 }
 
 ns.Sync = Sync
@@ -31,7 +32,12 @@ function Sync:init()
 end
 
 
-function Sync:computeIndices()
+---@param computeRaidRosterHistoryHashes boolean
+function Sync:computeIndices(computeRaidRosterHistoryHashes)
+    if computeRaidRosterHistoryHashes == nil then
+        computeRaidRosterHistoryHashes = true
+    end
+
     self.weekTsIndex:clear()
     self.dayTsIndex:clear()
     self.eventIds:clear()
@@ -65,6 +71,21 @@ function Sync:computeIndices()
         tinsert(dayTsIndexParts, k .. ': ' .. v)
     end
     ns.debug('dayTsIndex: ' .. table.concat(dayTsIndexParts, ', '))
+
+    if computeRaidRosterHistoryHashes then
+        self:computeRaidRosterHistoryHashes()
+    end
+end
+
+function Sync:computeRaidRosterHistoryHashes()
+    self.raidRosterHistoryHashMap:clear()
+
+    if ns.Lib.isOfficer() then
+        for _, event in ipairs(ns.db.raid.rosterHistory) do
+            local hash = ns.Lib.hash(event)
+            self.raidRosterHistoryHashMap:set(hash, event)
+        end
+    end
 end
 
 
@@ -260,19 +281,27 @@ function Sync.getLmSettings()
 end
 
 
+---@return table
+function Sync:getRaidRosterHistoryHashes()
+    return self.raidRosterHistoryHashMap:keys():toTable()
+end
+
+
 function Sync:syncInit()
     ns.debug('initializing sync')
 
     local weeklyHashes = self:getWeeklyHashes()
     local lmSettingsLastChange = ns.Lib.b64Encode(ns.db.lmSettingsLastChange)
+    local raidRosterHistoryHashes = self:getRaidRosterHistoryHashes()
 
-    self.sendSync0(weeklyHashes, lmSettingsLastChange)
+    self.sendSync0(weeklyHashes, lmSettingsLastChange, raidRosterHistoryHashes)
 end
 
 
 ---@param weeklyHashes table
 ---@param lmSettingsLastChange number
-function Sync.sendSync0(weeklyHashes, lmSettingsLastChange)
+---@param raidRosterHistoryHashes table
+function Sync.sendSync0(weeklyHashes, lmSettingsLastChange, raidRosterHistoryHashes)
     local parts = {}
     for weekTs, weekHash in pairs(weeklyHashes) do
         tinsert(parts, tostring(weekTs) .. ': ' .. weekHash)
@@ -280,7 +309,7 @@ function Sync.sendSync0(weeklyHashes, lmSettingsLastChange)
     local weeklyHashesStr = '{' .. table.concat(parts, ', ') .. '}'
     ns.debug('sending weekly hashes: ' .. weeklyHashesStr)
 
-    local toSend = {weeklyHashes, lmSettingsLastChange}
+    local toSend = {weeklyHashes, lmSettingsLastChange, raidRosterHistoryHashes}
 
     ns.Comm:send(ns.Comm.msgTypes.SYNC_0, toSend, 'GUILD')
 end
@@ -311,24 +340,33 @@ end
 ---@param timeframe number
 ---@param timestamps table
 ---@param lmSettings boolean
+---@param raidRosterHistoryHashes table
 ---@param target string
-function Sync.sendDataReq(timeframe, timestamps, lmSettings, target)
-    local toSend = {timeframe, timestamps, lmSettings}
+function Sync.sendDataReq(timeframe, timestamps, lmSettings, raidRosterHistoryHashes, target)
+    local toSend = {timeframe, timestamps, lmSettings, raidRosterHistoryHashes}
     ns.Comm:send(ns.Comm.msgTypes.DATA_REQ, toSend, 'WHISPER', target)
 end
 
 ---@param timeframe number
 ---@param timestamps Set
 ---@param sendLmSettings boolean
+---@param raidRosterHistoryHashes table
 ---@param target string
-function Sync:sendDataSend(timeframe, timestamps, sendLmSettings, target)
-    local toSend = {}
+function Sync:sendDataSend(timeframe, timestamps, sendLmSettings, raidRosterHistoryHashes, target)
+    local events = self:getEvents(timeframe, timestamps)
 
-    tinsert(toSend, self:getEvents(timeframe, timestamps))
-
+    local lmSettings = {}
     if sendLmSettings then
-        tinsert(toSend, self:getLmSettings())
+        lmSettings = self:getLmSettings()
     end
+
+    local raidRosterHistoryEvents = {}
+    for _, raidRosterHistoryHash in ipairs(raidRosterHistoryHashes) do
+        local event = self.raidRosterHistoryHashMap:get(raidRosterHistoryHash)
+        tinsert(raidRosterHistoryEvents, event)
+    end
+
+    local toSend = {events, lmSettings, raidRosterHistoryEvents}
 
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'WHISPER', target)
 end
@@ -352,6 +390,15 @@ function Sync:sendLmSettingsToGuild()
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end
 
+---@param ts number
+---@param players table
+function Sync:sendRosterHistoryEventToOfficers(ts, players)
+    local event = {ts, players}
+    local toSend = {{}, {}, {event}}
+
+    ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'OFFICER')
+end
+
 
 function Sync.handleSync0(message, sender)
     -- if we are both guildies, drop the message
@@ -363,9 +410,17 @@ function Sync.handleSync0(message, sender)
 
     local theirWeeklyHashes = Dict:new(data[1])
     local theirLmSettingsLastChange = ns.Lib.b64Decode(data[2])
+    local theirRaidRosterHistoryHashesTable = data[3]
+
+    if theirRaidRosterHistoryHashesTable == nil then
+        theirRaidRosterHistoryHashesTable = {}
+    end
+
+    local theirRaidRosterHistoryHashes = Set:new(theirRaidRosterHistoryHashesTable)
 
     local myWeeklyHashes = Dict:new(Sync:getWeeklyHashes())
     local myLmSettingsLastChange = ns.db.lmSettingsLastChange
+    local myRaidRosterHistoryHashes = Set:new(Sync:getRaidRosterHistoryHashes())
 
     local parts = {}
     for weekTs, weekHash in theirWeeklyHashes:iter() do
@@ -388,9 +443,14 @@ function Sync.handleSync0(message, sender)
 
         local iNeedLmSettings = theirLmSettingsLastChange > myLmSettingsLastChange
 
-        if #myMissingWeeks > 0 or iNeedLmSettings then
-            ns.debug(('i\'m missing weeks (%s), requesting from %s'):format(table.concat(myMissingWeeks, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.WEEKLY, myMissingWeeks, iNeedLmSettings, sender)
+        local myMissingRaidRosterHistoryEvents = {}
+        if ns.Lib.isOfficer() then
+            myMissingRaidRosterHistoryEvents = theirRaidRosterHistoryHashes:difference(myRaidRosterHistoryHashes):toTable()
+        end
+
+        if #myMissingWeeks > 0 or iNeedLmSettings or #myMissingRaidRosterHistoryEvents > 0 then
+            ns.debug(('i\'m missing weeks (%s), i need LM settings (%s), i\'m missing raid roster history events (%s), requesting from %s'):format(table.concat(myMissingWeeks, ', '), tostring(iNeedLmSettings), table.concat(myMissingRaidRosterHistoryEvents, ', '), sender))
+            Sync.sendDataReq(Sync.timeframes.WEEKLY, myMissingWeeks, iNeedLmSettings, myMissingRaidRosterHistoryEvents, sender)
         end
     end
 
@@ -408,9 +468,14 @@ function Sync.handleSync0(message, sender)
 
         local theyNeedLmSettings = myLmSettingsLastChange > theirLmSettingsLastChange
 
-        if not theirMissingWeeks:isEmpty() or theyNeedLmSettings then
-            ns.debug(('they\'re missing weeks (%s), sending to %s'):format(table.concat(theirMissingWeeksEncoded:toTable(), ', '), sender))
-            Sync:sendDataSend(Sync.timeframes.WEEKLY, theirMissingWeeks, theyNeedLmSettings, sender)
+        local theirMissingRaidRosterHistoryHashes = {}
+        if ns.Lib.isOfficer(sender) then
+            theirMissingRaidRosterHistoryHashes = myRaidRosterHistoryHashes:difference(theirRaidRosterHistoryHashes):toTable()
+        end
+
+        if not theirMissingWeeks:isEmpty() or theyNeedLmSettings or #theirMissingRaidRosterHistoryHashes > 0 then
+            ns.debug(('they\'re missing weeks (%s), they need lm settings (%s), they\'re missing raid roster history events (%s), sending to %s'):format(table.concat(theirMissingWeeksEncoded:toTable(), ', '), tostring(theyNeedLmSettings), table.concat(theirMissingRaidRosterHistoryHashes, ', '), sender))
+            Sync:sendDataSend(Sync.timeframes.WEEKLY, theirMissingWeeks, theyNeedLmSettings, theirMissingRaidRosterHistoryHashes, sender)
         end
     end
 
@@ -476,7 +541,7 @@ function Sync.handleSync1(message, sender)
 
         if #myMissingDays > 0 then
             ns.debug(('i\'m missing days (%s), requesting from %s'):format(table.concat(myMissingDays, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.DAILY, myMissingDays, false, sender)
+            Sync.sendDataReq(Sync.timeframes.DAILY, myMissingDays, false, {}, sender)
         end
     end
 
@@ -495,7 +560,7 @@ function Sync.handleSync1(message, sender)
 
         if not theirMissingDays:isEmpty() then
             ns.debug(('they\'re missing days (%s), sending to %s'):format(table.concat(theirMissingDays:toTable(), ', '), sender))
-            Sync:sendDataSend(Sync.timeframes.DAILY, theirMissingDays, false, sender)
+            Sync:sendDataSend(Sync.timeframes.DAILY, theirMissingDays, false, {}, sender)
         end
     end
 
@@ -564,7 +629,7 @@ function Sync.handleSync2(message, sender)
 
         if #myMissingEvents > 0 then
             ns.debug(('i\'m missing events (%s), requesting from %s'):format(table.concat(myMissingEvents, ', '), sender))
-            Sync.sendDataReq(Sync.timeframes.EVENTS, myMissingEvents, false, sender)
+            Sync.sendDataReq(Sync.timeframes.EVENTS, myMissingEvents, false, {}, sender)
         end
     end
 
@@ -583,7 +648,7 @@ function Sync.handleSync2(message, sender)
 
         if not theirMissingEvents:isEmpty() then
             ns.debug(('they\'re missing events (%s), sending to %s'):format(table.concat(theirMissingEvents:toTable(), ', '), sender))
-            Sync:sendDataSend(Sync.timeframes.EVENTS, theirMissingEvents, false, sender)
+            Sync:sendDataSend(Sync.timeframes.EVENTS, theirMissingEvents, false, {}, sender)
         end
     end
 end
@@ -602,6 +667,8 @@ function Sync.handleDataReq(message, sender)
     local timestamps = data[2]  -- list of encoded timestamps
     ---@type boolean
     local lmSettings = data[3]
+    ---@type table?
+    local raidRosterHistoryHashes = data[4]
 
     ns.debug('handle data req, timeframe: ' .. timeframe .. ', timestamps: ' .. table.concat(timestamps, ', '))
 
@@ -610,7 +677,11 @@ function Sync.handleDataReq(message, sender)
         timestampsDecoded:add(ns.Lib.b64Decode(timestamp))
     end
 
-    Sync:sendDataSend(timeframe, timestampsDecoded, lmSettings, sender)
+    if raidRosterHistoryHashes == nil then
+        raidRosterHistoryHashes = {}
+    end
+
+    Sync:sendDataSend(timeframe, timestampsDecoded, lmSettings, raidRosterHistoryHashes, sender)
 end
 
 function Sync.handleDataSend(message, sender)
@@ -625,8 +696,10 @@ function Sync.handleDataSend(message, sender)
     local events = data[1]
     ---@type table?
     local lmSettings = data[2]
+    ---@type table?
+    local raidRosterHistoryEvents = data[3]
 
-    local recompute = false
+    local recomputeStandings = false
     local sortedEvents = {}
 
     local latestEvent = ns.db.history[#ns.db.history]
@@ -660,10 +733,10 @@ function Sync.handleDataSend(message, sender)
             end
         end
 
-        Sync:computeIndices()
+        Sync:computeIndices(false)
     end
 
-    if lmSettings ~= nil then
+    if lmSettings ~= nil and #lmSettings > 0 then
         ns.debug(('received lmSettings from %s'):format(sender))
 
         local newSyncAltEp = lmSettings[3]
@@ -675,7 +748,7 @@ function Sync.handleDataSend(message, sender)
                 ns.cfg.syncAltGp ~= newSyncAltGp or
                 ns.cfg.gpBase ~= newGpBase or
                 ns.db.altData.mainAltMapping ~= newMainAltMapping then
-            recompute = true
+            recomputeStandings = true
         end
 
         ns.cfg.defaultDecayEp = lmSettings[1]
@@ -691,7 +764,7 @@ function Sync.handleDataSend(message, sender)
         LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
     end
 
-    if recompute then
+    if recomputeStandings then
         ns.addon:computeStandings()
     elseif #sortedEvents > 0 then
         if latestTsBeforeInsert ~= -1 and sortedEvents[1][1][1] >= latestTsBeforeInsert then
@@ -699,6 +772,34 @@ function Sync.handleDataSend(message, sender)
         else
             ns.addon:computeStandings()
         end
+    end
+
+    if ns.Lib.isOfficer() and raidRosterHistoryEvents ~= nil and #raidRosterHistoryEvents > 0 then
+        ns.debug(('received raidRosterHistoryEvents from %s'):format(sender))
+
+        local fcomp = function(left, right)
+            return left[1] < right[1]
+        end
+
+        for _, newEvent in ipairs(raidRosterHistoryEvents) do
+            ns.Lib.bininsert(ns.db.raid.rosterHistory, newEvent, fcomp)
+        end
+
+        -- initialize with first event
+        local newHistory = {ns.db.raid.rosterHistory[1]}
+
+        for i = 2, #ns.db.raid.rosterHistory do
+            local prevEvent = ns.db.raid.rosterHistory[i - 1]
+            local thisEvent = ns.db.raid.rosterHistory[i]
+
+            if not ns.Lib.equals(prevEvent[2], thisEvent[2]) then
+                tinsert(newHistory, thisEvent)
+            end
+        end
+
+        ns.db.raid.rosterHistory = newHistory
+
+        Sync:computeRaidRosterHistoryHashes()
     end
 end
 

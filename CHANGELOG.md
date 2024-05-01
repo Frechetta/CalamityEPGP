@@ -1,3 +1,8 @@
+# 0.21.0
+
+- add raid roster history recording in prep of new raid feature
+- update for Cataclysm (4.0.4)
+
 # 0.20.2
 
 - fix issue where only portion of raid shows in roster
