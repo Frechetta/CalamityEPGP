@@ -1,3 +1,7 @@
+# 0.21.1
+
+- Designate as for Cataclysm classic
+
 # 0.21.0
 
 - add raid roster history recording in prep of new raid feature
