@@ -1,5 +1,5 @@
 ## Title: CalamityEPGP
-## Notes: EPGP addon for WOTLK
+## Notes: EPGP addon for Cataclysm Classic
 ## Author: Kardiir-Atiesh
 ## Version: 0.21.0
 ## Interface: 40400
