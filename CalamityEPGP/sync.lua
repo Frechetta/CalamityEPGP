@@ -374,18 +374,17 @@ end
 ---@param eventAndHashes table
 function Sync:sendEventsToGuild(eventAndHashes)
     local events = {}
-
     for _, eventAndHash in ipairs(eventAndHashes) do
         tinsert(events, self.encodeEvent(eventAndHash))
     end
 
-    local toSend = {events}
+    local toSend = {events, {}, {}}
 
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end
 
 function Sync:sendLmSettingsToGuild()
-    local toSend = {{}, self:getLmSettings()}
+    local toSend = {{}, self:getLmSettings(), {}}
 
     ns.Comm:send(ns.Comm.msgTypes.DATA_SEND, toSend, 'GUILD')
 end

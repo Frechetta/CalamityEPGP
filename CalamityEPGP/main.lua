@@ -244,6 +244,8 @@ function addon:init()
         ns.standings = Dict:new()
         ns.playersLastUpdated = Dict:new()
 
+        ns.computeStandingsCallbacks = {}
+
         self.ldb = LibStub('LibDataBroker-1.1')
         self.ldbi = LibStub('LibDBIcon-1.0')
 
@@ -314,6 +316,8 @@ function addon:init()
         self:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
         self:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
         self:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
+        self:RegisterEvent('PLAYER_REGEN_DISABLED', 'handleEnterCombat')
+        self:RegisterEvent('PLAYER_REGEN_ENABLED', 'handleExitCombat')
 
         hooksecurefunc("HandleModifiedItemClick", function(itemLink)
             self:handleItemClick(itemLink, GetMouseButtonClicked())
@@ -537,6 +541,13 @@ end
 
 ---@param callback function?
 function addon:computeStandings(callback)
+    callback = callback or function(_) end
+
+    if ns.inCombat then
+        tinsert(ns.computeStandingsCallbacks, callback)
+        return
+    end
+
     -- ns.debug(debug.traceback())
     ns.standings:clear()
     ns.playersLastUpdated:clear()
@@ -1264,6 +1275,27 @@ function addon:handlePartyLootMethodChanged()
     else
         self.useForRaid = false
         self.useForRaidPrompted = false
+    end
+end
+
+
+function addon:handleEnterCombat()
+    ns.inCombat = true
+end
+
+
+function addon:handleExitCombat()
+    ns.inCombat = false
+
+    if #ns.computeStandingsCallbacks > 0 then
+        local callback = function(playerDiffs)
+            while #ns.computeStandingsCallbacks > 0 do
+                local cb = table.remove(ns.computeStandingsCallbacks, 1)
+                cb(playerDiffs)
+            end
+        end
+
+        self:computeStandings(callback)
     end
 end
 
