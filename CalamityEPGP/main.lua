@@ -49,6 +49,7 @@ local dbDefaults = {
         knownPlayers = {},
         raid = {
             rosterHistory = {},
+            active = false,
         },
     }
 }
@@ -1090,6 +1091,41 @@ end
 function addon.modifiedLmSettings()
     ns.db.lmSettingsLastChange = time()
     ns.Sync:sendLmSettingsToGuild()
+end
+
+
+function addon.startRaid()
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
+        return
+    end
+
+    ns.db.raid.active = true
+
+    ns.RaidWindow:refresh()
+
+    ns.print('started raid')
+
+    -- callback: Raid.active = true, Raid.startTs = <startTs>, Raid.onTimeTs = <onTimeTs>
+    --     if onTimeTs hasn't been reached, start a timer to award on-time EP
+    --         else, determine who was online at that time and award on-time EP
+    -- while raid is active, award attendance EP to anyone who has killed at least one boss
+    -- all EP is also awarded to bench players
+end
+
+
+function addon.stopRaid()
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
+        return
+    end
+
+    ns.db.raid.active = false
+
+    ns.RaidWindow:refresh()
+
+    ns.print('stopped raid')
+
+    -- callback: Raid.active = false, Raid.startTs = nil, Raid.onTimeTs = nil, Raid.bench = {}
+    --     award end-of-raid EP
 end
 
 

@@ -67,6 +67,10 @@ end
 
 
 function RaidWindow:show()
+    if not ns.Lib.isOfficer() or not ns.cfg.lmMode then
+        return
+    end
+
     self:createWindow()
     self:refresh()
     self.mainFrame:Raise()
@@ -77,6 +81,14 @@ end
 function RaidWindow:refresh()
     if self.mainFrame == nil then
         return
+    end
+
+    if ns.db.raid.active then
+        self.mainFrame.startButton:Disable()
+        self.mainFrame.stopButton:Enable()
+    else
+        self.mainFrame.startButton:Enable()
+        self.mainFrame.stopButton:Disable()
     end
 
     self:getData()
@@ -120,15 +132,7 @@ function RaidWindow:handleStartClick()
         return
     end
 
-    self.mainFrame.startButton:Disable()
-    self.mainFrame.stopButton:Enable()
-
     -- TODO: popup window asking to use current time or custom time, also verify on-time value and bench
-    -- callback: Raid.active = true, Raid.startTs = <startTs>, Raid.onTimeTs = <onTimeTs>
-    --           if onTimeTs hasn't been reached, start a timer to award on-time EP
-    --               else, determine who was online at that time and award on-time EP
-    -- while raid is active, award attendance EP to anyone who has killed at least one boss
-    -- all EP is also awarded to bench players
 end
 
 
@@ -137,12 +141,7 @@ function RaidWindow:handleStopClick()
         return
     end
 
-    self.mainFrame.startButton:Enable()
-    self.mainFrame.stopButton:Disable()
-
     -- TODO: popup window asking to use current time or custom time, verify end-of-raid awardees
-    -- callback: Raid.active = false, Raid.startTs = nil, Raid.onTimeTs = nil, Raid.bench = {}
-    --           award end-of-raid EP
 end
 
 
