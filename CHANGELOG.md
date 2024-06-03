@@ -1,3 +1,7 @@
+# 0.21.2
+
+- Only recompute standings out of combat
+
 # 0.21.1
 
 - Designate as for Cataclysm classic
