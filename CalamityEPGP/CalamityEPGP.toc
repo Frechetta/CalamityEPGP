@@ -1,7 +1,7 @@
 ## Title: CalamityEPGP
 ## Notes: EPGP addon for Cataclysm Classic
 ## Author: Kardiir-Atiesh
-## Version: 0.21.1
+## Version: 0.21.2
 ## Interface: 40400
 ## SavedVariables: CalamityEPGP
 ## DefaultState: enabled
