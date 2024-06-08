@@ -73,6 +73,7 @@ function addon:OnInitialize()
         INFO = '!ceinfo',
     }
 
+    ns.interfaceVersion = tonumber((select(4, GetBuildInfo())))
     ns.minSyncVersion = ns.Lib.getVersionNum('0.19.0')
 
     self:RegisterEvent('GUILD_ROSTER_UPDATE', 'handleGuildRosterUpdate')
