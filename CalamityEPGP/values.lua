@@ -183,19 +183,19 @@ ns.values.epDefaults = {
                     {"Thaddius", 1120, 26},
                     {"Sapphiron", 1119, 28},
                     {"Kel'Thuzad", 1114, 28},
-                }
+                },
             },
             {
                 "Obsidian Sanctum",
                 {
                     {"Sartharion", 742, 26},
-                }
+                },
             },
             {
                 "Eye of Eternity",
                 {
                     {"Malygos", 734, 26},
-                }
+                },
             },
             {
                 "Ulduar",
@@ -214,7 +214,7 @@ ns.values.epDefaults = {
                     {"General Vezax", 755, 28},
                     {"Algalon the Observer", 757, 30},
                     {"Yogg-Saron", 756, 30},
-                }
+                },
             },
             {
                 "Trial of the Crusader",
@@ -224,7 +224,7 @@ ns.values.epDefaults = {
                     {"Faction Champions", 637, 30},
                     {"Val'kyr Twins", 641, 30},
                     {"Anub'arak", 645, 32},
-                }
+                },
             },
             {
                 "Icecrown Citadel",
@@ -241,13 +241,13 @@ ns.values.epDefaults = {
                     {"Valithria Dreamwalker", 854, 75},
                     {"Sindragosa", 855, 75},
                     {"The Lich King", 856, 75},
-                }
+                },
             },
             {
                 "Ruby Sanctum",
                 {
                     {"Halion", 887, 75},
-                }
+                },
             },
             {
                 "Vault of Archavon",
@@ -256,16 +256,83 @@ ns.values.epDefaults = {
                     {"Emalon the Storm Watcher", 774, 28},
                     {"Koralon the Flame Watcher", 776, 30},
                     {"Toravon the Ice Watcher", 885, 75},
-                }
+                },
             },
             {
                 "Onyxias Lair",
                 {
                     {"Onyxia", 1084, 30},
-                }
-            }
-        }
-    }
+                },
+            },
+        },
+    },
+    {
+        'Cataclysm',
+        {
+            {
+                "Bastion of Twilight",
+                {
+                    {"Halfus Wyrmbreaker", 1030, 95},
+                    {"Therelion & Valiona", 1032, 95},
+                    {"Ascendant Council", 1028, 95},
+                    {"Cho'gall", 1029, 95},
+                    {"Sinestra", 1082, 97},
+                    {"Sinestra", 1083, 97},  -- ?
+                },
+            },
+            {
+                "Throne of the Four Winds",
+                {
+                    {"Conclave of Wind", 1035, 95},
+                    {"Al'Akir", 1034, 95},
+                },
+            },
+            {
+                "Blackwing Descent",
+                {
+                    {"Magmaw", 1024, 95},
+                    {"Omnotron Defense System", 1027, 95},
+                    {"Maloriak", 1025, 95},
+                    {"Atramedes", 1022, 95},
+                    {"Chimaeron", 1023, 95},
+                    {"Nefarian", 1026, 95},
+                },
+            },
+            {
+                "Firelands",
+                {
+                    {"Beth'tilac", 1197, 100},
+                    {"Lord Rhyolith", 1204, 100},
+                    {"Alysrazor", 1206, 100},
+                    {"Shannox", 1205, 100},
+                    {"Baleroc", 1200, 100},
+                    {"Majordomo Staghelm", 1185, 100},
+                    {"Ragnaros", 1203, 102},
+                },
+            },
+            {
+                "Dragon Soul",
+                {
+                    {"Morchok", 1292, 105},
+                    {"Warlord Zon'ozz", 1294, 105},
+                    {"Yor'sahj the Unsleeping", 1295, 105},
+                    {"Hagara the Stormbinder", 1296, 105},
+                    {"Ultraxion", 1297, 105},
+                    {"Warmaster Blackhorn", 1298, 105},
+                    {"Spine of Deathwing", 1291, 107},
+                    {"Madness of Deathwing", 1299, 107},
+                },
+            },
+            {
+                "Baradin Hold",
+                {
+                    {"Argaloth", 1033, 92},
+                    {"Occu'thar", 1250, 97},
+                    {"Alizabal", 1332, 102},
+                },
+            },
+        },
+    },
 }
 
 ns.values.encounters = {}
@@ -293,7 +360,7 @@ ns.values.tokenGp = {
     -- head
     [49644] = 245,
 
-    -- Naxx
+    -- T7
     -- head
     [40631] = 213,
     [40632] = 213,
@@ -332,7 +399,7 @@ ns.values.tokenGp = {
     [40614] = 200,
     [40615] = 200,
 
-    -- Ulduar
+    -- T8
     -- chest
     [45635] = 225, -- Chestguard of the Wayward Conqueror
     [45636] = 225,
@@ -372,7 +439,7 @@ ns.values.tokenGp = {
     [46052] = 239,
     [46053] = 252,
 
-    -- TOGC
+    -- T9
     -- trophy
     [47242] = 245,  -- Trophy of the Crusade
     -- tokens
@@ -380,7 +447,7 @@ ns.values.tokenGp = {
     [47558] = 258,  -- Regalia of the Grand Protector
     [47557] = 258,  -- Regalia of the Grand Conqueror
 
-    -- ICC
+    -- T10
     -- marks
     [52025] = 264, -- Vanquisher's Mark of Sanctification
     [52027] = 264, -- Conqueror's Mark of Sanctification
@@ -388,6 +455,49 @@ ns.values.tokenGp = {
     [52030] = 277, -- Conqueror's Mark of Sanctification (heroic)
     [52028] = 277, -- Vanquisher's Mark of Sanctification (heroic)
     [52029] = 277,  -- Protector's Mark of Sanctification (heroic)
+
+    -- Cataclysm
+    -- T11
+    -- helm
+    -- normal
+    [63683] = 359,  -- Conq
+    [63684] = 359,  -- Prot
+    [63682] = 359,  -- Vanq
+    -- heroic
+    [65001] = 372,  -- Conq
+    [65000] = 372,  -- Prot
+    [65002] = 372,  -- Vanq
+
+    -- shoulders
+    -- normal
+    [64315] = 359,  -- Conq
+    [64316] = 359,  -- Prot
+    [64314] = 359,  -- Vanq
+    -- heroic
+    [65088] = 372,  -- Conq
+    [65087] = 372,  -- Prot
+    [65089] = 372,  -- Vanq
+
+    -- chest
+    -- heroic
+    [67423] = 372,  -- Conq
+    [67424] = 372,  -- Prot
+    [67425] = 372,  -- Vanq
+
+    -- gloves
+    -- heroic
+    [67429] = 372,  -- Conq
+    [67430] = 372,  -- Prot
+    [67431] = 372,  -- Vanq
+
+    -- legs
+    -- heroic
+    [67428] = 372,  -- Conq
+    [67427] = 372,  -- Prot
+    [67426] = 372,  -- Vanq
+
+    -- Essence of the Forlorn (used to buy heroic tier)
+    [66998] = 372,
 }
 
 
