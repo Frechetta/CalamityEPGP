@@ -295,7 +295,13 @@ function Lib.getGpWithInfo(itemInfo, classFilename, spec)
         return 0
     end
 
-    return math.floor(4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * modifier) * 0.1)
+    local gp = 4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * modifier) * 0.1
+
+    if ilvl >= 300 then
+        gp = gp * 0.1
+    end
+
+    return math.floor(gp)
 end
 
 

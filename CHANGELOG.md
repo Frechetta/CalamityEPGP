@@ -1,3 +1,9 @@
+# 0.21.3
+
+- add Cataclysm encounter EP
+- add Cataclysm token GP
+- normalize GP for Cataclysm items
+
 # 0.21.2
 
 - Only recompute standings out of combat
