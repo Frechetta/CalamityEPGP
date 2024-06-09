@@ -8,6 +8,7 @@ ns.values.epgpReasons = {
     DECAY = 2,
     AWARD = 3,
     BOSS_KILL = 4,
+    CLEAR = 5,
 }
 
 ns.values.gpDefaults = {

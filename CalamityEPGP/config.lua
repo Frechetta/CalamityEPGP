@@ -147,9 +147,17 @@ function Config:init()
                 debugMode = {
                     type = 'toggle',
                     name = 'Debug Mode',
+                    order = 1,
                     get = 'getDebugMode',
                     set = 'setDebugMode',
-                }
+                },
+                clearDataForAll = {
+                    type = 'execute',
+                    name = 'Clear all data for everyone',
+                    order = 2,
+                    func = 'clearDataForAll',
+                    disabled = 'getClearDataForAllDisabled',
+                },
             }
         }
     }
@@ -940,6 +948,24 @@ function Config.clearData()
 end
 
 
+function Config.clearDataForAll()
+    if not ns.Lib.isOfficer() then
+        error('Non-officers cannot clear data for everyone')
+        return
+    end
+
+    if not ns.cfg.lmMode then
+        error('Cannot clear data for everyone when loot master mode is off')
+        return
+    end
+
+    ns.ConfirmWindow:show(
+        'Are you sure you want to clear all data for everyone?\nWARNING: this is irreversible!',
+        function() ns.addon:clearDataForAll() end
+    )
+end
+
+
 -------------------------
 -- OPTION GETTERS/SETTERS
 -------------------------
@@ -1034,13 +1060,17 @@ function Config:getLmModeDisabled()
 end
 
 function Config:getDefaultDecayEpDisabled()
-    return not ns.cfg.lmMode
+    return not ns.Lib.isOfficer() or not ns.cfg.lmMode
 end
 
 function Config:getDefaultDecayGpDisabled()
-    return not ns.cfg.lmMode
+    return not ns.Lib.isOfficer() or not ns.cfg.lmMode
 end
 
 function Config:getGpManagementDisabled()
-    return not ns.cfg.lmMode
+    return not ns.Lib.isOfficer() or not ns.cfg.lmMode
+end
+
+function Config:getClearDataForAllDisabled()
+    return not ns.Lib.isOfficer() or not ns.cfg.lmMode
 end
