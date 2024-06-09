@@ -768,6 +768,10 @@ function Lib.getEventReason(reason, ...)
         return reasonStr
     end
 
+    if reason == ns.values.epgpReasons.CLEAR then
+        return ('%d:'):format(ns.values.epgpReasons.CLEAR)
+    end
+
     error(('Unknown event reason: %s'):format(reason))
 end
 
