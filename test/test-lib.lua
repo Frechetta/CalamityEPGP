@@ -745,8 +745,24 @@ describe('lib', function()
             end)
         end)
 
+        describe('clear', function()
+            test('nominal', function()
+                local expected = '5:'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.CLEAR)
+
+                assert.same(expected, actual)
+            end)
+
+            test('details', function()
+                local expected = '5:'
+                local actual = Lib.getEventReason(ns.values.epgpReasons.CLEAR, 'details')
+
+                assert.same(expected, actual)
+            end)
+        end)
+
         test('unknown', function()
-            assert.has.errors(function() Lib.getEventReason(5, 'derp') end)
+            assert.has.errors(function() Lib.getEventReason(6, 'derp') end)
         end)
     end)
 
