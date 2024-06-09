@@ -573,9 +573,31 @@ function addon:computeStandingsWithEvents(events, callback)
             local players = event[3]
             local mode = event[4]
             local value = event[5]
+            local reason = event[6]
             local percent = event[7]
             -- local minGp = event[8]
             local minGp = ns.cfg.gpBase
+
+            local reasonType = string.match(reason, '^(%d):.*$')
+            reasonType = tonumber(reasonType)
+
+            if reasonType == ns.values.epgpReasons.CLEAR then
+                local newHistory = {}
+                for _, historyEventAndHash in ipairs(ns.db.history) do
+                    local historyEvent = historyEventAndHash[1]
+                    local historyTs = historyEvent[1]
+
+                    if historyTs >= ts then
+                        tinsert(newHistory, historyEventAndHash)
+                    end
+                end
+
+                ns.db.history = newHistory
+
+                playerDiffs:clear()
+                ns.standings:clear()
+                ns.playersLastUpdated:clear()
+            end
 
             local mains = Set:new()
 
@@ -1086,6 +1108,28 @@ function addon:clearData()
     if IsInGuild() then
         self:handleGuildRosterUpdate()
     end
+end
+
+
+function addon:clearDataForAll()
+    if not ns.Lib.isOfficer() then
+        error('Non-officers cannot clear history')
+        return
+    end
+
+    if not ns.cfg.lmMode then
+        error('Cannot modify EPGP when loot master mode is off')
+        return
+    end
+
+    local event = self.createHistoryEvent({}, 'ep', 0, ns.Lib.getEventReason(ns.values.epgpReasons.CLEAR))
+
+    self:clearData()
+
+    tinsert(ns.db.history, event)
+
+    ns.Sync:computeIndices(false)
+    ns.Sync:sendEventsToGuild({event})
 end
 
 
