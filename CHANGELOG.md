@@ -1,3 +1,7 @@
+# 0.22.0
+
+- add capability to clear data for guild
+
 # 0.21.3
 
 - add Cataclysm encounter EP
