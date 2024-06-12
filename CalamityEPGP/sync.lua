@@ -237,7 +237,7 @@ function Sync:getEvents(timeframe, timestamps)
         for timeframeTs in timestamps:iter() do
             local index = timeframeTsIndex:get(timeframeTs)
 
-            -- if index ~= nil then
+            if index ~= nil and ns.db.history ~= nil then
                 local i = index
                 while true do
                     if i > #ns.db.history then
@@ -257,7 +257,7 @@ function Sync:getEvents(timeframe, timestamps)
 
                     i = i + 1
                 end
-            -- end
+            end
         end
     end
 
