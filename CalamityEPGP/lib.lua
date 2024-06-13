@@ -146,6 +146,9 @@ function Lib.remove(container, value, all)
 end
 
 
+---@param str string
+---@param sep string?
+---@return table
 function Lib.split(str, sep)
     if sep == nil then
         sep = "%s"
@@ -887,4 +890,32 @@ end
 ---@return string
 function Lib.getEventAndHashId(eventAndHash)
     return ('%s:%s'):format(eventAndHash[1][1], eventAndHash[2])
+end
+
+
+---@param t table
+---@param path string
+function Lib.findTableValue(t, path)
+    local pathParts = Lib.split(path, '.')
+
+    if #pathParts == 1 then
+        return t[path]
+    end
+
+    for _, key in ipairs(pathParts) do
+        local newPathParts = {}
+        for i = 2, #pathParts do
+            tinsert(newPathParts, pathParts[i])
+        end
+
+        local newTable = t[key]
+
+        if newTable == nil then
+            return nil
+        end
+
+        local newPath = table.concat(newPathParts, '.')
+
+        return Lib.findTableValue(newTable, newPath)
+    end
 end

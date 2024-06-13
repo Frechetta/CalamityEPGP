@@ -152,10 +152,6 @@ end
 function addon:handleGuildRosterUpdate()
     C_Timer.After(0.1, function()
         self:init()
-
-        -- if self.initialized then
-        --     self:computeStandings()
-        -- end
     end)
 end
 
@@ -235,7 +231,6 @@ function addon:init()
         db:SetProfile(guildFullName)
 
         ns.db = db.profile
-        ns.cfg = ns.db.cfg
 
         ns.db.realmId = GetRealmID()
         ns.db.knownPlayers = {}
@@ -254,6 +249,9 @@ function addon:init()
 
         self.libc = LibStub('LibCompress')
         self.libcEncodeTable = self.libc:GetAddonEncodeTable()
+
+        ns.cfg = {}
+        ns.Config:setupCfg(ns.cfg, ns.Config.defaults)
 
         self.migrateData()
 
@@ -395,10 +393,17 @@ function addon.migrateData()
     end
 
     -- GP SLOT MODIFIERS
-    if not ns.db.slotModifiersVersion then
-        ns.debug('migrating slot modifiers to v1')
+    if ns.db.slotModifiersVersion ~= nil then
+        ns.debug('removing slotModifiersVersion')
+        ns.db.slotModifiersVersion = nil
+    end
+
+    -- DB CONFIG
+    if not ns.db.cfgVersion then
+        ns.debug('migrating cfg to v1')
         ns.db.cfg.gpSlotMods = nil
-        ns.db.slotModifiersVersion = 1
+        ns.db.cfg.encounterEp = nil
+        ns.db.cfgVersion = 1
     end
 
     ns.debug('done migrating data')
@@ -1075,7 +1080,7 @@ function addon:initMinimapButton()
         end,
     })
 
-    self.ldbi:Register(addonName, minimapButton, ns.db.cfg.minimap)
+    self.ldbi:Register(addonName, minimapButton, ns.cfg.minimap)
 
     self.minimapButtonInitialized = true
 end
@@ -1399,8 +1404,7 @@ end
 ---@param _ any
 ---@param success number
 function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
-    if not self.useForRaid or
-            success ~= 1 then
+    if not self.useForRaid or success ~= 1 then
         return
     end
 
