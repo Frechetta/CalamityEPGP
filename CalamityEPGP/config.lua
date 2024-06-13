@@ -12,7 +12,7 @@ local Config = {
         defaultDecayGp = 10,
         syncAltEp = false,
         syncAltGp = true,
-        rollDuration = 25,
+        rollDuration = 17,
         closeOnAward = true,
         gpBase = ns.values.gpDefaults.base,
         gpSlotMods = ns.values.gpDefaults.slotModifiers,
@@ -37,6 +37,79 @@ end
 
 Config.aceConfig = LibStub("AceConfig-3.0")
 Config.aceConfigDialog = LibStub("AceConfigDialog-3.0")
+
+
+function Config.cfgTableIndex(table, key)
+    local dbTable
+    local defaultsTable
+    if table._path == '.' then
+        dbTable = ns.db.cfg
+        defaultsTable = Config.defaults
+    else
+        dbTable = ns.Lib.findTableValue(ns.db.cfg, table._path)
+        defaultsTable = ns.Lib.findTableValue(Config.defaults, table._path)
+    end
+
+    if dbTable ~= nil then
+        local dbValue = dbTable[key]
+        if dbValue ~= nil then
+            return dbValue
+        end
+    end
+
+    if defaultsTable ~= nil then
+        local defaultValue = defaultsTable[key]
+        if defaultValue ~= nil then
+            return defaultValue
+        end
+    end
+
+    return nil
+end
+
+function Config.cfgTableNewIndex(table, key, value)
+    local dbTable = ns.db.cfg
+    if table._path ~= '.' then
+        for _, key in ipairs(ns.Lib.split(table._path, '.')) do
+            if dbTable[key] == nil then
+                dbTable[key] = {}
+            end
+
+            dbTable = dbTable[key]
+        end
+    end
+
+    dbTable[key] = value
+end
+
+
+function Config:setupCfg(cfgTable, defaultsTable, path)
+    path = path or '.'
+
+    cfgTable._path = path
+
+    setmetatable(cfgTable, {
+        __index = self.cfgTableIndex,
+        __newindex = self.cfgTableNewIndex,
+    })
+
+    for key, val in pairs(defaultsTable) do
+        if type(val) == 'table' then
+            if rawget(cfgTable, key) == nil then
+                rawset(cfgTable, key, {})
+            end
+
+            local newPath
+            if path == '.' then
+                newPath = key
+            else
+                newPath = path .. '.' .. key
+            end
+
+            self:setupCfg(cfgTable[key], val, newPath)
+        end
+    end
+end
 
 
 function Config:init()
@@ -161,13 +234,6 @@ function Config:init()
             }
         }
     }
-
-    -- add defaults to ns.cfg if it's not already poulated
-    for optName, default in pairs(self.defaults) do
-        if ns.cfg[optName] == nil then
-            ns.cfg[optName] = default
-        end
-    end
 
     -- create options menus
     self:addOptionsMenu(addonName, menus.root)
@@ -993,7 +1059,7 @@ function Config:getDefaultDecayEp(_)
 end
 
 function Config:setDefaultDecayEp(_, input)
-    ns.cfg.defaultDecayEp = input
+    ns.cfg.defaultDecayEp = tonumber(input)
     ns.addon.modifiedLmSettings()
 end
 
@@ -1002,7 +1068,7 @@ function Config:getDefaultDecayGp(_)
 end
 
 function Config:setDefaultDecayGp(_, input)
-    ns.cfg.defaultDecayGp = input
+    ns.cfg.defaultDecayGp = tonumber(input)
     ns.addon.modifiedLmSettings()
 end
 
