@@ -1,3 +1,11 @@
+# 0.22.2
+
+- fix encounter EP
+
+# 0.22.1
+
+- fix bug :)
+
 # 0.22.0
 
 - add capability to clear data for guild

@@ -122,6 +122,7 @@ describe('algorithm', function()
         assert(empty)
 
         Util:loadModule('constants', ns)
+        Util:loadModule('values', ns)
         Util:loadModule('datatypes', ns)
         Util:loadModule('lib', ns)
         Util:loadModule('comm', ns)
