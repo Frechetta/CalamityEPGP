@@ -1,3 +1,7 @@
+# 0.22.3
+
+- don't load raid roster when in BG
+
 # 0.22.2
 
 - fix encounter EP
