@@ -453,9 +453,15 @@ end
 
 
 function addon:loadRaidRoster()
+    if UnitInBattleground('player') then
+        return
+    end
+
     local prevPlayers = self.raidRoster:len()
 
     self.raidRoster:clear()
+
+    local iLeft = false
 
     if IsInRaid() then
         for i = 1, MAX_RAID_MEMBERS do
@@ -479,12 +485,14 @@ function addon:loadRaidRoster()
                 end
             end
         end
+    else
+        iLeft = true
     end
 
     ns.MainWindow:refresh()
     ns.RaidWindow:refresh()
 
-    if ns.Lib.isOfficer() and prevPlayers ~= self.raidRoster:len() then
+    if ns.Lib.isOfficer() and prevPlayers ~= self.raidRoster:len() and (not iLeft or prevPlayers == 2) then
         local ts = time()
 
         local players = {}
