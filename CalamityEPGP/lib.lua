@@ -896,22 +896,25 @@ end
 ---@param t table
 ---@param path string
 function Lib.findTableValue(t, path)
+    if path == '.' then
+        return t
+    end
+
     local pathParts = Lib.split(path, '.')
 
     if #pathParts == 1 then
-        return t[path]
+        return rawget(t, path)
     end
 
     for _, key in ipairs(pathParts) do
+        local newTable = rawget(t, key)
+        if newTable == nil then
+            return nil
+        end
+
         local newPathParts = {}
         for i = 2, #pathParts do
             tinsert(newPathParts, pathParts[i])
-        end
-
-        local newTable = t[key]
-
-        if newTable == nil then
-            return nil
         end
 
         local newPath = table.concat(newPathParts, '.')

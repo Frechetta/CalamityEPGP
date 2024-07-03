@@ -162,7 +162,7 @@ end
 
 function ConfirmAwardWindow:_renderSpecButtonRow(classFilename, classOverride, itemInfo)
     local i = 0
-    for spec in pairs(classOverride) do
+    for spec in ns.pairs(classOverride) do
         i = i + 1
 
         local button = self.mainFrame.specButtonRow.buttons[i]
