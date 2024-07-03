@@ -1,3 +1,7 @@
+# 0.22.4
+
+- fix GP overrides
+
 # 0.22.3
 
 - don't load raid roster when in BG
