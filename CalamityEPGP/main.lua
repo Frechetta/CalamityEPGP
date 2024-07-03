@@ -22,6 +22,22 @@ function ns.unitGuid(unit)
     return UnitGUID(unit)
 end
 
+function ns.pairs(t)
+    local metatable = getmetatable(t)
+    if metatable and metatable.__pairs then
+        return metatable.__pairs(t)
+    end
+    return pairs(t)
+end
+
+function ns.ipairs(t)
+    local metatable = getmetatable(t)
+    if metatable and metatable.__ipairs then
+        return metatable.__ipairs(t)
+    end
+    return ipairs(t)
+end
+
 local List = ns.List
 local Dict = ns.Dict
 local Set = ns.Set

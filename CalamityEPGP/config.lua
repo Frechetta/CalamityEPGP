@@ -40,18 +40,11 @@ Config.aceConfigDialog = LibStub("AceConfigDialog-3.0")
 
 
 function Config.cfgTableIndex(table, key)
-    local dbTable
-    local defaultsTable
-    if table._path == '.' then
-        dbTable = ns.db.cfg
-        defaultsTable = Config.defaults
-    else
-        dbTable = ns.Lib.findTableValue(ns.db.cfg, table._path)
-        defaultsTable = ns.Lib.findTableValue(Config.defaults, table._path)
-    end
+    local dbTable = ns.Lib.findTableValue(ns.db.cfg, table._path)
+    local defaultsTable = ns.Lib.findTableValue(Config.defaults, table._path)
 
     if dbTable ~= nil then
-        local dbValue = dbTable[key]
+        local dbValue = rawget(dbTable, key)
         if dbValue ~= nil then
             return dbValue
         end
@@ -82,15 +75,33 @@ function Config.cfgTableNewIndex(table, key, value)
     dbTable[key] = value
 end
 
+function Config.cfgTablePairs(t)
+    local dbTable = ns.Lib.findTableValue(ns.db.cfg, t._path)
+    local defaultsTable = ns.Lib.findTableValue(Config.defaults, t._path)
+    return function(t, k)
+        local v
+        repeat
+            k, v = next(t, k)
+        until k == nil or k ~= '_path'
+
+        if dbTable ~= nil then
+            v = dbTable[k]
+        end
+
+        return k, v
+    end, defaultsTable, nil
+end
+
 
 function Config:setupCfg(cfgTable, defaultsTable, path)
     path = path or '.'
 
-    cfgTable._path = path
+    rawset(cfgTable, '_path', path)
 
     setmetatable(cfgTable, {
         __index = self.cfgTableIndex,
         __newindex = self.cfgTableNewIndex,
+        __pairs = self.cfgTablePairs,
     })
 
     for key, val in pairs(defaultsTable) do
@@ -106,7 +117,7 @@ function Config:setupCfg(cfgTable, defaultsTable, path)
                 newPath = path .. '.' .. key
             end
 
-            self:setupCfg(cfgTable[key], val, newPath)
+            self:setupCfg(rawget(cfgTable, key), val, newPath)
         end
     end
 end
