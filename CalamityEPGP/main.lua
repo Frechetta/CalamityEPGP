@@ -177,7 +177,7 @@ function addon.showMainWindow()
 end
 
 function addon.openOptions()
-    InterfaceOptionsFrame_OpenToCategory(addonName)
+    Settings.OpenToCategory(addonName)
 end
 
 function addon:handleItemClick(itemLink, mouseButton)
@@ -1488,7 +1488,7 @@ function addon:handleTooltipUpdate(frame)
 
     -- add GP to tooltip
     local classFilename = UnitClassBase('player')
-    local spec = ns.Lib.getSpecName(classFilename, ns.Lib.getActiveSpecIndex())
+    local spec = ns.Lib.getSpecName()
 
     ns.Lib.getItemInfo(itemLink, function(itemInfo)
         local gpBase = itemInfo.gp

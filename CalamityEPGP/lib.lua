@@ -778,63 +778,11 @@ function Lib.getEventReason(reason, ...)
     error(('Unknown event reason: %s'):format(reason))
 end
 
-
-Lib.specTable = {
-    DEATHKNIGHT = {ns.consts.SPEC_DK_BLOOD, ns.consts.SPEC_DK_FROST, ns.consts.SPEC_DK_UNHOLY},
-    DRUID = {ns.consts.SPEC_DRUID_BALANCE, ns.consts.SPEC_DRUID_FERAL, ns.consts.SPEC_DRUID_RESTO},
-    HUNTER = {ns.consts.SPEC_HUNTER_BM, ns.consts.SPEC_HUNTER_MM, ns.consts.SPEC_HUNTER_SV},
-    MAGE = {ns.consts.SPEC_MAGE_ARCANE, ns.consts.SPEC_MAGE_FIRE, ns.consts.SPEC_MAGE_FROST},
-    PALADIN = {ns.consts.SPEC_PALADIN_HOLY, ns.consts.SPEC_PALADIN_PROT, ns.consts.SPEC_PALADIN_RET},
-    PRIEST = {ns.consts.SPEC_PRIEST_DISC, ns.consts.SPEC_PRIEST_HOLY, ns.consts.SPEC_PRIEST_SHADOW},
-    ROGUE = {ns.consts.SPEC_ROGUE_ASS, ns.consts.SPEC_ROGUE_COMBAT, ns.consts.SPEC_ROGUE_SUB},
-    SHAMAN = {ns.consts.SPEC_SHAMAN_ELE, ns.consts.SPEC_SHAMAN_ENH, ns.consts.SPEC_SHAMAN_RESTO},
-    WARLOCK = {ns.consts.SPEC_WARLOCK_AFF, ns.consts.SPEC_WARLOCK_DEMO, ns.consts.SPEC_WARLOCK_DESTRO},
-    WARRIOR = {ns.consts.SPEC_WARRIOR_ARMS, ns.consts.SPEC_WARRIOR_FURY, ns.consts.SPEC_WARRIOR_PROT},
-}
-
----@return number
-function Lib.getActiveTalentGroup()
-    return GetActiveTalentGroup(false, false)
-end
-
----@param group number?
----@return number?
-function Lib.getActiveSpecIndex(group)
-    if group == nil then
-        group = Lib.getActiveTalentGroup()
-    end
-
-    assert(group == 1 or group == 2, "group is not a valid number (1-2)")
-
-    local mostPoints = 0
-    local specIndex = nil
-
-    for i = 1, 3 do  -- GetNumTalentTabs
-        local points = 0
-
-        for j = 1, GetNumTalents(i, false, false) do
-            points = points + select(5, GetTalentInfo(i, j, group))
-        end
-
-        if (points > mostPoints) then
-            mostPoints = points
-            specIndex = i
-        end
-    end
-
-    return specIndex
-end
-
----@param class string
----@param specIndex number
 ---@return string
-function Lib.getSpecName(class, specIndex)
-    local specs = Lib.specTable[class]
-    assert(specs ~= nil, 'invalid class')
-
-    assert(type(specIndex) == 'number' and specIndex > 0 and specIndex < 4, 'specIndex is not a valid number (1-3)')
-
-    return specs[specIndex]
+function Lib.getSpecName()
+    local specId = C_SpecializationInfo.GetSpecialization()
+    local _, specName = C_SpecializationInfo.GetSpecializationInfo(specId)
+    return specName
 end
 
 

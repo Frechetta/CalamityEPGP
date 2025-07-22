@@ -269,7 +269,8 @@ function Config:initAltManagementMenu()
     self.aamPanel.parent = addonName
     self.aamPanel.refresh = function() self:refreshAltManagementMenu() end
 
-    InterfaceOptions_AddCategory(self.aamPanel)
+    local category = Settings.GetCategory(addonName)
+    Settings.RegisterCanvasLayoutSubcategory(category, self.aamPanel, self.aamPanel.name)
 end
 
 
