@@ -26,7 +26,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: Install Lua and LuaRocks
         run: |
@@ -49,13 +49,13 @@ jobs:
         run: scripts/test.sh -o junit > ut_results.xml
 
       - name: Publish UT report
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v5
         if: success() || failure()
         with:
           report_paths: ut_results.xml
 
       - name: Publish coverage report
-        uses: 5monkeys/cobertura-action@v13
+        uses: 5monkeys/cobertura-action@v14
         if: success() || failure()
         with:
           path: luacov.report.out
@@ -70,7 +70,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: Release
         id: release
@@ -80,14 +80,14 @@ jobs:
         run: echo "version=$(scripts/release.sh)" >> $GITHUB_ENV
 
       - name: Create tag
-        uses: anothrNick/github-tag-action@1.64.0
+        uses: anothrNick/github-tag-action@1.75.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUSTOM_TAG: ${{ env.version }}
           WITH_V: false
 
       - name: Create release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.20.0
         with:
           tag: ${{ env.version }}
           artifacts: build/*.zip
