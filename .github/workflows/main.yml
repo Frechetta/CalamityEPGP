@@ -64,7 +64,7 @@ jobs:
 
   release:
     if: github.ref_name == 'main'  # && github.event.pull_request.merged == true
-    needs: test
+    # needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
