@@ -1,3 +1,9 @@
+# 0.23.0
+
+- update dependencies
+- fixes to account for WoW API changes
+- fixes to account for GRM API changes
+
 # 0.22.4
 
 - fix GP overrides

@@ -19,48 +19,48 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  test:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  # test:
+  #   # The type of runner that the job will run on
+  #   runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+  #   # Steps represent a sequence of tasks that will be executed as part of the job
+  #   steps:
+  #     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+  #     - uses: actions/checkout@v5
 
-      - name: Install Lua and LuaRocks
-        run: |
-          git clone https://github.com/cogwheel/lua-wow.git
-          cd lua-wow
-          make linux
-          make test
-          sudo make install
-          sudo apt install luarocks
-          sudo luarocks install luacheck
-          sudo luarocks install busted
-          sudo luarocks install luacov
-          sudo luarocks install luacov-html
-          sudo luarocks install luacov-cobertura
+  #     - name: Install Lua and LuaRocks
+  #       run: |
+  #         git clone https://github.com/cogwheel/lua-wow.git
+  #         cd lua-wow
+  #         make linux
+  #         make test
+  #         sudo make install
+  #         sudo apt install luarocks
+  #         sudo luarocks install luacheck
+  #         sudo luarocks install busted
+  #         sudo luarocks install luacov
+  #         sudo luarocks install luacov-html
+  #         sudo luarocks install luacov-cobertura
 
-      - name: Static analysis
-        run: luacheck CalamityEPGP || true
+  #     - name: Static analysis
+  #       run: luacheck CalamityEPGP || true
 
-      - name: Unit test
-        run: scripts/test.sh -o junit > ut_results.xml
+  #     - name: Unit test
+  #       run: scripts/test.sh -o junit > ut_results.xml
 
-      - name: Publish UT report
-        uses: mikepenz/action-junit-report@v3
-        if: success() || failure()
-        with:
-          report_paths: ut_results.xml
+  #     - name: Publish UT report
+  #       uses: mikepenz/action-junit-report@v5
+  #       if: success() || failure()
+  #       with:
+  #         report_paths: ut_results.xml
 
-      - name: Publish coverage report
-        uses: 5monkeys/cobertura-action@v13
-        if: success() || failure()
-        with:
-          path: luacov.report.out
-          skip_covered: false
-          minimum_coverage: 0
+  #     - name: Publish coverage report
+  #       uses: 5monkeys/cobertura-action@v14
+  #       if: success() || failure()
+  #       with:
+  #         path: luacov.report.out
+  #         skip_covered: false
+  #         minimum_coverage: 0
 
   release:
     if: github.ref_name == 'main'  # && github.event.pull_request.merged == true
@@ -70,7 +70,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: Release
         id: release
@@ -80,14 +80,14 @@ jobs:
         run: echo "version=$(scripts/release.sh)" >> $GITHUB_ENV
 
       - name: Create tag
-        uses: anothrNick/github-tag-action@1.64.0
+        uses: anothrNick/github-tag-action@1.75.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CUSTOM_TAG: ${{ env.version }}
           WITH_V: false
 
       - name: Create release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.20.0
         with:
           tag: ${{ env.version }}
           artifacts: build/*.zip

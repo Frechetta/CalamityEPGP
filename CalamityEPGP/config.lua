@@ -267,9 +267,10 @@ function Config:initAltManagementMenu()
     self.aamPanel = CreateFrame('FRAME', addonName .. '_AltManagement')
     self.aamPanel.name = 'Alt Management'
     self.aamPanel.parent = addonName
-    self.aamPanel.refresh = function() self:refreshAltManagementMenu() end
+    self.aamPanel.OnRefresh = function() self:refreshAltManagementMenu() end
 
-    InterfaceOptions_AddCategory(self.aamPanel)
+    local category = Settings.GetCategory(addonName)
+    Settings.RegisterCanvasLayoutSubcategory(category, self.aamPanel, self.aamPanel.name)
 end
 
 
@@ -340,12 +341,12 @@ function Config:createAltManagementMenu()
     panel.tableFrame:SetPoint('BOTTOMRIGHT', panel.synchroniseEpCheck, 'TOPRIGHT', 0, 15)
 
     panel.importAltMappingButton:SetScript('OnClick', function()
-        if GRM_Alts == nil then
+        if GRM == nil then
             ns.print('GRM data not accessible')
             return
         end
 
-        for _, altData in pairs(GRM_Alts[ns.guild]) do
+        for _, altData in pairs(GRM.GetGuildAlts()) do
             if #altData.main > 0 then
                 local main = ns.addon.getCharName(altData.main)
 
