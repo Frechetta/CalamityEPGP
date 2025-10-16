@@ -59,7 +59,7 @@ done < CHANGELOG.md
 changelog=$(sed -e '/[^[:space:]]/,$!d' -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' "$changelog_file")
 echo "$changelog" > "$changelog_file"
 
-game_versions="10977"
+game_versions="13839"
 
 # CURSEFORGE
 metadata=$(jq -n \
