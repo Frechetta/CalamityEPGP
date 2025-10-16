@@ -267,7 +267,7 @@ function Config:initAltManagementMenu()
     self.aamPanel = CreateFrame('FRAME', addonName .. '_AltManagement')
     self.aamPanel.name = 'Alt Management'
     self.aamPanel.parent = addonName
-    self.aamPanel.refresh = function() self:refreshAltManagementMenu() end
+    self.aamPanel.OnRefresh = function() self:refreshAltManagementMenu() end
 
     local category = Settings.GetCategory(addonName)
     Settings.RegisterCanvasLayoutSubcategory(category, self.aamPanel, self.aamPanel.name)
