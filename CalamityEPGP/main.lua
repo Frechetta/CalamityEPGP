@@ -529,7 +529,7 @@ end
 function addon.loadPlayersFromEvents(events, callback)
     callback = callback or function() end
 
-    local shortGuids = Set:new()
+    local guids = Set:new()
 
     local uniquePlayersSeen = 0
     local uniquePlayersLoaded = 0
@@ -541,11 +541,9 @@ function addon.loadPlayersFromEvents(events, callback)
         local event = eventAndHash[1]
         local players = event[3]
 
-        for _, guidShort in ipairs(players) do
-            if not shortGuids:contains(guidShort) then
-                shortGuids:add(guidShort)
-
-                local guid = ns.Lib.getFullPlayerGuid(guidShort)
+        for _, guid in ipairs(players) do
+            if not guids:contains(guid) then
+                guids:add(guid)
 
                 uniquePlayersSeen = uniquePlayersSeen + 1
 
@@ -590,8 +588,6 @@ end
 function addon:computeStandingsWithEvents(events, callback)
     callback = callback or function(_) end
 
-    local shortToFullGuids = Dict:new()
-
     self.loadPlayersFromEvents(events, function()
         local playerDiffs = Dict:new()
 
@@ -629,13 +625,7 @@ function addon:computeStandingsWithEvents(events, callback)
 
             local mains = Set:new()
 
-            for _, guidShort in ipairs(players) do
-                local guid = shortToFullGuids:get(guidShort)
-                if guid == nil then
-                    guid = ns.Lib.getFullPlayerGuid(guidShort)
-                    shortToFullGuids:set(guidShort, guid)
-                end
-
+            for _, guid in ipairs(players) do
                 local lastUpdated = ns.playersLastUpdated:get(guid)
                 if lastUpdated == nil or ts > lastUpdated then
                     ns.playersLastUpdated:set(guid, ts)
@@ -955,11 +945,11 @@ function addon.createHistoryEvent(players, mode, value, reason, percent)
 
     local ts = time()
 
-    local issuer = ns.Lib.getShortPlayerGuid(ns.unitGuid('player'))
+    local issuer = ns.unitGuid('player')
 
     local newPlayers = {}
     for _, guid in ipairs(players) do
-        tinsert(newPlayers, ns.Lib.getShortPlayerGuid(guid))
+        tinsert(newPlayers, guid)
     end
 
     local minGp = ns.cfg.gpBase

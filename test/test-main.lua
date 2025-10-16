@@ -50,12 +50,6 @@ describe('modifyEpgp', function()
         stub(ns, 'debug')
 
         ns.Lib.hash = function() return 0 end
-        ns.Lib.getShortPlayerGuid = function(guid)
-            return guid
-        end
-        ns.Lib.getFullPlayerGuid = function(guid)
-            return guid
-        end
         ns.Lib.getPlayerInfo = function(guid, callback)
             callback = callback or function() end
             ns.db.knownPlayers[guid] = {name = 'p' .. guid}

@@ -441,14 +441,6 @@ describe('lib', function()
 
     -- TODO: b64Decode
 
-    -- TODO: getShortPlayerGuid
-
-    -- TODO: getFullPlayerGuid
-
-    -- TODO: isShortPlayerGuid
-
-    -- TODO: isFullPlayerGuid
-
     describe('strStartsWith', function()
         test('first char', function()
             local s = 'Hello, world!'

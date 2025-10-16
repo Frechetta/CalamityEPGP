@@ -437,7 +437,7 @@ function HistoryWindow:getData(callback)
         local event = eventAndHash[1]
 
         local time = date('%Y-%m-%d %H:%M:%S', event[1])
-        local issuedBy = playerGuidToName[ns.Lib.getFullPlayerGuid(event[2])]
+        local issuedBy = playerGuidToName[event[2]]
         local players = event[3]
         local mode = event[4]
         local value = event[5]
@@ -446,8 +446,8 @@ function HistoryWindow:getData(callback)
         local minGp = event[8]
 
         local newPlayers = {}
-        for _, guidShort in ipairs(players) do
-            tinsert(newPlayers, ns.Lib.getFullPlayerGuid(guidShort))
+        for _, guid in ipairs(players) do
+            tinsert(newPlayers, guid)
         end
 
         self:getFormattedReason(reason, function(reason, prettyReason, reasonType)

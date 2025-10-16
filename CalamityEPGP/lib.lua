@@ -678,43 +678,6 @@ function Lib.b64Decode(s)
 end
 
 
----@param guidFull string
----@return string
-function Lib.getShortPlayerGuid(guidFull)
-    local realmId, guidShort = string.match(guidFull, '^Player%-(%d+)%-(%x%x%x%x%x%x%x%x)$')
-
-    if realmId == nil or guidShort == nil then
-        error(('Player GUID is malformed: "%s"'):format(guidFull))
-    end
-
-    if tonumber(realmId) ~= ns.db.realmId then
-        error(('Player GUID has incorrect realm ID: "%d"; ID should be %d'):format(tonumber(realmId), ns.db.realmId))
-    end
-
-    return guidShort
-end
-
----@param guidShort string
----@return string
-function Lib.getFullPlayerGuid(guidShort)
-    if not Lib.isShortPlayerGuid(guidShort) then
-        error(('Player short GUID is malformed: "%s"'):format(guidShort))
-    end
-
-    return ('Player-%d-%s'):format(ns.db.realmId, guidShort)
-end
-
-function Lib.isShortPlayerGuid(guidShort)
-    local res = string.match(guidShort, '^%x%x%x%x%x%x%x%x$')
-    return res ~= nil and #res == 8
-end
-
-function Lib.isFullPlayerGuid(guidFull)
-    local res = string.match(guidFull, '^Player%-%d+%-%x%x%x%x%x%x%x%x$')
-    return res ~= nil
-end
-
-
 function Lib.strStartsWith(s, pattern)
     return s:sub(1, #pattern) == pattern
 end
