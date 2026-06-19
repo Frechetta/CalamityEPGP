@@ -1,3 +1,7 @@
+# 0.23.1
+
+- update to WoW version 5.5.4
+
 # 0.23.0
 
 - update dependencies

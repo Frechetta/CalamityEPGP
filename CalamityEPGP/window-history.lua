@@ -573,7 +573,7 @@ function HistoryWindow:getRenderedData()
             local baseReason = metadata.baseReason
             local players = metadata.players
 
-            local mains = Set:new()
+            local standingsByMain = Dict:new()
 
             for _, playerGuid in ipairs(players) do
                 local playerData = ns.db.knownPlayers[playerGuid]
@@ -666,15 +666,14 @@ function HistoryWindow:getRenderedData()
 
                     local main = ns.db.altData.altMainMapping[player]
                     if main ~= nil then
-                        mains:add(main)
+                        standingsByMain:set(main, {ep = epAfter, gp = gpAfter})
                     end
                 end
             end
 
             -- sync alts
             if ns.cfg.syncAltEp or ns.cfg.syncAltGp then
-                for main in mains:iter() do
-                    local mainStandings = mockStandings:get(main)
+                for main, mainStandings in standingsByMain:iter() do
                     local alts = ns.db.altData.mainAltMapping[main]
                     if alts ~= nil then
                         for _, alt in ipairs(alts) do

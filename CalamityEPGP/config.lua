@@ -2,6 +2,7 @@ local addonName, ns = ...  -- Namespace
 
 local List = ns.List
 local Set = ns.Set
+local Dict = ns.Dict
 
 local Config = {
     initialized = false,
@@ -24,6 +25,7 @@ local Config = {
     },
     mains = Set:new(),
     alts = Set:new(),
+    categoryIds = Dict:new(),
 }
 
 ns.Config = Config
@@ -259,7 +261,9 @@ end
 
 function Config:addOptionsMenu(ident, options, parent)
     self.aceConfig:RegisterOptionsTable(ident, options)
-    self.aceConfigDialog:AddToBlizOptions(ident, options.name, parent)
+    local _, categoryId = self.aceConfigDialog:AddToBlizOptions(ident, options.name, parent)
+
+    Config.categoryIds[options.name] = categoryId
 end
 
 
@@ -269,7 +273,7 @@ function Config:initAltManagementMenu()
     self.aamPanel.parent = addonName
     self.aamPanel.OnRefresh = function() self:refreshAltManagementMenu() end
 
-    local category = Settings.GetCategory(addonName)
+    local category = Settings.GetCategory(Config.categoryIds[addonName])
     Settings.RegisterCanvasLayoutSubcategory(category, self.aamPanel, self.aamPanel.name)
 end
 
