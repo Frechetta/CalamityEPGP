@@ -49,16 +49,15 @@ ns.values.gpDefaults = {
             base = 0.5,
         },
         INVTYPE_TRINKET = {
-            base = 0.75,
+            base = 1.25,
         },
         INVTYPE_WEAPON = {  -- one handed weapon
-            base = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
+            base = 1,  -- [increase to 1.5 for casters]
             overrides = {
                 DRUID = {
                     [ns.consts.SPEC_DRUID_BALANCE] = 1.5,
                     [ns.consts.SPEC_DRUID_RESTO] = 1.5,
                 },
-                HUNTER = 0.5,
                 MAGE = 1.5,
                 PALADIN = {
                     [ns.consts.SPEC_PALADIN_HOLY] = 1.5,
@@ -71,14 +70,14 @@ ns.values.gpDefaults = {
                 WARLOCK = 1.5,
             },
         },
+        -- unused in mop pve?
         INVTYPE_WEAPONMAINHAND = {
-            base = 1,  -- [decrease to 0.5 for hunters, increase to 1.5 for casters]
+            base = 1,  -- [increase to 1.5 for casters]
             overrides = {
                 DRUID = {
                     [ns.consts.SPEC_DRUID_BALANCE] = 1.5,
                     [ns.consts.SPEC_DRUID_RESTO] = 1.5,
                 },
-                HUNTER = 0.5,
                 MAGE = 1.5,
                 PALADIN = {
                     [ns.consts.SPEC_PALADIN_HOLY] = 1.5,
@@ -91,16 +90,13 @@ ns.values.gpDefaults = {
                 WARLOCK = 1.5,
             },
         },
+        -- unused in mop pve?
         INVTYPE_WEAPONOFFHAND = {
-            base = 1,  -- [decrease to 0.5 for hunters]
-            overrides = {
-                HUNTER = 0.5,
-            },
+            base = 1,
         },
         INVTYPE_2HWEAPON = {
-            base = 2,  -- [decrease to 1 for hunters and fury warriors]
+            base = 2,  -- [decrease to 1 for fury warriors]
             overrides = {
-                HUNTER = 1,
                 WARRIOR = {
                     [ns.consts.SPEC_WARRIOR_FURY] = 1,
                 },
@@ -118,23 +114,39 @@ ns.values.gpDefaults = {
             },
         },
         INVTYPE_RANGED = {
-            base = 0.5,  -- [increase to 1.5 for hunters]
+            base = 0.5,  -- [increase to 2 for hunters]
             overrides = {
-                HUNTER = 1.5,
+                HUNTER = 2,
             },
         },
-        INVTYPE_RANGEDRIGHT = {  -- wand and some other ranged [increase to 1.5 for hunters]
-            base = 0.5,
+        INVTYPE_RANGEDRIGHT = {  -- wand and some other ranged
+            base = 1,  -- [increase to 1.5 for casters and 2 for hunters]
             overrides = {
-                HUNTER = 1.5,
+                DRUID = {
+                    [ns.consts.SPEC_DRUID_BALANCE] = 1.5,
+                    [ns.consts.SPEC_DRUID_RESTO] = 1.5,
+                },
+                HUNTER = 2,
+                MAGE = 1.5,
+                PALADIN = {
+                    [ns.consts.SPEC_PALADIN_HOLY] = 1.5,
+                },
+                PRIEST = 1.5,
+                SHAMAN = {
+                    [ns.consts.SPEC_SHAMAN_ELE] = 1.5,
+                    [ns.consts.SPEC_SHAMAN_RESTO] = 1.5,
+                },
+                WARLOCK = 1.5,
             },
         },
         INVTYPE_HOLDABLE = {  -- held in off hand
             base = 0.5,
         },
+        -- unused in mop?
         INVTYPE_RELIC = {
             base = 0.5,
         },
+        -- unused in mop?
         INVTYPE_THROWN = {
             base = 0.5,
         },
@@ -334,6 +346,78 @@ ns.values.epDefaults = {
             },
         },
     },
+    {
+        'Mists of Pandaria',
+        {
+            -- the boss IDs for the commented bosses aren't correct
+            -- {
+            --     "Mogu'shan Vaults",
+            --     {
+            --         {"The Stone Guard", 1395, 110},
+            --         {"Feng the Accursed", 1390, 110},
+            --         {"Gara'jal the Spiritbinder", 1446, 110},
+            --         {"The Spirit Kings", 1445, 110},
+            --         {"Elegon", 1449, 110},
+            --         {"Will of the Emperor", 1450, 110},
+            --     },
+            -- },
+            -- {
+            --     "Heart of Fear",
+            --     {
+            --         {"Imperial Vizier Zor'lok", 1518, 115},
+            --         {"Blade Lord Ta'yak", 1519, 115},
+            --         {"Garalon", 1520, 115},
+            --         {"Wind Lord Mel'jarak", 1521, 115},
+            --         {"Amber-Shaper Un'sok", 1522, 115},
+            --         {"Grand Empress Shek'zeer", 1523, 115},
+            --     },
+            -- },
+            -- {
+            --     "Terrace of Endless Spring",
+            --     {
+            --         {"Protectors of the Endless", 1530, 115},
+            --         {"Tsulong", 1531, 115},
+            --         {"Lei Shi", 1532, 115},
+            --     },
+            -- },
+            -- {
+            --     "Throne of Thunder",
+            --     {
+            --         {"Jin'rokh the Breaker", 1571, 120},
+            --         {"Horridon", 1572, 120},
+            --         {"Council of Elders", 1573, 120},
+            --         {"Tortos", 1574, 120},
+            --         {"Megaera", 1575, 120},
+            --         {"Ji-Kun", 1576, 120},
+            --         {"Durumu the Forgotten", 1577, 120},
+            --         {"Primordius", 1578, 120},
+            --         {"Dark Animus", 1579, 120},
+            --         {"Iron Qon", 1580, 120},
+            --         {"Twin Consorts", 1581, 120},
+            --         {"Lei Shen", 1582, 120},
+            --     },
+            -- },
+            {
+                "Siege of Orgrimmar",
+                {
+                    {"Immerseus", 1602, 125},
+                    {"Fallen Protectors", 1598, 125},
+                    {"Norushen", 1624, 125},
+                    {"Sha of Pride", 1604, 125},
+                    {"Galakras", 1622, 125},
+                    {"Iron Juggernaut", 1600, 125},
+                    {"Kor'kron Dark Shaman", 1606, 125},
+                    {"General Nazgrim", 1603, 125},
+                    {"Malkorok", 1595, 125},
+                    {"Spoils of Pandaria", 1594, 125},
+                    {"Thok the Bloodthirsty", 1599, 125},
+                    {"Siegecrafter Blackfuse", 1601, 125},
+                    {"Paragons of the Klaxxi", 1593, 125},
+                    {"Garrosh Hellscream", 1623, 125},
+                },
+            },
+        },
+    },
 }
 
 ns.values.encounters = {}
@@ -499,6 +583,68 @@ ns.values.tokenGp = {
 
     -- Essence of the Forlorn (used to buy heroic tier)
     [66998] = 372,
+
+    -- MoP
+    -- T16
+    -- helm
+    -- normal
+    [99689] = 553,  -- Conq
+    [99694] = 553,  -- Prot
+    [99683] = 553,  -- Vanq
+    -- heroic
+    [99724] = 566,  -- Conq
+    [99725] = 566,  -- Prot
+    [99723] = 566,  -- Vanq
+
+    -- shoulders
+    -- normal
+    [99690] = 553,  -- Conq
+    [99695] = 553,  -- Prot
+    [99685] = 553,  -- Vanq
+    -- heroic
+    [99718] = 566,  -- Conq
+    [99719] = 566,  -- Prot
+    [99717] = 566,  -- Vanq
+
+    -- chest
+    -- normal
+    [99686] = 553,  -- Conq
+    [99691] = 553,  -- Prot
+    [99696] = 553,  -- Vanq
+    -- heroic
+    [99715] = 566,  -- Conq
+    [99716] = 566,  -- Prot
+    [99714] = 566,  -- Vanq
+
+    -- gloves
+    -- normal
+    [99687] = 553,  -- Conq
+    [99692] = 553,  -- Prot
+    [99682] = 553,  -- Vanq
+    -- heroic
+    [99721] = 566,  -- Conq
+    [99722] = 566,  -- Prot
+    [99720] = 566,  -- Vanq
+
+    -- legs
+    -- normal
+    [99688] = 553,  -- Conq
+    [99693] = 553,  -- Prot
+    [99684] = 553,  -- Vanq
+    -- heroic
+    [99712] = 566,  -- Conq
+    [99713] = 566,  -- Prot
+    [99726] = 566,  -- Vanq
+
+    -- essences
+    -- normal
+    [105858] = 553,  -- Conq
+    [105857] = 553,  -- Prot
+    [105859] = 553,  -- Vanq
+    -- heroic
+    [105867] = 566,  -- Conq
+    [105866] = 566,  -- Prot
+    [105868] = 566,  -- Vanq
 }
 
 
