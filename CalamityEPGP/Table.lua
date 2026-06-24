@@ -149,7 +149,7 @@ function Table:_setHeader()
             column.text = column:CreateFontString(nil, 'OVERLAY', 'GameTooltipText')
             column.text:SetAllPoints()
             column.text:SetTextColor(1, 1, 0)
-            column.text:SetFont('Fonts\\ARIAL.TTF', 10)
+            column.text:SetFontHeight(10)
 
             columns:append(column)
         end

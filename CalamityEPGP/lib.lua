@@ -276,7 +276,7 @@ function Lib.getGpWithInfo(itemInfo, classFilename, spec)
     local slotMod = ns.cfg.gpSlotMods[slot]
     if slotMod == nil then
         ilvl = ns.values.tokenGp[itemInfo.id]
-        modifier = 0.75
+        modifier = 1.1
     else
         modifier = slotMod.base
         if classFilename ~= nil and slotMod.overrides ~= nil then
@@ -301,6 +301,14 @@ function Lib.getGpWithInfo(itemInfo, classFilename, spec)
     local gp = 4.83 * (2 ^ ((ilvl / 26) + (rarity - 4)) * modifier) * 0.1
 
     if ilvl >= 300 then
+        gp = gp * 0.1
+    end
+
+    if ilvl >= 400 then
+        gp = gp * 0.1
+    end
+
+    if ilvl >= 500 then
         gp = gp * 0.1
     end
 
@@ -832,4 +840,9 @@ function Lib.findTableValue(t, path)
 
         return Lib.findTableValue(newTable, newPath)
     end
+end
+
+function Lib.isLootMethodMasterLooter()
+    local method, _masterLootPartyID, _masterLooterRaidID = C_PartyInfo.GetLootMethod()
+    return method == 2
 end

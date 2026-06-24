@@ -95,7 +95,7 @@ function addon:OnInitialize()
 
     if IsInGuild() then
         -- Request guild roster info from server; will receive an event (GUILD_ROSTER_UPDATE)
-        GuildRoster()
+        C_GuildInfo.GuildRoster()
     else
         self:init()
     end
@@ -177,7 +177,7 @@ function addon.showMainWindow()
 end
 
 function addon.openOptions()
-    Settings.OpenToCategory(addonName)
+    Settings.OpenToCategory(ns.Config.categoryIds[addonName])
 end
 
 function addon:handleItemClick(itemLink, mouseButton)
@@ -483,7 +483,7 @@ function addon:loadRaidRoster()
         for i = 1, MAX_RAID_MEMBERS do
             local name, _, _, _, _, classFilename, _, online, _, _, isMl, _ = GetRaidRosterInfo(i)
 
-            if name ~= nil then
+            if name ~= nil and name ~= 'Unknown' then
                 self.raidRoster:set(name, {
                     online = online,
                     ml = isMl,
@@ -1325,14 +1325,14 @@ end
 function addon:handleEnteredRaid()
     self:loadRaidRoster()
 
-    if ns.cfg and ns.cfg.lmMode and C_PartyInfo.GetLootMethod() == 'master' and IsMasterLooter() and not self.useForRaidPrompted then
+    if ns.cfg and ns.cfg.lmMode and ns.Lib.isLootMethodMasterLooter() and IsMasterLooter() and not self.useForRaidPrompted then
         self:showUseForRaidWindow()
     end
 end
 
 
 function addon:handlePartyLootMethodChanged()
-    if ns.cfg and ns.cfg.lmMode and C_PartyInfo.GetLootMethod() == 'master' and IsMasterLooter() then
+    if ns.cfg and ns.cfg.lmMode and ns.Lib.isLootMethodMasterLooter() and IsMasterLooter() then
         if not self.useForRaid then
             self:showUseForRaidWindow()
         end

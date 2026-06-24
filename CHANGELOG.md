@@ -1,3 +1,10 @@
+# 0.23.1
+
+- update to WoW version 5.5.4
+- add Siege of Orgrimmar boss EP values
+- update class GP overrides
+- add T16 token GP values
+
 # 0.23.0
 
 - update dependencies
