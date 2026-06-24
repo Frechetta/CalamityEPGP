@@ -1325,14 +1325,14 @@ end
 function addon:handleEnteredRaid()
     self:loadRaidRoster()
 
-    if ns.cfg and ns.cfg.lmMode and C_PartyInfo.GetLootMethod() == 'master' and IsMasterLooter() and not self.useForRaidPrompted then
+    if ns.cfg and ns.cfg.lmMode and ns.Lib.isLootMethodMasterLooter() and IsMasterLooter() and not self.useForRaidPrompted then
         self:showUseForRaidWindow()
     end
 end
 
 
 function addon:handlePartyLootMethodChanged()
-    if ns.cfg and ns.cfg.lmMode and C_PartyInfo.GetLootMethod() == 'master' and IsMasterLooter() then
+    if ns.cfg and ns.cfg.lmMode and ns.Lib.isLootMethodMasterLooter() and IsMasterLooter() then
         if not self.useForRaid then
             self:showUseForRaidWindow()
         end

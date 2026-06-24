@@ -841,3 +841,8 @@ function Lib.findTableValue(t, path)
         return Lib.findTableValue(newTable, newPath)
     end
 end
+
+function Lib.isLootMethodMasterLooter()
+    local method, _masterLootPartyID, _masterLooterRaidID = C_PartyInfo.GetLootMethod()
+    return method == 2
+end
