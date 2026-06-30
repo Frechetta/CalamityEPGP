@@ -165,11 +165,13 @@ end
 
 
 function Lib.getPlayerGuid(playerName)
-    local guid = Lib.playerNameToGuid[playerName]
+    local name = ns.addon.getCharName(playerName)
+
+    local guid = Lib.playerNameToGuid[name]
 
     if guid == nil then
-        guid = ns.unitGuid(playerName)
-        Lib.playerNameToGuid[playerName] = guid
+        guid = ns.unitGuid(name)
+        Lib.playerNameToGuid[name] = guid
     end
 
     return guid
