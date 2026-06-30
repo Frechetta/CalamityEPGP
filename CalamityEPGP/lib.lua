@@ -165,11 +165,13 @@ end
 
 
 function Lib.getPlayerGuid(playerName)
-    local guid = Lib.playerNameToGuid[playerName]
+    local name = ns.addon.getCharName(playerName)
+
+    local guid = Lib.playerNameToGuid[name]
 
     if guid == nil then
-        guid = ns.unitGuid(playerName)
-        Lib.playerNameToGuid[playerName] = guid
+        guid = ns.unitGuid(name)
+        Lib.playerNameToGuid[name] = guid
     end
 
     return guid
@@ -269,6 +271,7 @@ function Lib.getGpWithInfo(itemInfo, classFilename, spec)
     local ilvl = itemInfo.level
     local slot = itemInfo.slot
 
+    if ilvl == 559 or ilvl == 572 then ilvl = ilvl - 6 end  -- subtract 6 ilvl for warforged items (MoP)
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
 
     local modifier

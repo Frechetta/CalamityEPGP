@@ -1,3 +1,8 @@
+# 0.23.2
+
+- subtract 6 ilvl from warforged items to make their GP cost equivalent to their non-warforged counterparts
+- fix functionality that obtains character GUID by removing realm from character name
+
 # 0.23.1
 
 - update to WoW version 5.5.4
