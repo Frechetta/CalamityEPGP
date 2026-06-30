@@ -269,6 +269,7 @@ function Lib.getGpWithInfo(itemInfo, classFilename, spec)
     local ilvl = itemInfo.level
     local slot = itemInfo.slot
 
+    if ilvl == 559 or ilvl == 572 then ilvl = ilvl - 6 end  -- subtract 6 ilvl for warforged items (MoP)
     if slot == 'INVTYPE_ROBE' then slot = 'INVTYPE_CHEST' end
 
     local modifier
