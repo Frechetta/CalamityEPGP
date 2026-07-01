@@ -1,3 +1,7 @@
+# 0.23.3
+
+- fix main window character filtering for in-raid
+
 # 0.23.2
 
 - subtract 6 ilvl from warforged items to make their GP cost equivalent to their non-warforged counterparts
