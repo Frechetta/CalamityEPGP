@@ -481,9 +481,11 @@ function addon:loadRaidRoster()
 
     if IsInRaid() then
         for i = 1, MAX_RAID_MEMBERS do
-            local name, _, _, _, _, classFilename, _, online, _, _, isMl, _ = GetRaidRosterInfo(i)
+            local fullName, _, _, _, _, classFilename, _, online, _, _, isMl, _ = GetRaidRosterInfo(i)
 
-            if name ~= nil and name ~= 'Unknown' then
+            if fullName ~= nil and fullName ~= 'Unknown' then
+                local name = ns.addon.getCharName(fullName)
+
                 self.raidRoster:set(name, {
                     online = online,
                     ml = isMl,
