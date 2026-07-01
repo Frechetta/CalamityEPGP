@@ -263,10 +263,18 @@ function MainWindow:sortData()
     end
 
     table.sort(self.data.rows, function(left, right)
+        local leftColumn = left[columnIndex]
+        local rightColumn = right[columnIndex]
+
+        -- if sort column values are equal, sort by name
+        if leftColumn == rightColumn then
+            return left[1] < right[1]
+        end
+
         if order == 'ascending' then
-            return left[columnIndex] < right[columnIndex]
+            return leftColumn < rightColumn
         else
-            return left[columnIndex] > right[columnIndex]
+            return leftColumn > rightColumn
         end
     end)
 
