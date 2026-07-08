@@ -464,7 +464,9 @@ end
 ---@param rollType string
 ---@param perc string
 ---@param gp number
-function LootDistWindow:award(itemLink, awardee, rollType, perc, gp)
+function LootDistWindow:award(itemLink, awardeeFullName, rollType, perc, gp)
+    local awardee = ns.addon.getCharName(awardeeFullName)
+
     ns.debug(itemLink .. ' awarded to ' .. awardee)
 
 	local itemIndex = self.currentLoot[itemLink]
