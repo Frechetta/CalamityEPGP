@@ -1218,7 +1218,8 @@ function addon:handleChatMsgWhisper(_, message, playerFullName)
     if command == self.whisperCommands.INFO then
         local name
         if parts[2] ~= nil then
-            name = parts[2]
+            -- allows names to be treated as case agnostic
+            name = parts[2]:sub(1, 1):upper() .. parts[2]:sub(2):lower()
         else
             name = self.getCharName(playerFullName)
         end
@@ -1264,7 +1265,7 @@ function addon:handleChatMsgWhisper(_, message, playerFullName)
 
         local j = 1  -- guild index
         local k = 1  -- raid index
-        for i, playerData in sortedStandings:iter() do
+        for i, playerData in sortedStandings:enumerate() do
             if playerData.name == name then
                 overallRank = i
                 guildRank = j
