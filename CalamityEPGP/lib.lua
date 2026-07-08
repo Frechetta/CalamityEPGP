@@ -524,8 +524,9 @@ end
 ---@param itemId number
 ---@return table?
 function Lib.getCachedItemInfo(itemId)
-    local itemName, itemLink, itemQuality, itemLevel, _, _, _, _, itemEquipLoc,
-            itemTexture, _, classID, subclassID, bindType, _, _, _ = GetItemInfo(itemId)
+    local itemName, itemLink, itemQuality, itemLevel, _itemMinLevel, _itemType, _itemSubType,
+            _itemStackCount, itemEquipLoc, itemTexture, _sellPrice, classID, subclassID,
+            bindType, _expansionId, _setID, _isCraftingReagent = C_Item.GetItemInfo(itemId)
 
     if itemName == nil or itemLink == nil or type(bindType) ~= 'number' then
         ns.debug('GetItemInfo data was not yet available for item with ID: ' .. itemId)
@@ -572,22 +573,8 @@ function Lib.getItemInfo(item, callback)
         error('No item found with ID "' .. itemId .. '"')
     end
 
-    if theItem:IsItemDataCached() then
-        local itemInfo = Lib.getCachedItemInfo(itemId)
-
-        if itemInfo then
-            callback(itemInfo)
-            return
-        end
-    end
-
     theItem:ContinueOnItemLoad(function()
         local itemInfo = Lib.getCachedItemInfo(itemId)
-
-        -- if itemInfo == nil then
-        --     return
-        -- end
-
         callback(itemInfo)
     end)
 end
