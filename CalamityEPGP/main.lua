@@ -1420,6 +1420,8 @@ end
 ---@param _ any
 ---@param success number
 function addon:handleEncounterEnd(_, encounterId, encounterName, _, _, success)
+    ns.debug('encounter ended; ID: ' .. encounterId .. ', name: ' .. encounterName .. ', success: ' .. success)
+
     if not self.useForRaid or success ~= 1 then
         return
     end
