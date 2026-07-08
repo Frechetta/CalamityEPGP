@@ -5,7 +5,7 @@
 ## Interface: 50504
 ## SavedVariables: CalamityEPGP
 ## DefaultState: enabled
-## OptionalDeps: Guild_Roster_Manager
+## OptionalDeps: Guild_Roster_Manager, DevTool
 ## X-Curse-Project-ID: 883687
 
 # interface is retrieved by running this in-game: `/run print((select(4, GetBuildInfo())));`

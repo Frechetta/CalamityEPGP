@@ -217,6 +217,12 @@ function addon.showManualAwardWindow(itemLink)
     ns.ManualAwardWindow:show(itemLink)
 end
 
+function addon.addToInspector(data, strName)
+	if DevTool and ns.cfg.debugMode then
+		DevTool:AddData(data, addonName .. '::' .. strName)
+	end
+end
+
 function addon:init()
     if self == nil then
         C_Timer.After(0.25, function() addon:init() end)
@@ -385,6 +391,8 @@ function addon:init()
 
             self:loadRaidRoster()
         end)
+
+        self.addToInspector(ns, 'Namespace')
     else
         self:loadRaidRoster()
     end
