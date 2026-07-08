@@ -474,7 +474,7 @@ function LootDistWindow:award(itemLink, awardeeFullName, rollType, perc, gp)
 	if itemIndex ~= nil then
         -- item is from loot window
         local playerIndex
-        for i = 1, GetNumGroupMembers() do
+        for i = 1, MAX_RAID_MEMBERS do
             local candidate = GetMasterLootCandidate(itemIndex, i)
             if candidate == awardee then
                 playerIndex = i
