@@ -460,7 +460,7 @@ end
 
 
 ---@param itemLink string
----@param awardee string
+---@param awardeeFullName string
 ---@param rollType string
 ---@param perc string
 ---@param gp number
