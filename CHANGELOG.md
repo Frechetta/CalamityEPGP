@@ -1,3 +1,10 @@
+# 0.23.4
+
+- potentially fixed item info retrieval issue that was causing errors for many when mousing over items
+- potentially fixed award loot issue where addon reported some players weren't eligible for loot
+- fixed !ceinfo whisper command
+- added support for case-insensitivity to !ceinfo whisper command
+
 # 0.23.3
 
 - fix main window character filtering for in-raid
