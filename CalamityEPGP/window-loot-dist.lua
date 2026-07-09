@@ -475,10 +475,13 @@ function LootDistWindow:award(itemLink, awardeeFullName, rollType, perc, gp)
         -- item is from loot window
         local playerIndex
         for i = 1, MAX_RAID_MEMBERS do
-            local candidate = GetMasterLootCandidate(itemIndex, i)
-            if candidate == awardee then
-                playerIndex = i
-                break
+            local candidateFullName = GetMasterLootCandidate(itemIndex, i)
+            if candidateFullName ~= nil then
+                local candidate = ns.addon.getCharName(candidateFullName)
+                if candidate == awardee then
+                    playerIndex = i
+                    break
+                end
             end
         end
 
