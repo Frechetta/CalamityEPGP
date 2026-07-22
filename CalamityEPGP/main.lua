@@ -344,8 +344,14 @@ function addon:init()
             self:handleItemClick(itemLink, GetMouseButtonClicked())
         end);
 
-        hooksecurefunc("GameTooltip_UpdateStyle", function(frame)
-            self:handleTooltipUpdate(frame)
+        -- update GameTooltip (tooltip from hovering cursor over item or link)
+        hooksecurefunc("GameTooltip_UpdateStyle", function(tooltipFrame)
+            self:handleTooltipUpdate(tooltipFrame)
+        end)
+
+        -- update ItemRefTooltip (tooltip from clicking item link in chat)
+        ItemRefTooltip:HookScript("OnTooltipSetItem", function(tooltipFrame)
+            self:handleTooltipUpdate(tooltipFrame)
         end)
 
         self.preinitialized = true
@@ -1505,7 +1511,7 @@ function addon:handleTooltipUpdate(frame)
             gpYours = '?'
         end
 
-        frame:AddLine('GP: ' .. gpBase, 0.5, 0.6, 1)
+        frame:AddLine('\nGP: ' .. gpBase, 0.5, 0.6, 1)
 
         if gpYours ~= gpBase then
             frame:AddLine('Your GP: ' .. gpYours, 0.5, 0.6, 1)
