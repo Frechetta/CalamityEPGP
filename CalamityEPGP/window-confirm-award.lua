@@ -3,7 +3,6 @@ local addonName, ns = ...  -- Namespace
 local ConfirmAwardWindow = {
     baseGp = nil,
     msGp = nil,
-    osGp = nil,
 }
 
 ns.ConfirmAwardWindow = ConfirmAwardWindow
@@ -51,21 +50,29 @@ function ConfirmAwardWindow:createWindow()
         CreateFrame('CheckButton', mainFrameName .. 'SpecButton2', mainFrame.specButtonRow, 'UICheckButtonTemplate'),
     }
 
-    mainFrame.osButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.osButton:SetPoint('BOTTOM', mainFrame, 'BOTTOM', 0, 45)
-    mainFrame.osButton:SetWidth(100)
-    mainFrame.osButton:SetHeight(30)
-    mainFrame.osButton:GetFontString():SetTextScale(1.2)
-
     mainFrame.msButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.msButton:SetPoint('RIGHT', mainFrame.osButton, 'LEFT', -5, 0)
-    mainFrame.msButton:SetWidth(100)
+    mainFrame.msButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 17, 45)
+    mainFrame.msButton:SetWidth(110)
     mainFrame.msButton:SetHeight(30)
     mainFrame.msButton:GetFontString():SetTextScale(1.2)
 
+    mainFrame.osButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.osButton:SetPoint('LEFT', mainFrame.msButton, 'RIGHT', 5, 0)
+    mainFrame.osButton:SetWidth(64)
+    mainFrame.osButton:SetHeight(30)
+    mainFrame.osButton:GetFontString():SetTextScale(1.2)
+    mainFrame.osButton:SetText('OS')
+
+    mainFrame.tMogButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.tMogButton:SetPoint('LEFT', mainFrame.osButton, 'RIGHT', 5, 0)
+    mainFrame.tMogButton:SetWidth(64)
+    mainFrame.tMogButton:SetHeight(30)
+    mainFrame.tMogButton:GetFontString():SetTextScale(1.2)
+    mainFrame.tMogButton:SetText('TMog')
+
     mainFrame.freeButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
-    mainFrame.freeButton:SetPoint('LEFT', mainFrame.osButton, 'RIGHT', 5, 0)
-    mainFrame.freeButton:SetWidth(100)
+    mainFrame.freeButton:SetPoint('LEFT', mainFrame.tMogButton, 'RIGHT', 5, 0)
+    mainFrame.freeButton:SetWidth(63)
     mainFrame.freeButton:SetHeight(30)
     mainFrame.freeButton:GetFontString():SetTextScale(1.2)
     mainFrame.freeButton:SetText('Free')
@@ -96,7 +103,6 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
 
     self.baseGp = nil
     self.msGp = nil
-    self.osGp = nil
 
     self.mainFrame.specButtonRow.buttons[1]:Hide()
     self.mainFrame.specButtonRow.buttons[1]:SetChecked(false)
@@ -122,13 +128,11 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
         self.baseClassGp = ns.Lib.getGpWithInfo(itemInfo, classFilename)
 
         self.msGp = self.baseClassGp
-        self.osGp = math.floor(self.msGp * .1)
 
         self.mainFrame.baseGpLabel:SetText(string.format('Base GP: %d', self.baseGp))
         self.mainFrame.theirGpLabel:SetText(string.format('Their GP: %d', self.msGp))
 
         self.mainFrame.msButton:SetText(string.format('MS (%d GP)', self.msGp))
-        self.mainFrame.osButton:SetText(string.format('OS (%d GP)', self.osGp))
 
         local slotMod = ns.cfg.gpSlotMods[itemInfo.slot]
         if slotMod ~= nil then
@@ -147,12 +151,17 @@ function ConfirmAwardWindow:show(itemLink, player, rollType)
         end)
 
         self.mainFrame.osButton:SetScript('OnClick', function()
-            ns.LootDistWindow:award(itemLink, player, 'OS', '10%', self.osGp)
+            ns.LootDistWindow:award(itemLink, player, 'OS')
+            ConfirmAwardWindow.mainFrame:Hide()
+        end)
+
+        self.mainFrame.tMogButton:SetScript('OnClick', function()
+            ns.LootDistWindow:award(itemLink, player, 'TMog')
             ConfirmAwardWindow.mainFrame:Hide()
         end)
 
         self.mainFrame.freeButton:SetScript('OnClick', function()
-            ns.LootDistWindow:award(itemLink, player)
+            ns.LootDistWindow:award(itemLink, player, 'Other')
             ConfirmAwardWindow.mainFrame:Hide()
         end)
 
@@ -186,12 +195,9 @@ function ConfirmAwardWindow:_renderSpecButtonRow(classFilename, classOverride, i
                 self.msGp = self.baseClassGp
             end
 
-            self.osGp = math.floor(self.msGp * .1)
-
             self.mainFrame.theirGpLabel:SetText(string.format('Their GP: %d', self.msGp))
 
             self.mainFrame.msButton:SetText(string.format('MS (%d GP)', self.msGp))
-            self.mainFrame.osButton:SetText(string.format('OS (%d GP)', self.osGp))
         end)
     end
 
