@@ -332,8 +332,6 @@ function addon:init()
         self:RegisterEvent('RAID_ROSTER_UPDATE', 'handleEnteredRaid')
         self:RegisterEvent('GROUP_ROSTER_UPDATE', 'handleEnteredRaid')
         self:RegisterEvent('GROUP_LEFT', 'loadRaidRoster')
-        self:RegisterEvent('LOOT_READY', 'handleLootReady')
-        self:RegisterEvent('LOOT_CLOSED', 'handleLootClosed')
         self:RegisterEvent('UI_INFO_MESSAGE', 'handleUiInfoMessage')
         self:RegisterEvent('ENCOUNTER_END', 'handleEncounterEnd')
         self:RegisterEvent('PARTY_LOOT_METHOD_CHANGED', 'handlePartyLootMethodChanged')
@@ -1380,24 +1378,6 @@ function addon:handleExitCombat()
 
         self:computeStandings(callback)
     end
-end
-
-
-function addon:handleLootReady()
-    if not ns.cfg or not ns.cfg.lmMode then
-        return
-    end
-
-    ns.LootDistWindow:getLoot()
-end
-
-
-function addon:handleLootClosed()
-    if not ns.cfg.lmMode then
-        return
-    end
-
-    ns.LootDistWindow:clearLoot()
 end
 
 
