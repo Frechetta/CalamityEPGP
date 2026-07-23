@@ -715,7 +715,7 @@ function Lib.getEventReason(reason, ...)
     end
 
     if reason == ns.values.epgpReasons.AWARD then
-        assert(args[1] and (strlower(args[1]) == 'ms' or strlower(args[1]) == 'os'))  -- roll type
+        assert(args[1] and (strlower(args[1]) == 'ms' or strlower(args[1]) == 'os' or strlower(args[1]) == 'tmog' or strlower(args[1]) == 'other'))  -- roll type
         assert(args[2] and (type(args[2]) == 'number' or type(args[2]) == 'string'))  -- item ID or name
         return ('%d:%s:%s'):format(ns.values.epgpReasons.AWARD, strlower(args[1]), args[2])
     end

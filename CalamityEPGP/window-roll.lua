@@ -44,11 +44,17 @@ function RollWindow:createWindow()
 
     mainFrame.msButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.msButton:SetPoint('BOTTOMLEFT', mainFrame, 'BOTTOMLEFT', 3, 3)
-    mainFrame.msButton:SetWidth(110)
+    mainFrame.msButton:SetWidth(100)
 
     mainFrame.osButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.osButton:SetText('OS')
     mainFrame.osButton:SetPoint('LEFT', mainFrame.msButton, 'RIGHT', 3, 0)
-    mainFrame.osButton:SetWidth(110)
+    mainFrame.osButton:SetWidth(50)
+
+    mainFrame.tMogButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
+    mainFrame.tMogButton:SetText('TMog')
+    mainFrame.tMogButton:SetPoint('LEFT', mainFrame.osButton, 'RIGHT', 3, 0)
+    mainFrame.tMogButton:SetWidth(50)
 
     mainFrame.passButton = CreateFrame('Button', nil, mainFrame, 'UIPanelButtonTemplate')
     mainFrame.passButton:SetText('Pass')
@@ -61,12 +67,21 @@ function RollWindow:createWindow()
         RandomRoll(1, 100)
         RollWindow.mainFrame.msButton:Disable()
         RollWindow.mainFrame.osButton:Enable()
+        RollWindow.mainFrame.tMogButton:Enable()
     end)
 
     self.mainFrame.osButton:SetScript('OnClick', function()
         RandomRoll(1, 99)
         RollWindow.mainFrame.msButton:Enable()
         RollWindow.mainFrame.osButton:Disable()
+        RollWindow.mainFrame.tMogButton:Enable()
+    end)
+
+    self.mainFrame.tMogButton:SetScript('OnClick', function()
+        RandomRoll(1, 98)
+        RollWindow.mainFrame.msButton:Enable()
+        RollWindow.mainFrame.osButton:Enable()
+        RollWindow.mainFrame.tMogButton:Disable()
     end)
 
     mainFrame.passButton:SetScript('OnClick', function()
@@ -86,16 +101,16 @@ function RollWindow:show(itemLink, duration)
     self.mainFrame:Raise()
 
     ns.Lib.canPlayerUseItem(itemLink, function(usable)
-        local label
+        local label = itemLink
         if usable then
-            label = itemLink
             RollWindow.mainFrame.msButton:Enable()
             RollWindow.mainFrame.osButton:Enable()
         else
-            label = 'You can\'t use this item!'
+            label = label .. ' (Unusable)'
             RollWindow.mainFrame.msButton:Disable()
             RollWindow.mainFrame.osButton:Disable()
         end
+        RollWindow.mainFrame.tMogButton:Enable()
 
         ns.Lib.getItemInfo(itemLink, function(itemInfo)
             self.mainFrame.timerBar = ns.addon.candy:New(
@@ -118,11 +133,7 @@ function RollWindow:show(itemLink, duration)
             end)
             self.mainFrame.timerBar:SetScript('OnLeave', function() GameTooltip:Hide() end)
 
-            local msGp = itemInfo.gp
-            local osGp = math.floor(msGp * .1)
-
-            self.mainFrame.msButton:SetText(string.format('MS (100%% GP: %d)', msGp))
-            self.mainFrame.osButton:SetText(string.format('OS (10%% GP: %d)', osGp))
+            self.mainFrame.msButton:SetText(string.format('MS (GP: %d)', itemInfo.gp))
 
             self.mainFrame:Show()
             self.mainFrame.timerBar:Start()

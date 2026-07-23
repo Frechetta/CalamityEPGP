@@ -1213,6 +1213,8 @@ function addon:handleChatMsg(_, message)
                 rollType = 'MS'
             elseif high == 99 then
                 rollType = 'OS'
+            elseif high == 98 then
+                rollType = 'TMog'
             end
         end
 

@@ -499,15 +499,23 @@ function LootDistWindow:award(itemLink, awardeeFullName, rollType, perc, gp)
         self.markAsToTrade(itemLink, awardee)
 	end
 
+    local message = string.format('%s was awarded to %s', itemLink, awardee)
     if rollType ~= nil then
-        -- add gp
+        message = message .. string.format(' for %s', rollType)
+
+        if gp ~= nil then
+            message = message .. string.format(' (%s GP: %d)', perc, gp)
+        else
+            gp = 0
+        end
+
         local itemId = ns.Lib.getItemIdFromLink(itemLink)
         local reason = ns.Lib.getEventReason(ns.values.epgpReasons.AWARD, rollType, itemId)
+
         ns.addon:modifyEpgp({ns.Lib.getPlayerGuid(awardee)}, ns.consts.MODE_GP, gp, reason)
-        ns.printPublic(string.format('%s was awarded to %s for %s (%s GP: %d)', itemLink, awardee, rollType, perc, gp))
-    else
-        ns.printPublic(string.format('%s was awarded to %s', itemLink, awardee))
     end
+
+    ns.printPublic(message)
 
     -- add item to awarded table
     if ns.db.loot.awarded[itemLink] == nil then
