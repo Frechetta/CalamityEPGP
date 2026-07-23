@@ -19,7 +19,6 @@ local LootDistWindow = {
     rolling = false,
     rollPattern = ns.Lib.createPattern(RANDOM_ROLL_RESULT),
     selectedRoller = nil,
-    currentLoot = {},
     trading = {},
     disenchanter = nil,
 }
@@ -420,24 +419,15 @@ function LootDistWindow.handleRowClick(button, row)
 end
 
 
-function LootDistWindow:getLoot()
-	self:clearLoot()
-
-	for i = 1, GetNumLootItems() do
+function LootDistWindow:getLootItemIndex(itemLink)
+    for i = 1, GetNumLootItems() do
         if LootSlotHasItem(i) then
-            local itemLink = GetLootSlotLink(i)
-
-            if itemLink ~= nil then
-                -- ns.debug(i .. ': ' .. itemLink)
-                self.currentLoot[itemLink] = i
+            local lootItemLink = GetLootSlotLink(i)
+            if itemLink == lootItemLink then
+                return i
             end
         end
 	end
-end
-
-
-function LootDistWindow:clearLoot()
-    self.currentLoot = {}
 end
 
 
@@ -469,7 +459,7 @@ function LootDistWindow:award(itemLink, awardeeFullName, rollType, perc, gp)
 
     ns.debug(itemLink .. ' awarded to ' .. awardee)
 
-	local itemIndex = self.currentLoot[itemLink]
+	local itemIndex = self:getLootItemIndex(itemLink)
 
 	if itemIndex ~= nil then
         -- item is from loot window
@@ -744,7 +734,7 @@ function LootDistWindow:disenchant()
 
 	ns.printPublic(string.format('Item %s will be disenchanted by %s', self.itemLink, self.disenchanter))
 
-    local itemIndex = self.currentLoot[self.itemLink]
+	local itemIndex = self:getLootItemIndex(self.itemLink)
 
 	if itemIndex ~= nil then
         -- item is from loot window
