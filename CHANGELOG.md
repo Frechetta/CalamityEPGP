@@ -1,3 +1,11 @@
+# 0.24.0
+
+- fix loot award issue for characters not on the same server as the master looter
+- add GP to item ref tooltip
+- add transmog roll option
+- remove GP cost from OS roll option
+- add ability to award duplicate items to multiple people using the same award/roll cycle
+
 # 0.23.4
 
 - potentially fixed item info retrieval issue that was causing errors for many when mousing over items

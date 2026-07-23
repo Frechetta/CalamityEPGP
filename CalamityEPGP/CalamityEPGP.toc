@@ -1,7 +1,7 @@
 ## Title: CalamityEPGP
 ## Notes: EPGP addon for Mists of Pandaria Classic
 ## Author: Kardiir-LeiShen
-## Version: 0.23.4
+## Version: 0.24.0
 ## Interface: 50504
 ## SavedVariables: CalamityEPGP
 ## DefaultState: enabled
