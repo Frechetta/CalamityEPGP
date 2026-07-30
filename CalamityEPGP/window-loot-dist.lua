@@ -463,21 +463,7 @@ function LootDistWindow:award(itemLink, awardeeFullName, rollType, perc, gp)
 
 	if itemIndex ~= nil then
         -- item is from loot window
-        local playerIndex
-        for i = 1, MAX_RAID_MEMBERS do
-            local candidateFullName = GetMasterLootCandidate(itemIndex, i)
-            if candidateFullName ~= nil then
-                local candidate = ns.addon.getCharName(candidateFullName)
-                if candidate == awardee then
-                    playerIndex = i
-                    break
-                end
-            end
-        end
-
-		if playerIndex ~= nil then
-			GiveMasterLoot(itemIndex, playerIndex)
-		else
+        if not self:giveLootFromLootWindow(itemIndex, awardee) then
 			ns.print('Could\'nt award ' .. itemLink .. ' to ' .. awardee .. ' as they are not eligible')
             return
 		end
@@ -738,24 +724,40 @@ function LootDistWindow:disenchant()
 
 	if itemIndex ~= nil then
         -- item is from loot window
-        local playerIndex
-        for i = 1, GetNumGroupMembers() do
-            local candidate = GetMasterLootCandidate(itemIndex, i)
-            if candidate == self.disenchanter then
-                playerIndex = i
-                break
-            end
-        end
-
-		if playerIndex ~= nil then
-			GiveMasterLoot(itemIndex, playerIndex)
-		else
-			ns.print(self.disenchanter .. ' is not eligible for loot')
+        if not self:giveLootFromLootWindow(itemIndex, self.disenchanter) then
+			ns.print('Could\'nt give ' .. self.itemLink .. ' to ' .. self.disenchanter .. ' as they are not eligible')
             return
 		end
 	end
 
     if self.mainFrame.closeOnAwardCheck:GetChecked() then
         self.mainFrame:Hide()
+    end
+end
+
+
+---@param itemIndex number
+---@param playerFullName string
+---@return boolean
+function LootDistWindow:giveLootFromLootWindow(itemIndex, playerFullName)
+    local playerName = ns.addon.getCharName(playerFullName)
+
+    local playerIndex
+    for i = 1, MAX_RAID_MEMBERS do
+        local candidateFullName = GetMasterLootCandidate(itemIndex, i)
+        if candidateFullName ~= nil then
+            local candidate = ns.addon.getCharName(candidateFullName)
+            if candidate == playerName then
+                playerIndex = i
+                break
+            end
+        end
+    end
+
+    if playerIndex ~= nil then
+        GiveMasterLoot(itemIndex, playerIndex)
+        return true
+    else
+        return false
     end
 end

@@ -66,3 +66,5 @@ RANDOM_ROLL_RESULT = '%s rolls %d (%d-%d)'
 GetPlayerInfoByGUID = function(guid)
     return nil, 'WARRIOR', nil, nil, nil, guid, nil
 end
+
+MAX_RAID_MEMBERS = 40
